@@ -1,28 +1,12 @@
-# Compiled Object files
-*.slo
-*.lo
+" Intermediate build files
 *.o
-*.obj
 
-# Precompiled Headers
-*.gch
-*.pch
+" Flex and bison generated files
+c_lexer.cpp
+c_parser.cpp
+c_parser.h
+c_parser.output
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
+" Executable files
+vype
 *.exe
-*.out
-*.app
