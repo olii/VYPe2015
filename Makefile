@@ -1,38 +1,29 @@
 PROJECT=vype
 
-LEXER=c_lexer
-PARSER=c_parser
+ROOT=.
+MODULE=
 
-LEXER_FILE=$(LEXER).l
-LEXER_SRC=$(LEXER).cpp
-LEXER_OBJ=$(LEXER).o
+SRC_FILES=main.cpp
 
-PARSER_FILE=$(PARSER).y
-PARSER_SRC=$(PARSER).cpp
-PARSER_HDR=$(PARSER).h
-PARSER_OBJ=$(PARSER).o
+include $(ROOT)/mak/config.mak
 
-CXXFLAGS=-std=c++11 -Wall -Wextra -g3
-
-SRCS=$(filter-out $(LEXER_SRC) $(PARSER_SRC), $(wildcard *.cpp))
-OBJS=$(patsubst %.cpp, %.o, $(SRCS))
 RM=rm -rf
+MKDIR=mkdir -p
 
-all: parser lexer build
+all: init build_all
 
-build: $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(PROJECT) $^ $(LEXER_OBJ) $(PARSER_OBJ)
+init:
+	@$(MKDIR) objs/frontend
 
-lexer: $(LEXER_FILE)
-	flex -o $(LEXER_SRC) $<
-	$(CXX) $(CXXFLAGS) -c -o $(LEXER_OBJ) $(LEXER_SRC)
+build_all: build frontend
+	$(CXX) -o $(PROJECT) $(OBJ_FILES) objs/frontend/*.o
 
-parser: $(PARSER_FILE)
-	bison --defines=$(PARSER_HDR) -o $(PARSER_SRC) $<
-	$(CXX) $(CXXFLAGS) -c -o $(PARSER_OBJ) $(PARSER_SRC)
-
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+frontend:
+	@$(MAKE) -C $@
 
 clean:
-	$(RM) $(PROJECT) $(OBJS) $(LEXER_SRC) $(PARSER_SRC) $(PARSER_HDR)
+	$(RM) $(PROJECT) objs
+
+.PHONY: frontend
+
+include $(ROOT)/mak/common.mak

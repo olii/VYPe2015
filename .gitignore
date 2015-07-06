@@ -1,5 +1,5 @@
 " Intermediate build files
-*.o
+objs/
 
 " Flex and bison generated files
 c_lexer.cpp
