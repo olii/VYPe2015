@@ -1,8 +1,12 @@
 ROOT=../
 MODULE=frontend
 
-SRC_FILES= c_lexer.cpp \
-		   c_parser.cpp
+SRC_FILES= ast.cpp \
+           c_lexer.cpp \
+           c_parser.cpp \
+           context.cpp \
+           symbol.cpp \
+           symbol_table.cpp
 
 include $(ROOT)/mak/config.mak
 

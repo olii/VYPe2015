@@ -1,6 +1,6 @@
 #include "frontend/symbol.h"
 
-Symbol::Symbol()
+Symbol::Symbol(Type type, const std::string& name, Symbol::DataType dataType) : _type(type), _name(name), _dataType(dataType)
 {
 }
 
@@ -8,7 +8,7 @@ Symbol::~Symbol()
 {
 }
 
-DataType Symbol::stringToDataType(const std::string& typeString)
+Symbol::DataType Symbol::stringToDataType(const std::string& typeString)
 {
     if (typeString == "int")
         return INT;
@@ -20,22 +20,22 @@ DataType Symbol::stringToDataType(const std::string& typeString)
     return VOID;
 }
 
+Symbol::Type Symbol::getType() const
+{
+    return _type;
+}
+
 const std::string& Symbol::getName() const
 {
     return _name;
 }
 
-void Symbol::setName(const std::string& name)
+Symbol::DataType Symbol::getDataType() const
 {
-    _name = name;
+    return _dataType;
 }
 
-Type Symbol::getType() const
-{
-    return _type;
-}
-
-FunctionSymbol::FunctionSymbol()
+FunctionSymbol::FunctionSymbol(const std::string& name, Symbol::DataType returnType, const ParameterList& parameters) : Symbol(Symbol::FUNCTION, name, returnType), _parameters(parameters)
 {
 }
 
@@ -43,22 +43,22 @@ FunctionSymbol::~FunctionSymbol()
 {
 }
 
-DataType FunctionSymbol::getReturnType() const
+Symbol::DataType FunctionSymbol::getReturnType() const
 {
-    return _returnType;
+    return _dataType;
 }
 
-void FunctionSymbol::setReturnType(DataType dataType)
+void FunctionSymbol::setReturnType(Symbol::DataType dataType)
 {
-    _returnType = dataType;
+    _dataType = dataType;
 }
 
-const SymbolTable* FunctionSymbol::getParameters() const
+const FunctionSymbol::ParameterList& FunctionSymbol::getParameters() const
 {
     return _parameters;
 }
 
-void FunctionSymbol::setParameters(SymbolTable* paramaters)
+void FunctionSymbol::setParameters(const FunctionSymbol::ParameterList& parameters)
 {
     _parameters = parameters;
 }

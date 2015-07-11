@@ -2,6 +2,7 @@
 #define FRONTEND_SYMBOL_H
 
 #include <map>
+#include <vector>
 
 class SymbolTable;
 
@@ -22,23 +23,25 @@ public:
         STRING
     };
 
-    Symbol();
+    Symbol() = delete;
+    Symbol(Type type, const std::string& name, DataType dataType);
     Symbol(const Symbol&) = delete;
     virtual ~Symbol();
 
     static DataType stringToDataType(const std::string& typeString);
 
-    const std::string& getName() const;
-
     Type getType() const;
+    const std::string& getName() const;
+    DataType getDataType() const;
 
-private:
+protected:
     Symbol& operator =(const Symbol&);
 
     void setName(const std::string& name);
 
-    std::string _name;
     Type _type;
+    std::string _name;
+    DataType _dataType;
 };
 
 class FunctionSymbol : public Symbol
@@ -54,7 +57,8 @@ public:
 
     typedef std::vector<Parameter*> ParameterList;
 
-    FunctionSymbol();
+    FunctionSymbol() = delete;
+    FunctionSymbol(const std::string& name, DataType returnType, const ParameterList& parameters);
     FunctionSymbol(const FunctionSymbol&) = delete;
     virtual ~FunctionSymbol();
 
@@ -70,7 +74,6 @@ public:
 private:
     FunctionSymbol& operator =(const FunctionSymbol&);
 
-    DataType _returnType;
     ParameterList _parameters;
     bool _defined;
 

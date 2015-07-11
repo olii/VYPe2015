@@ -47,7 +47,7 @@ FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataTy
                 return nullptr;
 
             // If the function was already defined, error
-            if (func->isDefined())
+            if (func->isFunctionDefined())
                 return nullptr;
 
             // Check whether return types match
@@ -59,23 +59,22 @@ FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataTy
                 return nullptr;
 
             // Check whether type of every parameter match
-            const ParameterList& declParams = func->getParameters();
+            const FunctionSymbol::ParameterList& declParams = func->getParameters();
             for (size_t i = 0; i < parameters.size(); ++i)
             {
-                if (declParams[i].dataType != parameters[i].dataType)
+                if (declParams[i]->dataType != parameters[i]->dataType)
                     return nullptr;
             }
 
             // Rewrite placeholder declaration parameters with the actual definition parameters and set the function as defined
             func->setParameters(parameters);
-            func->setDefined(true);
+            func->setFunctionDefined(true);
             return func;
         }
     }
 
     _table[name] = new FunctionSymbol(name, returnType, parameters);
-    return _table[name];
-
+    return static_cast<FunctionSymbol*>(_table[name]);
 }
 
 Symbol* SymbolTable::findSymbol(const std::string& name)
@@ -84,7 +83,8 @@ Symbol* SymbolTable::findSymbol(const std::string& name)
     if (itr != _table.end())
         return nullptr;
 
-    return itr.second;
+    return itr->second;
+}
 
 const Symbol* SymbolTable::findSymbol(const std::string& name) const
 {
@@ -92,5 +92,5 @@ const Symbol* SymbolTable::findSymbol(const std::string& name) const
     if (itr != _table.end())
         return nullptr;
 
-    return itr.second;
+    return itr->second;
 }

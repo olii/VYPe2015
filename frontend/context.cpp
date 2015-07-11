@@ -39,7 +39,7 @@ Symbol* Context::findSymbol(const std::string& name)
     Symbol* symbol = nullptr;
 
     // Reverse iterate over symbol table stack to find latest symbol with this name
-    for (SymbolTable::TableType::iterator itr = _symbolStack.rbegin(); itr != _symbolStack.rend(); ++itr)
+    for (StackType::reverse_iterator itr = _symbolStack.rbegin(); itr != _symbolStack.rend(); ++itr)
     {
         SymbolTable* symbolTable = *itr;
 
@@ -55,7 +55,7 @@ const Symbol* Context::findSymbol(const std::string& name) const
     const Symbol* symbol = nullptr;
 
     // Reverse iterate over symbol table stack to find latest symbol with this name
-    for (SymbolTable::TableType::const_iterator itr = _symbolStack.rbegin(); itr != _symbolStack.rend(); ++itr)
+    for (StackType::const_reverse_iterator itr = _symbolStack.rbegin(); itr != _symbolStack.rend(); ++itr)
     {
         const SymbolTable* symbolTable = *itr;
 
