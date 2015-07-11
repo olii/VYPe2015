@@ -15,7 +15,7 @@ all: init build_all
 init:
 	@$(MKDIR) objs/frontend
 
-build_all: build frontend
+build_all: frontend build
 	$(CXX) -o $(PROJECT) $(OBJ_FILES) objs/frontend/*.o
 
 frontend:
