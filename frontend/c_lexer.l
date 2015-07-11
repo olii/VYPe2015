@@ -2,7 +2,10 @@
 
 %{
 #include <string>
-#include "c_parser.h"
+#include <vector>
+
+#include "frontend/ast.h"
+#include "frontend/c_parser.h"
 %}
 
 digit       [0-9]
