@@ -80,7 +80,7 @@ FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataTy
 Symbol* SymbolTable::findSymbol(const std::string& name)
 {
     TableType::iterator itr = _table.find(name);
-    if (itr != _table.end())
+    if (itr == _table.end())
         return nullptr;
 
     return itr->second;
@@ -89,7 +89,7 @@ Symbol* SymbolTable::findSymbol(const std::string& name)
 const Symbol* SymbolTable::findSymbol(const std::string& name) const
 {
     TableType::const_iterator itr = _table.find(name);
-    if (itr != _table.end())
+    if (itr == _table.end())
         return nullptr;
 
     return itr->second;
