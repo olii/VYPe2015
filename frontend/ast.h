@@ -5,29 +5,15 @@
 
 #include "frontend/symbol_table.h"
 
-class ASTNode;
-class AST
-{
-public:
-    AST();
-    AST(const AST&) = delete;
-    ~AST();
-
-private:
-    AST& operator =(const AST&);
-
-    ASTNode* _rootNode;
-};
-
 class ASTNode
 {
 public:
     ASTNode(const ASTNode&) = delete;
-    virtual ~ASTNode();
+    virtual ~ASTNode() {}
 
     //virtual IRInstruction* generateIR() = 0;
 protected:
-    ASTNode();
+    ASTNode() {}
 
 private:
     ASTNode& operator =(const ASTNode&);
@@ -36,63 +22,86 @@ private:
 class Expression : public ASTNode
 {
 public:
-    Expression();
-    Expression(const Expression&);
-    virtual ~Expression();
+    Expression(const Expression&) = delete;
+    virtual ~Expression() {}
+
+protected:
+    Expression() {}
+
+private:
+    Expression& operator =(const Expression&);
 };
 
 template <typename T> class TerminalExpression : public Expression
 {
 public:
-    TerminalExpression();
-    TerminalExpression(const TerminalExpression&);
-    virtual ~TerminalExpression();
+    TerminalExpression(const TerminalExpression&) = delete;
+    virtual ~TerminalExpression() {}
 
 protected:
+    TerminalExpression(const T& data) : Expression(), _data(data) {}
+
     T _data;
+
+private:
+    TerminalExpression<T>& operator =(const TerminalExpression<T>&);
 };
 
 class IntLiteral : public TerminalExpression<int>
 {
 public:
-    IntLiteral(int data);
-    IntLiteral(const IntLiteral&);
-    virtual ~IntLiteral();
+    IntLiteral(int data) : TerminalExpression<int>(data) {}
+    IntLiteral(const IntLiteral&) = delete;
+    virtual ~IntLiteral() {}
+
+private:
+    IntLiteral& operator =(const IntLiteral&);
 };
 
 class CharLiteral : public TerminalExpression<char>
 {
 public:
-    CharLiteral(char data);
-    CharLiteral(const IntLiteral&);
-    virtual ~CharLiteral();
+    CharLiteral(char data) : TerminalExpression<char>(data) {}
+    CharLiteral(const IntLiteral&) = delete;
+    virtual ~CharLiteral() {}
+
+private:
+    CharLiteral& operator =(const CharLiteral&);
 };
 
 class StringLiteral : public TerminalExpression<std::string>
 {
 public:
-    StringLiteral(const std::string& data);
-    StringLiteral(const IntLiteral&);
-    virtual ~StringLiteral();
+    StringLiteral(const std::string& data) : TerminalExpression<std::string>(data) {}
+    StringLiteral(const IntLiteral&) = delete;
+    virtual ~StringLiteral() {}
+
+private:
+    StringLiteral& operator =(const StringLiteral&);
 };
 
 class Variable : public TerminalExpression<Symbol*>
 {
 public:
-    Variable(Symbol* data);
-    Variable(const Variable&);
-    virtual ~Variable();
+    Variable(Symbol* data) : TerminalExpression<Symbol*>(data) {}
+    Variable(const Variable&) = delete;
+    virtual ~Variable() {}
+
+private:
+    Variable& operator =(const Variable&);
 };
 
 class Call : public TerminalExpression<FunctionSymbol*>
 {
 public:
-    Call(FunctionSymbol* function, const std::vector<Expression*>& parameters);
-    Call(const Call&);
-    virtual ~Call();
+    Call(FunctionSymbol* function, const std::vector<Expression*>& parameters) :
+        TerminalExpression<FunctionSymbol*>(function), _parameters(parameters) {}
+    Call(const Call&) = delete;
+    virtual ~Call() {}
 
 private:
-    FunctionSymbol* _function;
+    Call& operator =(const Call&);
+
     std::vector<Expression*> _parameters;
 };
 
@@ -104,11 +113,13 @@ enum UnaryOp
 class UnaryExpression : public Expression
 {
 public:
-    UnaryExpression(UnaryOp operation, Expression* operand);
-    UnaryExpression(const UnaryExpression&);
-    virtual ~UnaryExpression();
+    UnaryExpression(UnaryOp operation, Expression* operand) : Expression(), _operation(operation), _operand(operand) {}
+    UnaryExpression(const UnaryExpression&) = delete;
+    virtual ~UnaryExpression() {}
 
 private:
+    UnaryExpression& operator =(const UnaryExpression&);
+
     UnaryOp _operation;
     Expression* _operand;
 };
@@ -133,11 +144,14 @@ enum BinaryOp
 class BinaryExpression : public Expression
 {
 public:
-    BinaryExpression(BinaryOp operation, Expression* leftOperand, Expression* rightOperand);
-    BinaryExpression(const BinaryExpression&);
-    virtual ~BinaryExpression();
+    BinaryExpression(BinaryOp operation, Expression* leftOperand, Expression* rightOperand) :
+        Expression(), _operation(operation), _leftOperand(leftOperand), _rightOperand(rightOperand) {}
+    BinaryExpression(const BinaryExpression&) = delete;
+    virtual ~BinaryExpression() {}
 
 private:
+    BinaryExpression& operator =(const BinaryExpression&);
+
     BinaryOp _operation;
     Expression* _leftOperand;
     Expression* _rightOperand;
@@ -146,20 +160,26 @@ private:
 class Statement : public ASTNode
 {
 public:
-    Statement();
-    Statement(const Statement&);
-    virtual ~Statement();
+    Statement(const Statement&) = delete;
+    virtual ~Statement() {}
 
+protected:
+    Statement() {}
+
+private:
+    Statement& operator =(const Statement&);
 };
 
 class AssignStatement : public Statement
 {
 public:
-    AssignStatement(Symbol* symbol, Expression* expression);
-    AssignStatement(const AssignStatement&);
-    virtual ~AssignStatement();
+    AssignStatement(Symbol* variable, Expression* expression) : Statement(), _variable(variable), _expression(expression) {}
+    AssignStatement(const AssignStatement&) = delete;
+    virtual ~AssignStatement() {}
 
 private:
+    AssignStatement& operator =(const AssignStatement&);
+
     Symbol* _variable;
     Expression* _expression;
 };
@@ -167,22 +187,27 @@ private:
 class DeclarationStatement : public Statement
 {
 public:
-    DeclarationStatement(const std::vector<Symbol*>& variables);
-    DeclarationStatement(const DeclarationStatement&);
-    virtual ~DeclarationStatement();
+    DeclarationStatement(const std::vector<Symbol*>& variables) : Statement(), _variables(variables) {}
+    DeclarationStatement(const DeclarationStatement&) = delete;
+    virtual ~DeclarationStatement() {}
 
 private:
+    DeclarationStatement& operator =(const DeclarationStatement&);
+
     std::vector<Symbol*> _variables;
 };
 
 class IfStatement : public Statement
 {
 public:
-    IfStatement(Expression* expression, const std::vector<Statement*>& ifStatements, const std::vector<Statement*>& elseStatements);
-    IfStatement(const IfStatement&);
-    virtual ~IfStatement();
+    IfStatement(Expression* expression, const std::vector<Statement*>& ifStatements, const std::vector<Statement*>& elseStatements) :
+        Statement(), _expression(expression), _ifStatements(ifStatements), _elseStatements(elseStatements) {}
+    IfStatement(const IfStatement&) = delete;
+    virtual ~IfStatement() {}
 
 private:
+    IfStatement& operator =(const IfStatement&);
+
     Expression* _expression;
     std::vector<Statement*> _ifStatements, _elseStatements;
 };
@@ -190,11 +215,14 @@ private:
 class WhileStatement : public Statement
 {
 public:
-    WhileStatement(Expression* expression, const std::vector<Statement*>& statements);
-    WhileStatement(const WhileStatement&);
-    virtual ~WhileStatement();
+    WhileStatement(Expression* expression, const std::vector<Statement*>& statements) :
+        Statement(), _expression(expression), _statements(statements) {}
+    WhileStatement(const WhileStatement&) = delete;
+    virtual ~WhileStatement() {}
 
 private:
+    WhileStatement& operator =(const WhileStatement&);
+
     Expression* _expression;
     std::vector<Statement*> _statements;
 };
@@ -202,23 +230,27 @@ private:
 class ReturnStatement : public Statement
 {
 public:
-    ReturnStatement();
-    ReturnStatement(Expression* expression);
-    ReturnStatement(const ReturnStatement&);
-    virtual ~ReturnStatement();
+    ReturnStatement() : Statement(), _expression(nullptr) {}
+    ReturnStatement(Expression* expression) : Statement(), _expression(expression) {}
+    ReturnStatement(const ReturnStatement&) = delete;
+    virtual ~ReturnStatement() {}
 
 private:
+    ReturnStatement& operator =(const ReturnStatement&);
+
     Expression* _expression;
 };
 
 class CallStatement : public Statement
 {
 public:
-    CallStatement(FunctionSymbol* function, const std::vector<Expression*>& parameters);
-    CallStatement(const CallStatement&);
-    virtual ~CallStatement();
+    CallStatement(FunctionSymbol* function, const std::vector<Expression*>& parameters) : Statement(), _function(function), _parameters(parameters) {}
+    CallStatement(const CallStatement&) = delete;
+    virtual ~CallStatement() {}
 
 private:
+    CallStatement& operator =(const CallStatement&);
+
     FunctionSymbol* _function;
     std::vector<Expression*> _parameters;
 };
@@ -226,11 +258,13 @@ private:
 class Function : public ASTNode
 {
 public:
-    Function(FunctionSymbol* symbol, const std::vector<Statement*>& body);
-    Function(const Function&);
-    virtual ~Function();
+    Function(FunctionSymbol* symbol, const std::vector<Statement*>& body) : ASTNode(), _symbol(symbol), _body(body) {}
+    Function(const Function&) = delete;
+    virtual ~Function() {}
 
 private:
+    Function& operator =(const Function&);
+
     FunctionSymbol* _symbol;
     std::vector<Statement*> _body;
 };
@@ -238,13 +272,18 @@ private:
 class Program : public ASTNode
 {
 public:
-    Program();
-    Program(const Program&);
-    virtual ~Program();
+    Program() : _functions() {}
+    Program(const Program&) = delete;
+    virtual ~Program() {}
 
-    void addFunction(Function* function);
+    void addFunction(Function* function)
+    {
+        _functions.push_back(function);
+    }
 
 private:
+    Program& operator =(const Program&);
+
     std::vector<Function*> _functions;
 };
 
