@@ -140,8 +140,18 @@ stmt    :   assign_stmt { $$ = $1; }
         |   empty_stmt  { $$ = $1; }
         ;
 
-stmt_list   :   stmt_list stmt              { $$->push_back($2); }
-            |   stmt                        { $$ = new std::vector<Statement*>({$1}); }
+stmt_list   :   stmt_list stmt              {
+                                                // Do not add empty statements
+                                                if ($2 != nullptr)
+                                                    $$->push_back($2);
+                                            }
+            |   stmt                        {
+                                                // Check whether it is an empty statement, if so, create just empty statement list
+                                                if ($1 == nullptr)
+                                                    $$ = new std::vector<Statement*>();
+                                                else
+                                                    $$ = new std::vector<Statement*>({$1});
+                                            }
             ;
 
 assign_stmt :   ID ASSIGN expr SEMICOLON    {
@@ -226,7 +236,7 @@ empty_stmt  :   SEMICOLON { $$ = nullptr; }
             ;
 
 exprs       :   expr_list { $$ = $1; }
-            |   %empty { $$ = nullptr; }
+            |   %empty { $$ = new std::vector<Expression*>(); }
             ;
 
 expr_list   :   expr_list COMMA expr    { $$->push_back($3); }
