@@ -2,6 +2,8 @@
 
 Context::Context() : _symbolStack()
 {
+    // Create global symbol table
+    newSymbolTable();
 }
 
 Context::~Context()
