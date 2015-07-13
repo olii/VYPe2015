@@ -6,6 +6,9 @@
 
 #include "frontend/ast.h"
 #include "frontend/c_parser.h"
+
+static char inputChar = '\0';
+static std::string inputString = "";
 %}
 
 digit       [0-9]
@@ -28,28 +31,30 @@ whitespace  [ \r\n\t]
 <BLOCK_COMMENT>\*\/     { BEGIN(0); }
 <BLOCK_COMMENT>.        ;
 
-\'                      { BEGIN(CHR); }
-<CHR>\\\'               { BEGIN(CHR_END); }
-<CHR>\\\"               { BEGIN(CHR_END); }
-<CHR>\\\\               { BEGIN(CHR_END); }
-<CHR>\\t                { BEGIN(CHR_END); }
-<CHR>\\n                { BEGIN(CHR_END); }
-<CHR>[^'"\t\n\\]        { BEGIN(CHR_END); }
-<CHR>.                  ;
+\'                      { inputChar = '\0'; BEGIN(CHR); }
+<CHR>\\\'               { inputChar = '\''; BEGIN(CHR_END); }
+<CHR>\\\"               { inputChar = '\"'; BEGIN(CHR_END); }
+<CHR>\\\\               { inputChar = '\\'; BEGIN(CHR_END); }
+<CHR>\\t                { inputChar = '\t'; BEGIN(CHR_END); }
+<CHR>\\n                { inputChar = '\n'; BEGIN(CHR_END); }
+<CHR>[^'"\t\n\\]        { inputChar = yytext[0]; BEGIN(CHR_END); }
+<CHR>.                  { yyterminate(); }
 <CHR_END>\'             {
                             BEGIN(0);
+                            yylval.charValue = inputChar;
                             return CHAR_LIT;
                         }
 
-\"                      { BEGIN(STR); }
-<STR>\\\'               ;
-<STR>\\\"               ;
-<STR>\\\\               ;
-<STR>\\t                ;
-<STR>\\n                ;
-<STR>([^\\"])+          ;
+\"                      { inputString = ""; BEGIN(STR); }
+<STR>\\\'               { inputString += '\''; }
+<STR>\\\"               { inputString += '\"'; }
+<STR>\\\\               { inputString += '\\'; }
+<STR>\\t                { inputString += '\t'; }
+<STR>\\n                { inputString += '\n'; }
+<STR>([^\\"])+          { inputString += std::string(yytext, yyleng); }
 <STR>\"                 {
                             BEGIN(0);
+                            yylval.strValue = new std::string(inputString);
                             return STRING_LIT;
                         }
 
@@ -80,12 +85,15 @@ while                   { return WHILE; }
 return                  { return RETURN; }
 void                    { return VOID; }
 int|char|string         {
+                            yylval.strValue = new std::string(yytext, yyleng);
                             return TYPE;
                         }
 {digit}+                {
+                            yylval.intValue = atoi(yytext);
                             return INT_LIT;
                         }
 {letter}({alphanum})*   {
+                            yylval.strValue = new std::string(yytext, yyleng);
                             return ID;
                         }
 
