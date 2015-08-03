@@ -1,5 +1,7 @@
 #include "frontend/context.h"
 
+namespace frontend {
+
 Context::Context() : _symbolStack()
 {
     // Create global symbol table
@@ -67,3 +69,5 @@ const Symbol* Context::findSymbol(const std::string& name) const
 
     return nullptr;
 }
+
+} // namespace frontend

@@ -3,6 +3,8 @@
 
 #include "frontend/symbol.h"
 
+namespace frontend {
+
 class SymbolTable
 {
 public:
@@ -24,4 +26,6 @@ private:
     TableType _table;
 };
 
-#endif
+} // namespace frontend
+
+#endif // FRONTEND_SYMBOL_TABLE_H

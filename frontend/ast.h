@@ -5,6 +5,8 @@
 
 #include "frontend/symbol_table.h"
 
+namespace frontend {
+
 class ASTNode
 {
 public:
@@ -287,4 +289,6 @@ private:
     std::vector<Function*> _functions;
 };
 
-#endif
+} // namespace frontend
+
+#endif // FRONTEND_AST_H

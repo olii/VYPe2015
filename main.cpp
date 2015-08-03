@@ -9,8 +9,8 @@
 extern int yyparse();
 extern int yydebug;
 
-Program program;
-Context context;
+frontend::Program program;
+frontend::Context context;
 
 void yyerror(const char* e)
 {

@@ -1,5 +1,7 @@
 #include "frontend/symbol.h"
 
+namespace frontend {
+
 Symbol::Symbol(Type type, const std::string& name, Symbol::DataType dataType) : _type(type), _name(name), _dataType(dataType)
 {
 }
@@ -35,7 +37,8 @@ Symbol::DataType Symbol::getDataType() const
     return _dataType;
 }
 
-FunctionSymbol::FunctionSymbol(const std::string& name, Symbol::DataType returnType, const ParameterList& parameters) : Symbol(Symbol::FUNCTION, name, returnType), _parameters(parameters)
+FunctionSymbol::FunctionSymbol(const std::string& name, Symbol::DataType returnType, const ParameterList& parameters) :
+        Symbol(Symbol::FUNCTION, name, returnType), _parameters(parameters), _defined(false)
 {
 }
 
@@ -72,3 +75,5 @@ void FunctionSymbol::setFunctionDefined(bool set)
 {
     _defined = set;
 }
+
+} // namespace frontend

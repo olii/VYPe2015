@@ -4,6 +4,8 @@
 #include "frontend/ast.h"
 #include "frontend/context.h"
 
+using namespace frontend;
+
 extern int yylex();
 extern void yyerror(const char* e);
 
@@ -16,12 +18,12 @@ extern Context context;
 
 %union
 {
-    Function* function;
-    FunctionSymbol::ParameterList* functionParameters;
-    std::vector<Statement*>* statements;
-    Statement* statement;
-    std::vector<Expression*>* expressions;
-    Expression* expression;
+    frontend::Function* function;
+    frontend::FunctionSymbol::ParameterList* functionParameters;
+    std::vector<frontend::Statement*>* statements;
+    frontend::Statement* statement;
+    std::vector<frontend::Expression*>* expressions;
+    frontend::Expression* expression;
     std::vector<std::string>* strList;
     std::string* strValue;
     char charValue;

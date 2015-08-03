@@ -5,6 +5,8 @@
 
 #include "frontend/symbol_table.h"
 
+namespace frontend {
+
 class Context
 {
 public:
@@ -29,4 +31,6 @@ private:
     StackType _symbolStack;
 };
 
-#endif
+} // namespace frontend
+
+#endif // FRONTEND_CONTEXT_H

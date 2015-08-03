@@ -4,6 +4,8 @@
 #include <map>
 #include <vector>
 
+namespace frontend {
+
 class SymbolTable;
 
 class Symbol
@@ -79,4 +81,6 @@ private:
 
 };
 
-#endif
+} // namespace frontend
+
+#endif // FRONTEND_SYMBOL_H

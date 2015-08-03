@@ -1,5 +1,7 @@
 #include "frontend/symbol_table.h"
 
+namespace frontend {
+
 SymbolTable::SymbolTable() : _table()
 {
 }
@@ -94,3 +96,5 @@ const Symbol* SymbolTable::findSymbol(const std::string& name) const
 
     return itr->second;
 }
+
+} // namespace frontend
