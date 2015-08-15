@@ -14,7 +14,7 @@ public:
     Context(const Context&) = delete;
     ~Context();
 
-    typedef std::vector<SymbolTable*> StackType;
+    using StackType = std::vector<SymbolTable*>;
 
     void newSymbolTable();
     void popSymbolTable();
@@ -28,7 +28,8 @@ public:
 private:
     Context& operator =(const Context&);
 
-    StackType _symbolStack;
+    SymbolTable* _globalSymTable;
+    StackType _symTableStack;
 };
 
 } // namespace frontend

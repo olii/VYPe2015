@@ -2,40 +2,44 @@
 
 namespace frontend {
 
-Context::Context() : _symbolStack()
+Context::Context() : _globalSymTable(new SymbolTable), _symTableStack()
 {
-    // Create global symbol table
-    newSymbolTable();
 }
 
 Context::~Context()
 {
-    for (StackType::iterator itr = _symbolStack.begin(); itr != _symbolStack.end(); )
+    for (StackType::iterator itr = _symTableStack.begin(); itr != _symTableStack.end(); )
     {
         delete *itr;
-        itr = _symbolStack.erase(itr);
+        itr = _symTableStack.erase(itr);
     }
 }
 
 void Context::newSymbolTable()
 {
-    _symbolStack.push_back(new SymbolTable());
+    _symTableStack.push_back(new SymbolTable());
 }
 
 void Context::popSymbolTable()
 {
-    delete _symbolStack.back();
-    _symbolStack.pop_back();
+    if (_symTableStack.empty())
+        return;
+
+    delete _symTableStack.back();
+    _symTableStack.pop_back();
 }
 
 SymbolTable* Context::globalSymbolTable()
 {
-    return _symbolStack.front();
+    return _globalSymTable;
 }
 
 SymbolTable* Context::currentSymbolTable()
 {
-    return _symbolStack.back();
+    if (_symTableStack.empty())
+        return nullptr;
+
+    return _symTableStack.back();
 }
 
 Symbol* Context::findSymbol(const std::string& name)
@@ -43,7 +47,7 @@ Symbol* Context::findSymbol(const std::string& name)
     Symbol* symbol = nullptr;
 
     // Reverse iterate over symbol table stack to find latest symbol with this name
-    for (StackType::reverse_iterator itr = _symbolStack.rbegin(); itr != _symbolStack.rend(); ++itr)
+    for (StackType::reverse_iterator itr = _symTableStack.rbegin(); itr != _symTableStack.rend(); ++itr)
     {
         SymbolTable* symbolTable = *itr;
 
@@ -51,7 +55,7 @@ Symbol* Context::findSymbol(const std::string& name)
             return symbol;
     }
 
-    return nullptr;
+    return _globalSymTable->findSymbol(name);
 }
 
 const Symbol* Context::findSymbol(const std::string& name) const
@@ -59,7 +63,7 @@ const Symbol* Context::findSymbol(const std::string& name) const
     const Symbol* symbol = nullptr;
 
     // Reverse iterate over symbol table stack to find latest symbol with this name
-    for (StackType::const_reverse_iterator itr = _symbolStack.rbegin(); itr != _symbolStack.rend(); ++itr)
+    for (StackType::const_reverse_iterator itr = _symTableStack.rbegin(); itr != _symTableStack.rend(); ++itr)
     {
         const SymbolTable* symbolTable = *itr;
 
@@ -67,7 +71,7 @@ const Symbol* Context::findSymbol(const std::string& name) const
             return symbol;
     }
 
-    return nullptr;
+    return _globalSymTable->findSymbol(name);
 }
 
 } // namespace frontend
