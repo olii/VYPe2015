@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "frontend/context.h"
 #include "frontend/symbol.h"
 #include "frontend/symbol_table.h"
 
@@ -226,4 +227,66 @@ FunctionRedefinition) {
     EXPECT_EQ(nullptr, table.addFunction("foo", Symbol::DataType::VOID, {}, false));
     EXPECT_EQ(1, table.getSize());
     EXPECT_TRUE(fooFunc->isDefined());
+}
+
+class ContextTest : public Test {};
+
+TEST_F(ContextTest,
+DefaultInitialization) {
+    Context context;
+
+    EXPECT_NE(nullptr, context.globalSymbolTable());
+    EXPECT_EQ(nullptr, context.currentSymbolTable());
+}
+
+TEST_F(ContextTest,
+NewSymbolTable) {
+    Context context;
+    context.newSymbolTable();
+    EXPECT_NE(nullptr, context.currentSymbolTable());
+
+    SymbolTable* table = context.currentSymbolTable();
+    context.newSymbolTable();
+    EXPECT_NE(table, context.currentSymbolTable());
+}
+
+TEST_F(ContextTest,
+PopSymbolTable) {
+    Context context;
+    context.newSymbolTable();
+    SymbolTable* table = context.currentSymbolTable();
+    context.newSymbolTable();
+    EXPECT_NE(table, context.currentSymbolTable());
+
+    context.popSymbolTable();
+    EXPECT_EQ(table, context.currentSymbolTable());
+
+    context.popSymbolTable();
+    EXPECT_EQ(nullptr, context.currentSymbolTable());
+}
+
+TEST_F(ContextTest,
+FindSymbolIfOnlyOneExistsInHierarchy) {
+    Context context;
+    context.newSymbolTable();
+    context.currentSymbolTable()->addVariable("x", Symbol::DataType::INT);
+    const Symbol* foundSymbol = context.findSymbol("x");
+
+    EXPECT_EQ(Symbol::Type::VARIABLE, foundSymbol->getType());
+    EXPECT_EQ("x", foundSymbol->getName());
+    EXPECT_EQ(Symbol::DataType::INT, static_cast<const VariableSymbol*>(foundSymbol)->getDataType());
+}
+
+TEST_F(ContextTest,
+FindSymbolIfMoreExistsInHierarchy) {
+    Context context;
+    context.newSymbolTable();
+    context.currentSymbolTable()->addVariable("x", Symbol::DataType::INT);
+    context.newSymbolTable();
+    context.currentSymbolTable()->addVariable("x", Symbol::DataType::CHAR);
+    const Symbol* foundSymbol = context.findSymbol("x");
+
+    EXPECT_EQ(Symbol::Type::VARIABLE, foundSymbol->getType());
+    EXPECT_EQ("x", foundSymbol->getName());
+    EXPECT_EQ(Symbol::DataType::CHAR, static_cast<const VariableSymbol*>(foundSymbol)->getDataType());
 }
