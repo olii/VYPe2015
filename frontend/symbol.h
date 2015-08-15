@@ -26,7 +26,6 @@ public:
     };
 
     Symbol() = delete;
-    Symbol(Type type, const std::string& name, DataType dataType);
     Symbol(const Symbol&) = delete;
     virtual ~Symbol();
 
@@ -34,15 +33,31 @@ public:
 
     Type getType() const;
     const std::string& getName() const;
-    DataType getDataType() const;
 
 protected:
+    Symbol(Type type, const std::string& name);
     Symbol& operator =(const Symbol&);
 
     void setName(const std::string& name);
 
     Type _type;
     std::string _name;
+};
+
+class VariableSymbol : public Symbol
+{
+public:
+    VariableSymbol() = delete;
+    VariableSymbol(const std::string& name, DataType dataType);
+    VariableSymbol(const VariableSymbol&) = delete;
+    virtual ~VariableSymbol();
+
+    DataType getDataType() const;
+    void setDataType(DataType dataType);
+
+private:
+    VariableSymbol& operator =(const VariableSymbol&);
+
     DataType _dataType;
 };
 
@@ -57,7 +72,7 @@ public:
         std::string name;
     };
 
-    typedef std::vector<Parameter*> ParameterList;
+    using ParameterList = std::vector<Parameter*>;
 
     FunctionSymbol() = delete;
     FunctionSymbol(const std::string& name, DataType returnType, const ParameterList& parameters);
@@ -70,12 +85,13 @@ public:
     const ParameterList& getParameters() const;
     void setParameters(const ParameterList& paramaters);
 
-    bool isFunctionDefined() const;
-    void setFunctionDefined(bool set);
+    bool isDefined() const;
+    void setDefined(bool set);
 
 private:
     FunctionSymbol& operator =(const FunctionSymbol&);
 
+    DataType _returnType;
     ParameterList _parameters;
     bool _defined;
 

@@ -16,7 +16,7 @@ public:
 
     size_t getSize() const;
 
-    Symbol* addVariable(const std::string& name, Symbol::DataType dataType);
+    VariableSymbol* addVariable(const std::string& name, Symbol::DataType dataType);
     FunctionSymbol* addFunction(const std::string& name, Symbol::DataType returnType, const FunctionSymbol::ParameterList& parameters, bool definition);
 
     Symbol* findSymbol(const std::string& name);

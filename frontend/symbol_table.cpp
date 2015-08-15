@@ -15,14 +15,14 @@ size_t SymbolTable::getSize() const
     return _table.size();
 }
 
-Symbol* SymbolTable::addVariable(const std::string& name, Symbol::DataType dataType)
+VariableSymbol* SymbolTable::addVariable(const std::string& name, Symbol::DataType dataType)
 {
     // Check whether symbol with this name already exists in the current table
     if (findSymbol(name))
         return nullptr;
 
-    _table[name] = new Symbol(Symbol::VARIABLE, name, dataType);
-    return _table[name];
+    _table[name] = new VariableSymbol(name, dataType);
+    return static_cast<VariableSymbol*>(_table[name]);
 }
 
 FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataType returnType, const FunctionSymbol::ParameterList& parameters, bool definition)
@@ -49,7 +49,7 @@ FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataTy
                 return nullptr;
 
             // If the function was already defined, error
-            if (func->isFunctionDefined())
+            if (func->isDefined())
                 return nullptr;
 
             // Check whether return types match
@@ -70,7 +70,7 @@ FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataTy
 
             // Rewrite placeholder declaration parameters with the actual definition parameters and set the function as defined
             func->setParameters(parameters);
-            func->setFunctionDefined(true);
+            func->setDefined(true);
             return func;
         }
     }

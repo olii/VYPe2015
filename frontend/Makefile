@@ -1,12 +1,6 @@
-ROOT=../
+ROOT=..
+ARCHIVE=frontend
 MODULE=frontend
-
-SRC_FILES= ast.cpp \
-           context.cpp \
-           symbol.cpp \
-           symbol_table.cpp
-
-include $(ROOT)/mak/config.mak
 
 LEXER=c_lexer
 PARSER=c_parser
@@ -20,6 +14,19 @@ PARSER_SRC=$(PARSER).cpp
 PARSER_HDR=$(PARSER).h
 PARSER_OBJ=$(PARSER).o
 
+SRC_FILES= ast.cpp \
+           context.cpp \
+           symbol.cpp \
+           symbol_table.cpp
+
+CUSTOM_CLEAN_FILES= $(PARSER_SRC) \
+					$(PARSER_HDR) \
+					$(LEXER_SRC)
+
+include $(ROOT)/mak/config.mak
+
+OBJ_FILES+= $(OBJ_DIR)/$(LEXER_OBJ) $(OBJ_DIR)/$(PARSER_OBJ)
+
 all: init parser lexer build
 
 lexer: $(LEXER_FILE)
@@ -30,8 +37,4 @@ parser: $(PARSER_FILE)
 	bison --defines=$(PARSER_HDR) -o $(PARSER_SRC) $<
 	$(CXX) $(CXXFLAGS) -o $(OBJ_DIR)/$(PARSER_OBJ) $(PARSER_SRC)
 
-include $(ROOT)/mak/common.mak
-
-clean: frontend-clean
-frontend-clean:
-	$(RM) $(PARSER_SRC) $(PARSER_HDR) $(LEXER_SRC)
+include $(ROOT)/mak/archive.mak

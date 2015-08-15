@@ -1,29 +1,25 @@
-PROJECT=vype
-
 ROOT=.
-MODULE=
+APP=vype
 
 SRC_FILES=main.cpp
 
+LIBRARIES=frontend
+
 include $(ROOT)/mak/config.mak
 
-all: build_all
-
-build_all: frontend build
-	$(CXX) -o $(PROJECT) $(OBJ_FILES) $(OBJ_DIR)/frontend/*.o
+all: frontend build
 
 frontend:
 	@$(MAKE) -C frontend
 
-include $(ROOT)/mak/common.mak
+include $(ROOT)/mak/app.mak
 
 clean: main-clean
 main-clean:
-	$(RM) $(PROJECT)
 	@$(MAKE) -C frontend clean
 	@$(MAKE) -C testing clean
 
-test:
-	$(MAKE) -C testing
+test: all
+	@$(MAKE) -C testing
 
-.PHONY: frontend
+.PHONY: frontend testing

@@ -1,10 +1,9 @@
-build: init $(OBJ_FILES)
-
 init:
 	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(LIBS_DIR)
 
 $(OBJ_DIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
-	
+
 clean:
-	rm -rf $(OBJ_DIR)
+	rm -rf $(CLEAN_FILES)

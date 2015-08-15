@@ -2,7 +2,7 @@
 
 namespace frontend {
 
-Symbol::Symbol(Type type, const std::string& name, Symbol::DataType dataType) : _type(type), _name(name), _dataType(dataType)
+Symbol::Symbol(Type type, const std::string& name) : _type(type), _name(name)
 {
 }
 
@@ -32,13 +32,27 @@ const std::string& Symbol::getName() const
     return _name;
 }
 
-Symbol::DataType Symbol::getDataType() const
+VariableSymbol::VariableSymbol(const std::string& name, Symbol::DataType dataType)
+    : Symbol(Symbol::VARIABLE, name), _dataType(dataType)
+{
+}
+
+VariableSymbol::~VariableSymbol()
+{
+}
+
+Symbol::DataType VariableSymbol::getDataType() const
 {
     return _dataType;
 }
 
-FunctionSymbol::FunctionSymbol(const std::string& name, Symbol::DataType returnType, const ParameterList& parameters) :
-        Symbol(Symbol::FUNCTION, name, returnType), _parameters(parameters), _defined(false)
+void VariableSymbol::setDataType(Symbol::DataType dataType)
+{
+    _dataType = dataType;
+}
+
+FunctionSymbol::FunctionSymbol(const std::string& name, Symbol::DataType returnType, const ParameterList& parameters)
+        : Symbol(Symbol::FUNCTION, name), _returnType(returnType), _parameters(parameters), _defined(false)
 {
 }
 
@@ -48,12 +62,12 @@ FunctionSymbol::~FunctionSymbol()
 
 Symbol::DataType FunctionSymbol::getReturnType() const
 {
-    return _dataType;
+    return _returnType;
 }
 
-void FunctionSymbol::setReturnType(Symbol::DataType dataType)
+void FunctionSymbol::setReturnType(Symbol::DataType returnType)
 {
-    _dataType = dataType;
+    _returnType = returnType;
 }
 
 const FunctionSymbol::ParameterList& FunctionSymbol::getParameters() const
@@ -66,12 +80,12 @@ void FunctionSymbol::setParameters(const FunctionSymbol::ParameterList& paramete
     _parameters = parameters;
 }
 
-bool FunctionSymbol::isFunctionDefined() const
+bool FunctionSymbol::isDefined() const
 {
     return _defined;
 }
 
-void FunctionSymbol::setFunctionDefined(bool set)
+void FunctionSymbol::setDefined(bool set)
 {
     _defined = set;
 }
