@@ -2,7 +2,7 @@ ROOT=..
 APP=vype-test
 MODULE=testing
 
-CUSTOM_CXXFLAGS= -I$(ROOT)/testing -Wno-missing-field-initializers -pthread
+CUSTOM_CXXFLAGS= -I$(ROOT)/testing -Wno-missing-field-initializers -Wno-sign-compare -pthread
 CUSTOM_LXXFLAGS= -lpthread
 
 SRC_FILES= 	gtest/gtest-all.cpp \
