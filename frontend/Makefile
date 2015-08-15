@@ -20,7 +20,7 @@ PARSER_SRC=$(PARSER).cpp
 PARSER_HDR=$(PARSER).h
 PARSER_OBJ=$(PARSER).o
 
-all: parser lexer build
+all: init parser lexer build
 
 lexer: $(LEXER_FILE)
 	flex -o $(LEXER_SRC) $<

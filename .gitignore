@@ -9,4 +9,5 @@ c_parser.output
 
 " Executable files
 vype
+vype-test
 *.exe
