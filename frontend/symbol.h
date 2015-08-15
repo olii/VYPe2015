@@ -87,6 +87,16 @@ public:
             return *this;
         }
 
+        bool operator ==(const Parameter& rhs) const
+        {
+            return (name == rhs.name) && (dataType == rhs.dataType);
+        }
+
+        bool operator !=(const Parameter& rhs) const
+        {
+            return *this != rhs;
+        }
+
         std::string name;
         Symbol::DataType dataType;
     };
@@ -94,7 +104,7 @@ public:
     using ParameterList = std::vector<Parameter>;
 
     FunctionSymbol() = delete;
-    FunctionSymbol(const std::string& name, DataType returnType, const ParameterList& parameters);
+    FunctionSymbol(const std::string& name, DataType returnType, const ParameterList& parameters, bool definition);
     FunctionSymbol(const FunctionSymbol&) = delete;
     virtual ~FunctionSymbol();
 

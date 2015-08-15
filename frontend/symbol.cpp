@@ -51,8 +51,8 @@ void VariableSymbol::setDataType(Symbol::DataType dataType)
     _dataType = dataType;
 }
 
-FunctionSymbol::FunctionSymbol(const std::string& name, Symbol::DataType returnType, const ParameterList& parameters)
-        : Symbol(Symbol::FUNCTION, name), _returnType(returnType), _parameters(parameters), _defined(false)
+FunctionSymbol::FunctionSymbol(const std::string& name, Symbol::DataType returnType, const ParameterList& parameters, bool definition)
+        : Symbol(Symbol::FUNCTION, name), _returnType(returnType), _parameters(parameters), _defined(definition)
 {
 }
 

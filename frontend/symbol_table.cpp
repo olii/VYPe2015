@@ -75,7 +75,7 @@ FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataTy
         }
     }
 
-    _table[name] = new FunctionSymbol(name, returnType, parameters);
+    _table[name] = new FunctionSymbol(name, returnType, parameters, definition);
     return static_cast<FunctionSymbol*>(_table[name]);
 }
 
