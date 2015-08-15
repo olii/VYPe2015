@@ -64,7 +64,7 @@ FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataTy
             const FunctionSymbol::ParameterList& declParams = func->getParameters();
             for (size_t i = 0; i < parameters.size(); ++i)
             {
-                if (declParams[i]->dataType != parameters[i]->dataType)
+                if (declParams[i].dataType != parameters[i].dataType)
                     return nullptr;
             }
 

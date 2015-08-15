@@ -3,6 +3,9 @@
 
 #include <map>
 #include <vector>
+#include <utility>
+
+#include <iostream>
 
 namespace frontend {
 
@@ -66,13 +69,29 @@ class FunctionSymbol : public Symbol
 public:
     struct Parameter
     {
-        Parameter(Symbol::DataType dataType_, const std::string& name_) : dataType(dataType_), name(name_) {}
+        Parameter(const std::string& name_, Symbol::DataType dataType_) : name(name_), dataType(dataType_) {}
+        Parameter(const Parameter& param) : name(param.name), dataType(param.dataType) {}
+        Parameter(Parameter&& param) : name(std::move(param.name)), dataType(param.dataType) {}
 
-        Symbol::DataType dataType;
+        Parameter operator =(const Parameter& rhs)
+        {
+            name = rhs.name;
+            dataType = rhs.dataType;
+            return *this;
+        }
+
+        Parameter operator =(Parameter&& rhs)
+        {
+            name = std::move(rhs.name);
+            dataType = rhs.dataType;
+            return *this;
+        }
+
         std::string name;
+        Symbol::DataType dataType;
     };
 
-    using ParameterList = std::vector<Parameter*>;
+    using ParameterList = std::vector<Parameter>;
 
     FunctionSymbol() = delete;
     FunctionSymbol(const std::string& name, DataType returnType, const ParameterList& parameters);

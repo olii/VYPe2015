@@ -121,12 +121,12 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
                                                                                                 }
             ;
 
-decl_param_list :   decl_param_list COMMA TYPE      { $$->push_back(new FunctionSymbol::Parameter(Symbol::stringToDataType({*$3}), "")); }
-                |   TYPE                            { $$ = new FunctionSymbol::ParameterList( { new FunctionSymbol::Parameter(Symbol::stringToDataType({*$1}), "") } ); }
+decl_param_list :   decl_param_list COMMA TYPE      { $$->push_back(FunctionSymbol::Parameter("", Symbol::stringToDataType({*$3}))); }
+                |   TYPE                            { $$ = new FunctionSymbol::ParameterList( { FunctionSymbol::Parameter("", Symbol::stringToDataType({*$1})) } ); }
                 ;
 
-impl_param_list :   impl_param_list COMMA TYPE ID   { $$->push_back(new FunctionSymbol::Parameter(Symbol::stringToDataType({*$3}), *$4)); }
-                |   TYPE ID                         { $$ = new FunctionSymbol::ParameterList( { new FunctionSymbol::Parameter(Symbol::stringToDataType({*$1}), *$2) } ); }
+impl_param_list :   impl_param_list COMMA TYPE ID   { $$->push_back(FunctionSymbol::Parameter(*$4, Symbol::stringToDataType({*$3}))); }
+                |   TYPE ID                         { $$ = new FunctionSymbol::ParameterList( { FunctionSymbol::Parameter(*$2, Symbol::stringToDataType({*$1})) } ); }
                 ;
 
 stmts   :   stmt_list   { $$ = $1; }
