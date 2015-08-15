@@ -1,5 +1,6 @@
 " Intermediate build files
 objs/
+libs/
 
 " Flex and bison generated files
 c_lexer.cpp
@@ -11,3 +12,6 @@ c_parser.output
 vype
 vype-test
 *.exe
+
+" User specific files
+.ycm_extra_conf.py*
