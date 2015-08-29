@@ -19,7 +19,12 @@ void yyerror(const char* e)
 
 int main()
 {
-    yydebug = 1;
+    //yydebug = 1;
     yyparse();
+
+    ir::Builder builder;
+    program.generateIr(builder);
+
+    std::cout << builder.codeText() << std::endl;
     return 0;
 }

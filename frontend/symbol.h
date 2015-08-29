@@ -4,8 +4,7 @@
 #include <map>
 #include <vector>
 #include <utility>
-
-#include <iostream>
+#include "ir/value.h"
 
 namespace frontend {
 
@@ -33,9 +32,13 @@ public:
     virtual ~Symbol();
 
     static DataType stringToDataType(const std::string& typeString);
+    static ir::Value::DataType dataTypeToIrDataType(DataType dataType);
 
     Type getType() const;
     const std::string& getName() const;
+
+    ir::Value* getIrValue() const;
+    void setIrValue(ir::Value* value);
 
 protected:
     Symbol(Type type, const std::string& name);
@@ -45,6 +48,7 @@ protected:
 
     Type _type;
     std::string _name;
+    ir::Value* _irValue;
 };
 
 class VariableSymbol : public Symbol

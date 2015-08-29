@@ -20,7 +20,7 @@ extern Context context;
 {
     frontend::Function* function;
     frontend::FunctionSymbol::ParameterList* functionParameters;
-    std::vector<frontend::Statement*>* statements;
+    frontend::StatementBlock* statements;
     frontend::Statement* statement;
     std::vector<frontend::Expression*>* expressions;
     frontend::Expression* expression;
@@ -83,7 +83,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
                                                                                                     if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::stringToDataType(*$1), {}, true)) == nullptr)
                                                                                                         YYACCEPT;
 
-                                                                                                    $$ = new Function(funcSymbol, *$8);
+                                                                                                    $$ = new Function(funcSymbol, $8);
                                                                                                     context.popSymbolTable();
                                                                                                 }
             |   TYPE ID LEFT_PAREN impl_param_list RIGHT_PAREN                                  { context.newSymbolTable(); }
@@ -94,7 +94,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
                                                                                                     if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::stringToDataType(*$1), *$4, true)) == nullptr)
                                                                                                         YYACCEPT;
 
-                                                                                                    $$ = new Function(funcSymbol, *$8);
+                                                                                                    $$ = new Function(funcSymbol, $8);
                                                                                                     context.popSymbolTable();
                                                                                                 }
             |   VOID ID LEFT_PAREN VOID RIGHT_PAREN                                             { context.newSymbolTable(); }
@@ -105,7 +105,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
                                                                                                     if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, {}, true)) == nullptr)
                                                                                                         YYACCEPT;
 
-                                                                                                    $$ = new Function(funcSymbol, *$8);
+                                                                                                    $$ = new Function(funcSymbol, $8);
                                                                                                     context.popSymbolTable();
                                                                                                 }
             |   VOID ID LEFT_PAREN impl_param_list RIGHT_PAREN                                  { context.newSymbolTable(); }
@@ -116,7 +116,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
                                                                                                     if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, *$4, true)) == nullptr)
                                                                                                         YYACCEPT;
 
-                                                                                                    $$ = new Function(funcSymbol, *$8);
+                                                                                                    $$ = new Function(funcSymbol, $8);
                                                                                                     context.popSymbolTable();
                                                                                                 }
             ;
@@ -130,7 +130,7 @@ impl_param_list :   impl_param_list COMMA TYPE ID   { $$->push_back(FunctionSymb
                 ;
 
 stmts   :   stmt_list   { $$ = $1; }
-        |   %empty      { $$ = new std::vector<Statement*>(); }
+        |   %empty      { $$ = new StatementBlock(); }
         ;
 
 stmt    :   assign_stmt { $$ = $1; }
@@ -145,14 +145,13 @@ stmt    :   assign_stmt { $$ = $1; }
 stmt_list   :   stmt_list stmt              {
                                                 // Do not add empty statements
                                                 if ($2 != nullptr)
-                                                    $$->push_back($2);
+                                                    $$->addStatement($2);
                                             }
             |   stmt                        {
                                                 // Check whether it is an empty statement, if so, create just empty statement list
-                                                if ($1 == nullptr)
-                                                    $$ = new std::vector<Statement*>();
-                                                else
-                                                    $$ = new std::vector<Statement*>({$1});
+                                                $$ = new StatementBlock();
+                                                if ($1 != nullptr)
+                                                    $$->addStatement($1);
                                             }
             ;
 
@@ -166,7 +165,7 @@ assign_stmt :   ID ASSIGN expr SEMICOLON    {
             ;
 
 decl_stmt   :   TYPE decl_id_list SEMICOLON {
-                                                std::vector<Symbol*> variables;
+                                                std::vector<VariableSymbol*> variables;
                                                 for (auto& varName : *$2)
                                                 {
                                                     Symbol* symbol = nullptr;
@@ -181,7 +180,7 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
                                                     if ((symbol = context.currentSymbolTable()->addVariable(varName, Symbol::stringToDataType(*$1))) == nullptr)
                                                         YYACCEPT;
 
-                                                    variables.push_back(symbol);
+                                                    variables.push_back(static_cast<VariableSymbol*>(symbol));
                                                 }
 
                                                 $$ = new DeclarationStatement(variables);
@@ -198,7 +197,7 @@ if_stmt :   IF LEFT_PAREN expr RIGHT_PAREN          { context.newSymbolTable(); 
                                                         context.newSymbolTable();
                                                     }
                 LEFT_CBRACE stmts RIGHT_CBRACE      {
-                                                        $$ = new IfStatement($3, *$7, *$12);
+                                                        $$ = new IfStatement($3, $7, $12);
                                                         context.popSymbolTable();
                                                     }
 
@@ -206,7 +205,7 @@ if_stmt :   IF LEFT_PAREN expr RIGHT_PAREN          { context.newSymbolTable(); 
 
 while_stmt  :   WHILE LEFT_PAREN expr RIGHT_PAREN   { context.newSymbolTable(); }
                     LEFT_CBRACE stmts RIGHT_CBRACE  {
-                                                        $$ = new WhileStatement($3, *$7);
+                                                        $$ = new WhileStatement($3, $7);
                                                         context.popSymbolTable();
                                                     }
             ;

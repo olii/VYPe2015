@@ -22,6 +22,23 @@ Symbol::DataType Symbol::stringToDataType(const std::string& typeString)
     return VOID;
 }
 
+ir::Value::DataType Symbol::dataTypeToIrDataType(Symbol::DataType dataType)
+{
+    switch (dataType)
+    {
+        case Symbol::DataType::INT:
+            return ir::Value::DataType::INT;
+        case Symbol::DataType::CHAR:
+            return ir::Value::DataType::CHAR;
+        case Symbol::DataType::STRING:
+            return ir::Value::DataType::STRING;
+        case Symbol::DataType::VOID:
+            return ir::Value::DataType::VOID;
+    }
+
+    return ir::Value::DataType::VOID;
+}
+
 Symbol::Type Symbol::getType() const
 {
     return _type;
@@ -30,6 +47,16 @@ Symbol::Type Symbol::getType() const
 const std::string& Symbol::getName() const
 {
     return _name;
+}
+
+ir::Value* Symbol::getIrValue() const
+{
+    return _irValue;
+}
+
+void Symbol::setIrValue(ir::Value* irValue)
+{
+    _irValue = irValue;
 }
 
 VariableSymbol::VariableSymbol(const std::string& name, Symbol::DataType dataType)
