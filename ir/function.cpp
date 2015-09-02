@@ -54,7 +54,9 @@ void Function::text(std::stringstream& os)
     for (BasicBlock* bb : _basicBlocks)
     {
         bb->text(os);
-        os << ":\n";
+        os << ": ";
+        bb->detail(os);
+        os << "\n";
 
         for (Instruction* ins : bb->getInstructions())
             ins->text(os);

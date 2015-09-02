@@ -87,6 +87,11 @@ Value* Builder::createCall(const std::string& functionName, const std::vector<Va
 {
     Function* function = getFunction(functionName);
     Value* retValue = createTemporaryValue(function->getReturnDataType());
+    for (Value* arg : arguments)
+    {
+        if (arg->getType() == Value::Type::NAMED)
+            _activeBasicBlock->addUse(arg);
+    }
     _activeBasicBlock->addInstruction(new CallInstruction(retValue, function, arguments));
     return retValue;
 }
@@ -94,6 +99,7 @@ Value* Builder::createCall(const std::string& functionName, const std::vector<Va
 Value* Builder::createDeclaration(const std::string& name, Value::DataType dataType)
 {
     Value* value = createNamedValue(dataType, name);
+    _activeBasicBlock->addDef(value);
     _activeBasicBlock->addInstruction(new DeclarationInstruction(value));
     return value;
 }
@@ -103,6 +109,9 @@ template Value* Builder::createUnaryOperation<NotInstruction>(Value* operand);
 template <typename T> Value* Builder::createUnaryOperation(Value* operand)
 {
     static_assert(std::is_base_of<UnaryInstruction, T>::value, "Builder::createUnaryOperation template type needs to be derived from UnaryInstruction.");
+
+    if (operand->getType() == Value::Type::NAMED)
+        _activeBasicBlock->addUse(operand);
 
     Value* resultValue = createTemporaryValue(operand->getDataType());
     _activeBasicBlock->addInstruction(new T(resultValue, operand));
@@ -127,6 +136,12 @@ template <typename T> Value* Builder::createBinaryOperation(Value* leftOperand, 
 {
     static_assert(std::is_base_of<BinaryInstruction, T>::value, "Builder::createBinaryOperation template type needs to be derived from BinaryInstruction.");
 
+    if (leftOperand->getType() == Value::Type::NAMED)
+        _activeBasicBlock->addUse(leftOperand);
+
+    if (rightOperand->getType() == Value::Type::NAMED)
+        _activeBasicBlock->addUse(rightOperand);
+
     Value* resultValue = createTemporaryValue(leftOperand->getDataType());
     _activeBasicBlock->addInstruction(new T(resultValue, leftOperand, rightOperand));
     return resultValue;
@@ -134,6 +149,12 @@ template <typename T> Value* Builder::createBinaryOperation(Value* leftOperand, 
 
 void Builder::createAssignment(Value* dest, Value* value)
 {
+    if (dest->getType() == Value::Type::NAMED)
+        _activeBasicBlock->addDef(dest);
+
+    if (value->getType() == Value::Type::NAMED)
+        _activeBasicBlock->addUse(value);
+
     _activeBasicBlock->addInstruction(new AssignInstruction(dest, value));
 }
 
@@ -149,6 +170,9 @@ void Builder::createConditionalJump(Value* condition, BasicBlock* ifTrue, BasicB
 
 void Builder::createReturn(Value* value)
 {
+    if (value != nullptr && value->getType() == Value::Type::NAMED)
+        _activeBasicBlock->addUse(value);
+
     _activeBasicBlock->addInstruction(new ReturnInstruction(value));
 }
 
