@@ -37,9 +37,7 @@ void Builder::setActiveFunction(ir::Function* function)
 
 BasicBlock* Builder::createBasicBlock()
 {
-    BasicBlock* basicBlock = new BasicBlock();
-    _activeFunction->addBasicBlock(basicBlock);
-    return basicBlock;
+    return new BasicBlock();
 }
 
 BasicBlock* Builder::getActiveBasicBlock() const
@@ -50,6 +48,14 @@ BasicBlock* Builder::getActiveBasicBlock() const
 void Builder::setActiveBasicBlock(BasicBlock* basicBlock)
 {
     _activeBasicBlock = basicBlock;
+}
+
+void Builder::addBasicBlock(BasicBlock* basicBlock)
+{
+    if (basicBlock == nullptr)
+        return;
+
+    _activeFunction->addBasicBlock(basicBlock);
 }
 
 Value* Builder::createNamedValue(Value::DataType dataType, const std::string& name)

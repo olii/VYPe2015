@@ -21,6 +21,7 @@ public:
     BasicBlock* createBasicBlock();
     BasicBlock* getActiveBasicBlock() const;
     void setActiveBasicBlock(BasicBlock* basicBlock);
+    void addBasicBlock(BasicBlock* basicBlock);
 
     Value* createNamedValue(Value::DataType dataType, const std::string& name);
     Value* createTemporaryValue(Value::DataType dataType);

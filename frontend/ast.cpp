@@ -150,20 +150,23 @@ ir::BasicBlock* IfStatement::generateIrBlocks(ir::Builder& builder)
     ir::Value* condValue = _expression->generateIrValue(builder);
     ir::BasicBlock* ifBlock = builder.createBasicBlock();
     ir::BasicBlock* elseBlock = builder.createBasicBlock();
+    ir::BasicBlock* joinBlock = builder.createBasicBlock();
+
     builder.createConditionalJump(condValue, ifBlock, elseBlock);
 
+    builder.addBasicBlock(ifBlock);
     builder.setActiveBasicBlock(ifBlock);
     ir::BasicBlock* endIfBlock = _ifStatements->generateIrBlocks(builder);
-
-    builder.setActiveBasicBlock(elseBlock);
-    ir::BasicBlock* endElseBlock = _elseStatements->generateIrBlocks(builder);
-
-    ir::BasicBlock* joinBlock = builder.createBasicBlock();
     builder.setActiveBasicBlock(endIfBlock);
     builder.createJump(joinBlock);
+
+    builder.addBasicBlock(elseBlock);
+    builder.setActiveBasicBlock(elseBlock);
+    ir::BasicBlock* endElseBlock = _elseStatements->generateIrBlocks(builder);
     builder.setActiveBasicBlock(endElseBlock);
     builder.createJump(joinBlock);
 
+    builder.addBasicBlock(joinBlock);
     builder.setActiveBasicBlock(joinBlock);
     return joinBlock;
 }
@@ -171,19 +174,21 @@ ir::BasicBlock* IfStatement::generateIrBlocks(ir::Builder& builder)
 ir::BasicBlock* WhileStatement::generateIrBlocks(ir::Builder& builder)
 {
     ir::BasicBlock* condBlock = builder.createBasicBlock();
-    builder.setActiveBasicBlock(condBlock);
-    ir::Value* condValue = _expression->generateIrValue(builder);
-
     ir::BasicBlock* bodyBlock = builder.createBasicBlock();
     ir::BasicBlock* endBlock = builder.createBasicBlock();
+
+    builder.addBasicBlock(condBlock);
+    builder.setActiveBasicBlock(condBlock);
+    ir::Value* condValue = _expression->generateIrValue(builder);
     builder.createConditionalJump(condValue, bodyBlock, endBlock);
 
+    builder.addBasicBlock(bodyBlock);
     builder.setActiveBasicBlock(bodyBlock);
     ir::BasicBlock* endBodyBlock = _statements->generateIrBlocks(builder);
-
     builder.setActiveBasicBlock(endBodyBlock);
     builder.createJump(condBlock);
 
+    builder.addBasicBlock(endBlock);
     builder.setActiveBasicBlock(endBlock);
     return endBlock;
 }
@@ -210,6 +215,7 @@ void Function::generateIr(ir::Builder& builder)
 
     builder.setActiveFunction(irFunction);
     ir::BasicBlock* entryBlock = builder.createBasicBlock();
+    builder.addBasicBlock(entryBlock);
     builder.setActiveBasicBlock(entryBlock);
     _body->generateIrBlocks(builder);
 }
