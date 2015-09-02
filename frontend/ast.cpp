@@ -195,7 +195,10 @@ ir::BasicBlock* WhileStatement::generateIrBlocks(ir::Builder& builder)
 
 void ReturnStatement::generateIr(ir::Builder& builder)
 {
-    ir::Value* returnValue = _expression->generateIrValue(builder);
+    ir::Value* returnValue = nullptr;
+    if (_expression != nullptr)
+        returnValue = _expression->generateIrValue(builder);
+
     builder.createReturn(returnValue);
 }
 

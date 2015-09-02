@@ -153,8 +153,12 @@ ReturnInstruction::~ReturnInstruction()
 
 void ReturnInstruction::text(std::stringstream& os)
 {
-    os << "return ";
-    getOperand()->text(os);
+    os << "return";
+    if (getOperand() != nullptr)
+    {
+        os << " ";
+        getOperand()->text(os);
+    }
     os << "\n";
 }
 
