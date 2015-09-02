@@ -160,11 +160,17 @@ void Builder::createAssignment(Value* dest, Value* value)
 
 void Builder::createJump(BasicBlock* destBlock)
 {
+    _activeBasicBlock->addSuccessor(destBlock);
+    destBlock->addPredecessor(_activeBasicBlock);
     _activeBasicBlock->addInstruction(new JumpInstruction(destBlock));
 }
 
 void Builder::createConditionalJump(Value* condition, BasicBlock* ifTrue, BasicBlock* ifFalse)
 {
+    _activeBasicBlock->addSuccessor(ifTrue);
+    _activeBasicBlock->addSuccessor(ifFalse);
+    ifTrue->addPredecessor(_activeBasicBlock);
+    ifFalse->addPredecessor(_activeBasicBlock);
     _activeBasicBlock->addInstruction(new CondJumpInstruction(condition, ifTrue, ifFalse));
 }
 

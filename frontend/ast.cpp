@@ -177,6 +177,8 @@ ir::BasicBlock* WhileStatement::generateIrBlocks(ir::Builder& builder)
     ir::BasicBlock* bodyBlock = builder.createBasicBlock();
     ir::BasicBlock* endBlock = builder.createBasicBlock();
 
+    builder.createJump(condBlock);
+
     builder.addBasicBlock(condBlock);
     builder.setActiveBasicBlock(condBlock);
     ir::Value* condValue = _expression->generateIrValue(builder);

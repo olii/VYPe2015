@@ -4,7 +4,7 @@ namespace ir {
 
 uint64_t BasicBlock::BasicBlockIdPool = 0;
 
-BasicBlock::BasicBlock() : _instructions(), _basicBlockId(BasicBlockIdPool++), _defs(), _uses()
+BasicBlock::BasicBlock() : _instructions(), _basicBlockId(BasicBlockIdPool++), _defs(), _uses(), _pred(), _succ()
 {
 }
 
@@ -37,6 +37,26 @@ void BasicBlock::addUse(Value* value)
     _uses.insert(value);
 }
 
+std::set<BasicBlock*>& BasicBlock::getPredecessors()
+{
+    return _pred;
+}
+
+void BasicBlock::addPredecessor(BasicBlock* basicBlock)
+{
+    _pred.insert(basicBlock);
+}
+
+std::set<BasicBlock*>& BasicBlock::getSuccessors()
+{
+    return _succ;
+}
+
+void BasicBlock::addSuccessor(BasicBlock* basicBlock)
+{
+    _succ.insert(basicBlock);
+}
+
 void BasicBlock::addInstruction(Instruction* instruction)
 {
     _instructions.push_back(instruction);
@@ -50,7 +70,29 @@ void BasicBlock::text(std::stringstream& os)
 void BasicBlock::detail(std::stringstream& os)
 {
     bool any = false;
-    std::string prefix = "defs[";
+    std::string prefix = "pred[";
+    for (BasicBlock* pred : _pred)
+    {
+        any = true;
+        os << prefix;
+        pred->text(os);
+        prefix = ", ";
+    }
+    os << (any ? "" : prefix) << "] ";
+
+    any = false;
+    prefix = "succ[";
+    for (BasicBlock* succ : _succ)
+    {
+        any = true;
+        os << prefix;
+        succ->text(os);
+        prefix = ", ";
+    }
+    os << (any ? "" : prefix) << "] ";
+
+    any = false;
+    prefix = "defs[";
     for (Value* def : _defs)
     {
         any = true;

@@ -23,6 +23,12 @@ public:
     const std::set<Value*>& getUses() const;
     void addUse(Value* value);
 
+    std::set<BasicBlock*>& getPredecessors();
+    void addPredecessor(BasicBlock* basicBlock);
+
+    std::set<BasicBlock*>& getSuccessors();
+    void addSuccessor(BasicBlock* basicBlock);
+
     virtual void text(std::stringstream& os);
     virtual void detail(std::stringstream& os);
 
@@ -32,6 +38,8 @@ private:
     uint64_t _basicBlockId;
     std::set<Value*> _defs;
     std::set<Value*> _uses;
+    std::set<BasicBlock*> _pred;
+    std::set<BasicBlock*> _succ;
 };
 
 } // namespace ir
