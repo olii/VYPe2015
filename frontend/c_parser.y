@@ -86,7 +86,16 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									$$ = new Function(funcSymbol, $8);
 																									context.popSymbolTable();
 																								}
-			|   TYPE ID LEFT_PAREN impl_param_list RIGHT_PAREN                                  { context.newSymbolTable(); }
+			|   TYPE ID LEFT_PAREN impl_param_list RIGHT_PAREN                                  {
+																									context.newSymbolTable();
+
+																									// Add parameters as variables to newly created symbol table
+																									for (const auto& param : *$4)
+																									{
+																										if (context.currentSymbolTable()->addVariable(param) == nullptr)
+																											YYACCEPT;
+																									}
+																								}
 																LEFT_CBRACE stmts RIGHT_CBRACE  {
 																									// We can look for functions only in global space
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
@@ -108,7 +117,16 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									$$ = new Function(funcSymbol, $8);
 																									context.popSymbolTable();
 																								}
-			|   VOID ID LEFT_PAREN impl_param_list RIGHT_PAREN                                  { context.newSymbolTable(); }
+			|   VOID ID LEFT_PAREN impl_param_list RIGHT_PAREN                                  {
+																									context.newSymbolTable();
+
+																									// Add parameters as variables to newly created symbol table
+																									for (const auto& param : *$4)
+																									{
+																										if (context.currentSymbolTable()->addVariable(param) == nullptr)
+																											YYACCEPT;
+																									}
+																								}
 															   LEFT_CBRACE stmts RIGHT_CBRACE   {
 																									// We can look for functions only in global space
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
@@ -117,16 +135,17 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																										YYACCEPT;
 
 																									$$ = new Function(funcSymbol, $8);
+
 																									context.popSymbolTable();
 																								}
 			;
 
-decl_param_list :   decl_param_list COMMA TYPE      { $$->push_back(FunctionSymbol::Parameter("", Symbol::stringToDataType({*$3}))); }
-				|   TYPE                            { $$ = new FunctionSymbol::ParameterList( { FunctionSymbol::Parameter("", Symbol::stringToDataType({*$1})) } ); }
+decl_param_list :   decl_param_list COMMA TYPE      { $$->push_back(new VariableSymbol("", Symbol::stringToDataType({*$3}))); }
+				|   TYPE                            { $$ = new FunctionSymbol::ParameterList( { new VariableSymbol("", Symbol::stringToDataType({*$1})) } ); }
 				;
 
-impl_param_list :   impl_param_list COMMA TYPE ID   { $$->push_back(FunctionSymbol::Parameter(*$4, Symbol::stringToDataType({*$3}))); }
-				|   TYPE ID                         { $$ = new FunctionSymbol::ParameterList( { FunctionSymbol::Parameter(*$2, Symbol::stringToDataType({*$1})) } ); }
+impl_param_list :   impl_param_list COMMA TYPE ID   { $$->push_back(new VariableSymbol(*$4, Symbol::stringToDataType({*$3}))); }
+				|   TYPE ID                         { $$ = new FunctionSymbol::ParameterList( { new VariableSymbol(*$2, Symbol::stringToDataType({*$1})) } ); }
 				;
 
 stmts   :   stmt_list   { $$ = $1; }

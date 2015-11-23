@@ -208,9 +208,10 @@ void Function::generateIr(ir::Builder& builder)
 {
 	std::vector<ir::Value*> irParameters;
 	const FunctionSymbol::ParameterList& parameters = _symbol->getParameters();
-	for (const FunctionSymbol::Parameter& param : parameters)
+	for (auto& param : parameters)
 	{
-		ir::Value* value = builder.createNamedValue(Symbol::dataTypeToIrDataType(param.dataType), param.name);
+		ir::Value* value = builder.createNamedValue(Symbol::dataTypeToIrDataType(param->getDataType()), param->getName());
+		param->setIrValue(value);
 		irParameters.push_back(value);
 	}
 

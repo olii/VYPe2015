@@ -71,41 +71,7 @@ private:
 class FunctionSymbol : public Symbol
 {
 public:
-	struct Parameter
-	{
-		Parameter(const std::string& name_, Symbol::DataType dataType_) : name(name_), dataType(dataType_) {}
-		Parameter(const Parameter& param) : name(param.name), dataType(param.dataType) {}
-		Parameter(Parameter&& param) : name(std::move(param.name)), dataType(param.dataType) {}
-
-		Parameter operator =(const Parameter& rhs)
-		{
-			name = rhs.name;
-			dataType = rhs.dataType;
-			return *this;
-		}
-
-		Parameter operator =(Parameter&& rhs)
-		{
-			name = std::move(rhs.name);
-			dataType = rhs.dataType;
-			return *this;
-		}
-
-		bool operator ==(const Parameter& rhs) const
-		{
-			return (name == rhs.name) && (dataType == rhs.dataType);
-		}
-
-		bool operator !=(const Parameter& rhs) const
-		{
-			return *this != rhs;
-		}
-
-		std::string name;
-		Symbol::DataType dataType;
-	};
-
-	using ParameterList = std::vector<Parameter>;
+	using ParameterList = std::vector<VariableSymbol*>;
 
 	FunctionSymbol() = delete;
 	FunctionSymbol(const std::string& name, DataType returnType, const ParameterList& parameters, bool definition);

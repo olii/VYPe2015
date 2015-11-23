@@ -15,14 +15,23 @@ size_t SymbolTable::getSize() const
 	return _table.size();
 }
 
+VariableSymbol* SymbolTable::addVariable(VariableSymbol* variableSymbol)
+{
+	// Check whether symbol with this name already exists in the current table
+	if (findSymbol(variableSymbol->getName()))
+		return nullptr;
+
+	_table[variableSymbol->getName()] = variableSymbol;
+	return variableSymbol;
+}
+
 VariableSymbol* SymbolTable::addVariable(const std::string& name, Symbol::DataType dataType)
 {
 	// Check whether symbol with this name already exists in the current table
 	if (findSymbol(name))
 		return nullptr;
 
-	_table[name] = new VariableSymbol(name, dataType);
-	return static_cast<VariableSymbol*>(_table[name]);
+	return addVariable(new VariableSymbol(name, dataType));
 }
 
 FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataType returnType, const FunctionSymbol::ParameterList& parameters, bool definition)
@@ -64,7 +73,7 @@ FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataTy
 			const FunctionSymbol::ParameterList& declParams = func->getParameters();
 			for (size_t i = 0; i < parameters.size(); ++i)
 			{
-				if (declParams[i].dataType != parameters[i].dataType)
+				if (declParams[i]->getDataType() != parameters[i]->getDataType())
 					return nullptr;
 			}
 
