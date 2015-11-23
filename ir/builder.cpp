@@ -1,5 +1,6 @@
 #include "ir/builder.h"
 #include "ir/instruction.h"
+#include "ir/print_ir_visitor.h"
 #include "ir/value.h"
 
 namespace ir {
@@ -184,11 +185,12 @@ void Builder::createReturn(Value* value)
 
 std::string Builder::codeText() const
 {
+	PrintIrVisitor printVisitor;
 	std::stringstream codeStream;
 	for (auto& keyValue : _functions)
-		keyValue.second->text(codeStream);
+		keyValue.second->accept(printVisitor);
 
-	return codeStream.str();
+	return printVisitor.getText();
 }
 
 }

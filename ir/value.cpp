@@ -1,3 +1,4 @@
+#include "ir/ir_visitor.h"
 #include "ir/value.h"
 
 namespace ir {
@@ -60,6 +61,11 @@ NamedValue::~NamedValue()
 {
 }
 
+void NamedValue::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
+}
+
 const std::string& NamedValue::getName() const
 {
 	return _name;
@@ -70,11 +76,6 @@ void NamedValue::setName(const std::string& name)
 	_name = name;
 }
 
-void NamedValue::text(std::stringstream& os)
-{
-	os << getName();
-}
-
 uint64_t TemporaryValue::TemporaryIdPool = 0;
 
 TemporaryValue::TemporaryValue(Value::DataType dataType) : Value(Value::Type::TEMPORARY, dataType), _temporaryId(TemporaryIdPool++)
@@ -83,6 +84,11 @@ TemporaryValue::TemporaryValue(Value::DataType dataType) : Value(Value::Type::TE
 
 TemporaryValue::~TemporaryValue()
 {
+}
+
+void TemporaryValue::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
 }
 
 uint64_t TemporaryValue::getTemporaryId() const
@@ -102,15 +108,6 @@ std::string TemporaryValue::getSymbolicName() const
 	return ss.str();
 }
 
-void TemporaryValue::text(std::stringstream& os)
-{
-	os << getSymbolicName();
-}
-
-template class ConstantValue<int>;
-template class ConstantValue<char>;
-template class ConstantValue<std::string>;
-
 template <typename T> ConstantValue<T>::ConstantValue(Value::DataType dataType, const ConstantValue<T>::ConstantType& value)
 	: Value(Value::Type::CONSTANT, dataType), _value(value)
 {
@@ -118,6 +115,11 @@ template <typename T> ConstantValue<T>::ConstantValue(Value::DataType dataType, 
 
 template <typename T> ConstantValue<T>::~ConstantValue()
 {
+}
+
+template <typename T> void ConstantValue<T>::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
 }
 
 template <typename T> typename ConstantValue<T>::ConstantType ConstantValue<T>::getConstantValue() const
@@ -130,19 +132,8 @@ template <typename T> void ConstantValue<T>::setConstantValue(const ConstantValu
 	_value = value;
 }
 
-template <typename T> void ConstantValue<T>::text(std::stringstream& os)
-{
-	os << getConstantValue();
-}
-
-template <> void ConstantValue<char>::text(std::stringstream& os)
-{
-	os << "\'" << getConstantValue() << "\'";
-}
-
-template <> void ConstantValue<std::string>::text(std::stringstream& os)
-{
-	os << "\"" << getConstantValue() << "\"";
-}
+template class ConstantValue<int>;
+template class ConstantValue<char>;
+template class ConstantValue<std::string>;
 
 } // namespace ir

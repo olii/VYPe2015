@@ -6,6 +6,8 @@
 
 namespace ir {
 
+class IrVisitor;
+
 class Value
 {
 public:
@@ -30,13 +32,13 @@ public:
 
 	virtual ~Value();
 
+	virtual void accept(IrVisitor& visitor) = 0;
+
 	Type getType() const;
 	void setType(Type type);
 
 	DataType getDataType() const;
 	void setDataType(DataType dataType);
-
-	virtual void text(std::stringstream& os) = 0;
 
 protected:
 	Value(Type type, DataType dataType);
@@ -51,10 +53,10 @@ public:
 	NamedValue(Value::DataType dataType, const std::string& name);
 	virtual ~NamedValue();
 
+	virtual void accept(IrVisitor& visitor) override;
+
 	const std::string& getName() const;
 	void setName(const std::string& name);
-
-	virtual void text(std::stringstream& os) override;
 
 private:
 	std::string _name;
@@ -66,11 +68,11 @@ public:
 	TemporaryValue(Value::DataType dataType);
 	virtual ~TemporaryValue();
 
+	virtual void accept(IrVisitor& visitor) override;
+
 	uint64_t getTemporaryId() const;
 	void setTemporaryId(uint64_t temporaryId);
 	std::string getSymbolicName() const;
-
-	virtual void text(std::stringstream& os) override;
 
 	static uint64_t TemporaryIdPool;
 private:
@@ -85,10 +87,10 @@ public:
 	ConstantValue(Value::DataType dataType, const ConstantType& value);
 	virtual ~ConstantValue();
 
+	virtual void accept(IrVisitor& visitor) override;
+
 	ConstantType getConstantValue() const;
 	void setConstantValue(const ConstantType& value);
-
-	virtual void text(std::stringstream& os) override;
 
 private:
 	ConstantType _value;

@@ -18,8 +18,6 @@ public:
 	virtual ~Instruction();
 
 	virtual void accept(IrVisitor& visitor) = 0;
-
-	virtual void text(std::stringstream& os) = 0;
 };
 
 class UnaryInstruction : public virtual Instruction
@@ -67,8 +65,6 @@ public:
 	virtual ~AssignInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class DeclarationInstruction : public UnaryInstruction
@@ -78,8 +74,6 @@ public:
 	virtual ~DeclarationInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class JumpInstruction : public Instruction
@@ -89,8 +83,6 @@ public:
 	virtual ~JumpInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 
 	BasicBlock* getFollowingBasicBlock();
 
@@ -105,8 +97,6 @@ public:
 	virtual ~CondJumpInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 
 	Value* getCondition();
 	BasicBlock* getTrueBasicBlock();
@@ -125,8 +115,6 @@ public:
 	virtual ~ReturnInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class CallInstruction : public ResultInstruction
@@ -140,8 +128,6 @@ public:
 	Function* getFunction();
 	std::vector<Value*>& getArguments();
 
-	virtual void text(std::stringstream& os) override;
-
 private:
 	Function* _function;
 	std::vector<Value*> _arguments;
@@ -154,8 +140,6 @@ public:
 	virtual ~AddInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class SubtractInstruction : public ResultInstruction, public BinaryInstruction
@@ -165,8 +149,6 @@ public:
 	virtual ~SubtractInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class MultiplyInstruction : public ResultInstruction, public BinaryInstruction
@@ -176,8 +158,6 @@ public:
 	virtual ~MultiplyInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class DivideInstruction : public ResultInstruction, public BinaryInstruction
@@ -187,8 +167,6 @@ public:
 	virtual ~DivideInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class ModuloInstruction : public ResultInstruction, public BinaryInstruction
@@ -198,8 +176,6 @@ public:
 	virtual ~ModuloInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class LessInstruction : public ResultInstruction, public BinaryInstruction
@@ -209,8 +185,6 @@ public:
 	virtual ~LessInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class LessEqualInstruction : public ResultInstruction, public BinaryInstruction
@@ -219,7 +193,7 @@ public:
 	LessEqualInstruction(Value* result, Value* leftOperand, Value* rightOperand);
 	virtual ~LessEqualInstruction();
 
-	virtual void text(std::stringstream& os) override;
+	virtual void accept(IrVisitor& visitor) override;
 };
 
 class GreaterInstruction : public ResultInstruction, public BinaryInstruction
@@ -229,8 +203,6 @@ public:
 	virtual ~GreaterInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class GreaterEqualInstruction : public ResultInstruction, public BinaryInstruction
@@ -240,8 +212,6 @@ public:
 	virtual ~GreaterEqualInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class EqualInstruction : public ResultInstruction, public BinaryInstruction
@@ -251,8 +221,6 @@ public:
 	virtual ~EqualInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class NotEqualInstruction : public ResultInstruction, public BinaryInstruction
@@ -262,8 +230,6 @@ public:
 	virtual ~NotEqualInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class AndInstruction : public ResultInstruction, public BinaryInstruction
@@ -273,8 +239,6 @@ public:
 	virtual ~AndInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class OrInstruction : public ResultInstruction, public BinaryInstruction
@@ -284,8 +248,6 @@ public:
 	virtual ~OrInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 class NotInstruction : public ResultInstruction, public UnaryInstruction
@@ -295,8 +257,6 @@ public:
 	virtual ~NotInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
-
-	virtual void text(std::stringstream& os) override;
 };
 
 } // namespace ir

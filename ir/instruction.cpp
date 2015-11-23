@@ -1,6 +1,7 @@
 #include "ir/basic_block.h"
 #include "ir/function.h"
 #include "ir/instruction.h"
+#include "ir/ir_visitor.h"
 #include "ir/value.h"
 
 namespace ir {
@@ -65,12 +66,9 @@ AssignInstruction::~AssignInstruction()
 {
 }
 
-void AssignInstruction::text(std::stringstream& os)
+void AssignInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = ";
-	getOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 DeclarationInstruction::DeclarationInstruction(Value* declValue) : UnaryInstruction(declValue)
@@ -81,11 +79,9 @@ DeclarationInstruction::~DeclarationInstruction()
 {
 }
 
-void DeclarationInstruction::text(std::stringstream& os)
+void DeclarationInstruction::accept(IrVisitor& visitor)
 {
-	os << "declare ";
-	getOperand()->text(os);
-	os << ":" << Value::dataTypeToString(getOperand()->getDataType()) << "\n";
+	visitor.visit(this);
 }
 
 JumpInstruction::JumpInstruction(BasicBlock* followingBasicBlock) : _followingBasicBlock(followingBasicBlock)
@@ -101,11 +97,9 @@ BasicBlock* JumpInstruction::getFollowingBasicBlock()
 	return _followingBasicBlock;
 }
 
-void JumpInstruction::text(std::stringstream& os)
+void JumpInstruction::accept(IrVisitor& visitor)
 {
-	os << "jump ";
-	getFollowingBasicBlock()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 CondJumpInstruction::CondJumpInstruction(Value* condition, BasicBlock* trueBasicBlock, BasicBlock* falseBasicBlock)
@@ -132,15 +126,9 @@ BasicBlock* CondJumpInstruction::getFalseBasicBlock()
 	return _falseBasicBlock;
 }
 
-void CondJumpInstruction::text(std::stringstream& os)
+void CondJumpInstruction::accept(IrVisitor& visitor)
 {
-	os << "jumpif ";
-	getCondition()->text(os);
-	os << ", ";
-	getTrueBasicBlock()->text(os);
-	os << ", ";
-	getFalseBasicBlock()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 ReturnInstruction::ReturnInstruction(Value* returnValue) : UnaryInstruction(returnValue)
@@ -151,15 +139,9 @@ ReturnInstruction::~ReturnInstruction()
 {
 }
 
-void ReturnInstruction::text(std::stringstream& os)
+void ReturnInstruction::accept(IrVisitor& visitor)
 {
-	os << "return";
-	if (getOperand() != nullptr)
-	{
-		os << " ";
-		getOperand()->text(os);
-	}
-	os << "\n";
+	visitor.visit(this);
 }
 
 CallInstruction::CallInstruction(Value* returnValue, Function* function, const std::vector<Value*>& arguments)
@@ -181,16 +163,9 @@ std::vector<Value*>& CallInstruction::getArguments()
 	return _arguments;
 }
 
-void CallInstruction::text(std::stringstream& os)
+void CallInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = call " << getFunction()->getName();
-	for (Value* arg : getArguments())
-	{
-		os << ", ";
-		arg->text(os);
-	}
-	os << "\n";
+	visitor.visit(this);
 }
 
 AddInstruction::AddInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -201,14 +176,9 @@ AddInstruction::~AddInstruction()
 {
 }
 
-void AddInstruction::text(std::stringstream& os)
+void AddInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = add ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 SubtractInstruction::SubtractInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -219,14 +189,9 @@ SubtractInstruction::~SubtractInstruction()
 {
 }
 
-void SubtractInstruction::text(std::stringstream& os)
+void SubtractInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = subtract ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 MultiplyInstruction::MultiplyInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -237,14 +202,9 @@ MultiplyInstruction::~MultiplyInstruction()
 {
 }
 
-void MultiplyInstruction::text(std::stringstream& os)
+void MultiplyInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = multiply ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 DivideInstruction::DivideInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -255,14 +215,9 @@ DivideInstruction::~DivideInstruction()
 {
 }
 
-void DivideInstruction::text(std::stringstream& os)
+void DivideInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = divide ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 ModuloInstruction::ModuloInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -273,14 +228,9 @@ ModuloInstruction::~ModuloInstruction()
 {
 }
 
-void ModuloInstruction::text(std::stringstream& os)
+void ModuloInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = modulo ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 LessInstruction::LessInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -291,14 +241,9 @@ LessInstruction::~LessInstruction()
 {
 }
 
-void LessInstruction::text(std::stringstream& os)
+void LessInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = less ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 LessEqualInstruction::LessEqualInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -309,14 +254,9 @@ LessEqualInstruction::~LessEqualInstruction()
 {
 }
 
-void LessEqualInstruction::text(std::stringstream& os)
+void LessEqualInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = lesseq ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 GreaterInstruction::GreaterInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -327,14 +267,9 @@ GreaterInstruction::~GreaterInstruction()
 {
 }
 
-void GreaterInstruction::text(std::stringstream& os)
+void GreaterInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = greater ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 GreaterEqualInstruction::GreaterEqualInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -345,14 +280,9 @@ GreaterEqualInstruction::~GreaterEqualInstruction()
 {
 }
 
-void GreaterEqualInstruction::text(std::stringstream& os)
+void GreaterEqualInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = greatereq ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 EqualInstruction::EqualInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -363,14 +293,9 @@ EqualInstruction::~EqualInstruction()
 {
 }
 
-void EqualInstruction::text(std::stringstream& os)
+void EqualInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = equal ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 NotEqualInstruction::NotEqualInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -381,14 +306,9 @@ NotEqualInstruction::~NotEqualInstruction()
 {
 }
 
-void NotEqualInstruction::text(std::stringstream& os)
+void NotEqualInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = notequal ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 AndInstruction::AndInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -399,14 +319,9 @@ AndInstruction::~AndInstruction()
 {
 }
 
-void AndInstruction::text(std::stringstream& os)
+void AndInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = and ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 OrInstruction::OrInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
@@ -417,14 +332,9 @@ OrInstruction::~OrInstruction()
 {
 }
 
-void OrInstruction::text(std::stringstream& os)
+void OrInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = or ";
-	getLeftOperand()->text(os);
-	os << ", ";
-	getRightOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 NotInstruction::NotInstruction(Value* result, Value* operand) : ResultInstruction(result), UnaryInstruction(operand)
@@ -435,12 +345,9 @@ NotInstruction::~NotInstruction()
 {
 }
 
-void NotInstruction::text(std::stringstream& os)
+void NotInstruction::accept(IrVisitor& visitor)
 {
-	getResult()->text(os);
-	os << " = not ";
-	getOperand()->text(os);
-	os << "\n";
+	visitor.visit(this);
 }
 
 } // namespace ir

@@ -24,8 +24,6 @@ public:
 	const std::vector<Value*>& getParameters() const;
 	Value::DataType getReturnDataType() const;
 
-	void text(std::stringstream& os);
-
 private:
 	std::string _name;
 	std::vector<BasicBlock*> _basicBlocks;

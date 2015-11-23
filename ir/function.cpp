@@ -1,4 +1,5 @@
 #include "ir/function.h"
+#include "ir/ir_visitor.h"
 
 namespace ir {
 
@@ -9,6 +10,11 @@ Function::Function(const std::string& name, const std::vector<Value*>& parameter
 
 Function::~Function()
 {
+}
+
+void Function::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
 }
 
 BasicBlock* Function::getEntryBasicBlock() const
@@ -39,34 +45,6 @@ const std::vector<Value*>& Function::getParameters() const
 Value::DataType Function::getReturnDataType() const
 {
 	return _returnDataType;
-}
-
-void Function::text(std::stringstream& os)
-{
-	os << "function " << getName() << "(";
-	for (uint32_t i = 0; i < _parameters.size(); ++i)
-	{
-		_parameters[i]->text(os);
-		os << ":" << Value::dataTypeToString(_parameters[i]->getDataType());
-
-		// Make sure there is no trailing , at the end of parameters
-		if (i != _parameters.size() - 1)
-			os << ", ";
-	}
-	os << "):" << Value::dataTypeToString(_returnDataType) << "\n";
-
-	for (BasicBlock* bb : _basicBlocks)
-	{
-		bb->text(os);
-		os << ": ";
-		bb->detail(os);
-		os << "\n";
-
-		for (Instruction* ins : bb->getInstructions())
-			ins->text(os);
-	}
-
-	os << "\n";
 }
 
 } // namespace ir

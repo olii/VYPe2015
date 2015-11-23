@@ -1,4 +1,5 @@
 #include "ir/basic_block.h"
+#include "ir/ir_visitor.h"
 
 namespace ir {
 
@@ -10,6 +11,16 @@ BasicBlock::BasicBlock() : _instructions(), _basicBlockId(BasicBlockIdPool++), _
 
 BasicBlock::~BasicBlock()
 {
+}
+
+void BasicBlock::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
+}
+
+uint64_t BasicBlock::getId() const
+{
+	return _basicBlockId;
 }
 
 std::vector<Instruction*>& BasicBlock::getInstructions()
@@ -60,58 +71,6 @@ void BasicBlock::addSuccessor(BasicBlock* basicBlock)
 void BasicBlock::addInstruction(Instruction* instruction)
 {
 	_instructions.push_back(instruction);
-}
-
-void BasicBlock::text(std::stringstream& os)
-{
-	os << "@" << _basicBlockId;
-}
-
-void BasicBlock::detail(std::stringstream& os)
-{
-	bool any = false;
-	std::string prefix = "pred[";
-	for (BasicBlock* pred : _pred)
-	{
-		any = true;
-		os << prefix;
-		pred->text(os);
-		prefix = ", ";
-	}
-	os << (any ? "" : prefix) << "] ";
-
-	any = false;
-	prefix = "succ[";
-	for (BasicBlock* succ : _succ)
-	{
-		any = true;
-		os << prefix;
-		succ->text(os);
-		prefix = ", ";
-	}
-	os << (any ? "" : prefix) << "] ";
-
-	any = false;
-	prefix = "defs[";
-	for (Value* def : _defs)
-	{
-		any = true;
-		os << prefix;
-		def->text(os);
-		prefix = ", ";
-	}
-	os << (any ? "" : prefix) << "] ";
-
-	any = false;
-	prefix = "uses[";
-	for (Value* use : _uses)
-	{
-		any = true;
-		os << prefix;
-		use->text(os);
-		prefix = ", ";
-	}
-	os << (any ? "" : prefix) << "]";
 }
 
 } // namespace ir

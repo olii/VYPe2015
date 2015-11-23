@@ -18,6 +18,8 @@ public:
 
 	void accept(IrVisitor& visitor);
 
+	uint64_t getId() const;
+
 	std::vector<Instruction*>& getInstructions();
 	void addInstruction(Instruction* instruction);
 
@@ -32,9 +34,6 @@ public:
 
 	std::set<BasicBlock*>& getSuccessors();
 	void addSuccessor(BasicBlock* basicBlock);
-
-	virtual void text(std::stringstream& os);
-	virtual void detail(std::stringstream& os);
 
 	static uint64_t BasicBlockIdPool;
 private:
