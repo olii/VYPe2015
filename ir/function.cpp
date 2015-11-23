@@ -44,10 +44,14 @@ Value::DataType Function::getReturnDataType() const
 void Function::text(std::stringstream& os)
 {
 	os << "function " << getName() << "(";
-	for (Value* param : _parameters)
+	for (uint32_t i = 0; i < _parameters.size(); ++i)
 	{
-		param->text(os);
-		os << ":" << Value::dataTypeToString(param->getDataType()) << ", ";
+		_parameters[i]->text(os);
+		os << ":" << Value::dataTypeToString(_parameters[i]->getDataType());
+
+		// Make sure there is no trailing , at the end of parameters
+		if (i != _parameters.size() - 1)
+			os << ", ";
 	}
 	os << "):" << Value::dataTypeToString(_returnDataType) << "\n";
 
