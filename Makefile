@@ -7,14 +7,15 @@ LIBRARIES=frontend ir
 
 include $(ROOT)/mak/config.mak
 
-all: ir frontend build
-
-frontend:
-	@$(MAKE) -C frontend
+all: build
 
 ir:
 	@$(MAKE) -C ir
 
+frontend: ir
+	@$(MAKE) -C frontend
+
+DEPENDS=ir frontend
 include $(ROOT)/mak/app.mak
 
 clean: main-clean

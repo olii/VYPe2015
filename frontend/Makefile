@@ -27,14 +27,15 @@ include $(ROOT)/mak/config.mak
 
 OBJ_FILES+= $(OBJ_DIR)/$(LEXER_OBJ) $(OBJ_DIR)/$(PARSER_OBJ)
 
-all: init parser lexer build
+all: init lexer parser build
 
-lexer: $(LEXER_FILE)
-	flex -o $(LEXER_SRC) $<
+lexer: parser $(LEXER_FILE)
+	flex -o $(LEXER_SRC) $(LEXER_FILE)
 	$(CXX) $(CXXFLAGS) -o $(OBJ_DIR)/$(LEXER_OBJ) $(LEXER_SRC)
 
 parser: $(PARSER_FILE)
-	bison --defines=$(PARSER_HDR) -o $(PARSER_SRC) $<
+	bison --defines=$(PARSER_HDR) -o $(PARSER_SRC) $(PARSER_FILE)
 	$(CXX) $(CXXFLAGS) -o $(OBJ_DIR)/$(PARSER_OBJ) $(PARSER_SRC)
 
+DEPENDS=parser lexer
 include $(ROOT)/mak/archive.mak
