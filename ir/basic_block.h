@@ -11,35 +11,35 @@ namespace ir {
 class BasicBlock
 {
 public:
-    BasicBlock();
-    ~BasicBlock();
+	BasicBlock();
+	~BasicBlock();
 
-    std::vector<Instruction*>& getInstructions();
-    void addInstruction(Instruction* instruction);
+	std::vector<Instruction*>& getInstructions();
+	void addInstruction(Instruction* instruction);
 
-    const std::set<Value*>& getDefs() const;
-    void addDef(Value* value);
+	const std::set<Value*>& getDefs() const;
+	void addDef(Value* value);
 
-    const std::set<Value*>& getUses() const;
-    void addUse(Value* value);
+	const std::set<Value*>& getUses() const;
+	void addUse(Value* value);
 
-    std::set<BasicBlock*>& getPredecessors();
-    void addPredecessor(BasicBlock* basicBlock);
+	std::set<BasicBlock*>& getPredecessors();
+	void addPredecessor(BasicBlock* basicBlock);
 
-    std::set<BasicBlock*>& getSuccessors();
-    void addSuccessor(BasicBlock* basicBlock);
+	std::set<BasicBlock*>& getSuccessors();
+	void addSuccessor(BasicBlock* basicBlock);
 
-    virtual void text(std::stringstream& os);
-    virtual void detail(std::stringstream& os);
+	virtual void text(std::stringstream& os);
+	virtual void detail(std::stringstream& os);
 
-    static uint64_t BasicBlockIdPool;
+	static uint64_t BasicBlockIdPool;
 private:
-    std::vector<Instruction*> _instructions;
-    uint64_t _basicBlockId;
-    std::set<Value*> _defs;
-    std::set<Value*> _uses;
-    std::set<BasicBlock*> _pred;
-    std::set<BasicBlock*> _succ;
+	std::vector<Instruction*> _instructions;
+	uint64_t _basicBlockId;
+	std::set<Value*> _defs;
+	std::set<Value*> _uses;
+	std::set<BasicBlock*> _pred;
+	std::set<BasicBlock*> _succ;
 };
 
 } // namespace ir

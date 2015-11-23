@@ -10,26 +10,26 @@ namespace frontend {
 class Context
 {
 public:
-    Context();
-    Context(const Context&) = delete;
-    ~Context();
+	Context();
+	Context(const Context&) = delete;
+	~Context();
 
-    using StackType = std::vector<SymbolTable*>;
+	using StackType = std::vector<SymbolTable*>;
 
-    void newSymbolTable();
-    void popSymbolTable();
+	void newSymbolTable();
+	void popSymbolTable();
 
-    SymbolTable* globalSymbolTable();
-    SymbolTable* currentSymbolTable();
+	SymbolTable* globalSymbolTable();
+	SymbolTable* currentSymbolTable();
 
-    Symbol* findSymbol(const std::string& name);
-    const Symbol* findSymbol(const std::string& name) const;
+	Symbol* findSymbol(const std::string& name);
+	const Symbol* findSymbol(const std::string& name) const;
 
 private:
-    Context& operator =(const Context&);
+	Context& operator =(const Context&);
 
-    SymbolTable* _globalSymTable;
-    StackType _symTableStack;
+	SymbolTable* _globalSymTable;
+	StackType _symTableStack;
 };
 
 } // namespace frontend

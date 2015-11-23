@@ -8,22 +8,22 @@ namespace frontend {
 class SymbolTable
 {
 public:
-    typedef std::map<std::string, Symbol*> TableType;
+	typedef std::map<std::string, Symbol*> TableType;
 
-    SymbolTable();
-    SymbolTable(const SymbolTable&);
-    virtual ~SymbolTable();
+	SymbolTable();
+	SymbolTable(const SymbolTable&);
+	virtual ~SymbolTable();
 
-    size_t getSize() const;
+	size_t getSize() const;
 
-    VariableSymbol* addVariable(const std::string& name, Symbol::DataType dataType);
-    FunctionSymbol* addFunction(const std::string& name, Symbol::DataType returnType, const FunctionSymbol::ParameterList& parameters, bool definition);
+	VariableSymbol* addVariable(const std::string& name, Symbol::DataType dataType);
+	FunctionSymbol* addFunction(const std::string& name, Symbol::DataType returnType, const FunctionSymbol::ParameterList& parameters, bool definition);
 
-    Symbol* findSymbol(const std::string& name);
-    const Symbol* findSymbol(const std::string& name) const;
+	Symbol* findSymbol(const std::string& name);
+	const Symbol* findSymbol(const std::string& name) const;
 
 private:
-    TableType _table;
+	TableType _table;
 };
 
 } // namespace frontend

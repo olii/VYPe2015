@@ -14,17 +14,17 @@ frontend::Context context;
 
 void yyerror(const char* e)
 {
-    std::cerr << e << std::endl;
+	std::cerr << e << std::endl;
 }
 
 int main()
 {
-    //yydebug = 1;
-    yyparse();
+	//yydebug = 1;
+	yyparse();
 
-    ir::Builder builder;
-    program.generateIr(builder);
+	ir::Builder builder;
+	program.generateIr(builder);
 
-    std::cout << builder.codeText() << std::endl;
-    return 0;
+	std::cout << builder.codeText() << std::endl;
+	return 0;
 }

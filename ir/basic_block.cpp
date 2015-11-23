@@ -14,104 +14,104 @@ BasicBlock::~BasicBlock()
 
 std::vector<Instruction*>& BasicBlock::getInstructions()
 {
-    return _instructions;
+	return _instructions;
 }
 
 const std::set<Value*>& BasicBlock::getDefs() const
 {
-    return _defs;
+	return _defs;
 }
 
 void BasicBlock::addDef(Value* value)
 {
-    _defs.insert(value);
+	_defs.insert(value);
 }
 
 const std::set<Value*>& BasicBlock::getUses() const
 {
-    return _uses;
+	return _uses;
 }
 
 void BasicBlock::addUse(Value* value)
 {
-    _uses.insert(value);
+	_uses.insert(value);
 }
 
 std::set<BasicBlock*>& BasicBlock::getPredecessors()
 {
-    return _pred;
+	return _pred;
 }
 
 void BasicBlock::addPredecessor(BasicBlock* basicBlock)
 {
-    _pred.insert(basicBlock);
+	_pred.insert(basicBlock);
 }
 
 std::set<BasicBlock*>& BasicBlock::getSuccessors()
 {
-    return _succ;
+	return _succ;
 }
 
 void BasicBlock::addSuccessor(BasicBlock* basicBlock)
 {
-    _succ.insert(basicBlock);
+	_succ.insert(basicBlock);
 }
 
 void BasicBlock::addInstruction(Instruction* instruction)
 {
-    _instructions.push_back(instruction);
+	_instructions.push_back(instruction);
 }
 
 void BasicBlock::text(std::stringstream& os)
 {
-    os << "@" << _basicBlockId;
+	os << "@" << _basicBlockId;
 }
 
 void BasicBlock::detail(std::stringstream& os)
 {
-    bool any = false;
-    std::string prefix = "pred[";
-    for (BasicBlock* pred : _pred)
-    {
-        any = true;
-        os << prefix;
-        pred->text(os);
-        prefix = ", ";
-    }
-    os << (any ? "" : prefix) << "] ";
+	bool any = false;
+	std::string prefix = "pred[";
+	for (BasicBlock* pred : _pred)
+	{
+		any = true;
+		os << prefix;
+		pred->text(os);
+		prefix = ", ";
+	}
+	os << (any ? "" : prefix) << "] ";
 
-    any = false;
-    prefix = "succ[";
-    for (BasicBlock* succ : _succ)
-    {
-        any = true;
-        os << prefix;
-        succ->text(os);
-        prefix = ", ";
-    }
-    os << (any ? "" : prefix) << "] ";
+	any = false;
+	prefix = "succ[";
+	for (BasicBlock* succ : _succ)
+	{
+		any = true;
+		os << prefix;
+		succ->text(os);
+		prefix = ", ";
+	}
+	os << (any ? "" : prefix) << "] ";
 
-    any = false;
-    prefix = "defs[";
-    for (Value* def : _defs)
-    {
-        any = true;
-        os << prefix;
-        def->text(os);
-        prefix = ", ";
-    }
-    os << (any ? "" : prefix) << "] ";
+	any = false;
+	prefix = "defs[";
+	for (Value* def : _defs)
+	{
+		any = true;
+		os << prefix;
+		def->text(os);
+		prefix = ", ";
+	}
+	os << (any ? "" : prefix) << "] ";
 
-    any = false;
-    prefix = "uses[";
-    for (Value* use : _uses)
-    {
-        any = true;
-        os << prefix;
-        use->text(os);
-        prefix = ", ";
-    }
-    os << (any ? "" : prefix) << "]";
+	any = false;
+	prefix = "uses[";
+	for (Value* use : _uses)
+	{
+		any = true;
+		os << prefix;
+		use->text(os);
+		prefix = ", ";
+	}
+	os << (any ? "" : prefix) << "]";
 }
 
 } // namespace ir

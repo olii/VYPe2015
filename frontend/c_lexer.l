@@ -40,10 +40,10 @@ whitespace  [ \r\n\t]
 <CHR>[^'"\t\n\\]        { inputChar = yytext[0]; BEGIN(CHR_END); }
 <CHR>.                  { yyterminate(); }
 <CHR_END>\'             {
-                            BEGIN(0);
-                            yylval.charValue = inputChar;
-                            return CHAR_LIT;
-                        }
+							BEGIN(0);
+							yylval.charValue = inputChar;
+							return CHAR_LIT;
+						}
 
 \"                      { inputString = ""; BEGIN(STR); }
 <STR>\\\'               { inputString += '\''; }
@@ -53,10 +53,10 @@ whitespace  [ \r\n\t]
 <STR>\\n                { inputString += '\n'; }
 <STR>([^\\"])+          { inputString += std::string(yytext, yyleng); }
 <STR>\"                 {
-                            BEGIN(0);
-                            yylval.strValue = new std::string(inputString);
-                            return STRING_LIT;
-                        }
+							BEGIN(0);
+							yylval.strValue = new std::string(inputString);
+							return STRING_LIT;
+						}
 
 ","                     { return COMMA; }
 ";"                     { return SEMICOLON; }
@@ -85,16 +85,16 @@ while                   { return WHILE; }
 return                  { return RETURN; }
 void                    { return VOID; }
 int|char|string         {
-                            yylval.strValue = new std::string(yytext, yyleng);
-                            return TYPE;
-                        }
+							yylval.strValue = new std::string(yytext, yyleng);
+							return TYPE;
+						}
 {digit}+                {
-                            yylval.intValue = atoi(yytext);
-                            return INT_LIT;
-                        }
+							yylval.intValue = atoi(yytext);
+							return INT_LIT;
+						}
 {letter}({alphanum})*   {
-                            yylval.strValue = new std::string(yytext, yyleng);
-                            return ID;
-                        }
+							yylval.strValue = new std::string(yytext, yyleng);
+							return ID;
+						}
 
 %%
