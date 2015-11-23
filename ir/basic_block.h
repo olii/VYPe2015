@@ -8,11 +8,15 @@
 
 namespace ir {
 
+class IrVisitor;
+
 class BasicBlock
 {
 public:
 	BasicBlock();
 	~BasicBlock();
+
+	void accept(IrVisitor& visitor);
 
 	std::vector<Instruction*>& getInstructions();
 	void addInstruction(Instruction* instruction);

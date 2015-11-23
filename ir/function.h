@@ -6,11 +6,15 @@
 
 namespace ir {
 
+class IrVisitor;
+
 class Function
 {
 public:
 	Function(const std::string& name, const std::vector<Value*>& _parameters);
 	~Function();
+
+	void accept(IrVisitor& visitor);
 
 	BasicBlock* getEntryBasicBlock() const;
 	std::vector<BasicBlock*>& getBasicBlocks();
