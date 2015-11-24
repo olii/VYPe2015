@@ -23,6 +23,14 @@ uint64_t BasicBlock::getId() const
 	return _basicBlockId;
 }
 
+Instruction* BasicBlock::getTerminalInstruction() const
+{
+	if (_instructions.empty())
+		return nullptr;
+
+	return _instructions.back();
+}
+
 std::vector<Instruction*>& BasicBlock::getInstructions()
 {
 	return _instructions;

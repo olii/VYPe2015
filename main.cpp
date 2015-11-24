@@ -20,7 +20,9 @@ void yyerror(const char* e)
 int main()
 {
 	//yydebug = 1;
-	yyparse();
+	yyin = fopen("test.c", "r");
+	if (yyparse() != 0)
+		return 1;
 
 	ir::Builder builder;
 	program.generateIr(builder);

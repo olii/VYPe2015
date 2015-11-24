@@ -1,5 +1,6 @@
 %{
 #include <vector>
+#include <cstdarg>
 
 #include "frontend/ast.h"
 #include "frontend/context.h"
@@ -7,10 +8,19 @@
 using namespace frontend;
 
 extern int yylex();
-extern void yyerror(const char* e);
+//extern void yyerror(const char* e);
 
 extern Program program;
 extern Context context;
+
+void yyerror(const char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	fprintf(stderr, "Error: ");
+	vfprintf(stderr, s, ap);
+	fprintf(stderr, "\n");
+}
 %}
 
 %define parse.error verbose // Better error reporting
@@ -29,7 +39,6 @@ extern Context context;
 	char charValue;
 	int intValue;
 }
-
 
 %token COMMA SEMICOLON ASSIGN LEFT_PAREN RIGHT_PAREN LEFT_CBRACE RIGHT_CBRACE PLUS MINUS
 	MULTIPLY DIVIDE MODULO NOT LESS LESS_EQUAL GREATER GREATER_EQUAL EQUAL NOT_EQUAL AND OR
@@ -81,7 +90,10 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
 																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::stringToDataType(*$1), {}, true)) == nullptr)
-																										YYACCEPT;
+																									{
+																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										YYERROR;
+																									}
 
 																									$$ = new Function(funcSymbol, $8);
 																									context.popSymbolTable();
@@ -93,7 +105,10 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									for (const auto& param : *$4)
 																									{
 																										if (context.currentSymbolTable()->addVariable(param) == nullptr)
-																											YYACCEPT;
+																										{
+																											yyerror("Redefinition of function argument '%s'.", param->getName().c_str());
+																											YYERROR;
+																										}
 																									}
 																								}
 																LEFT_CBRACE stmts RIGHT_CBRACE  {
@@ -101,7 +116,10 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
 																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::stringToDataType(*$1), *$4, true)) == nullptr)
-																										YYACCEPT;
+																									{
+																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										YYERROR;
+																									}
 
 																									$$ = new Function(funcSymbol, $8);
 																									context.popSymbolTable();
@@ -112,7 +130,10 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
 																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, {}, true)) == nullptr)
-																										YYACCEPT;
+																									{
+																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										YYERROR;
+																									}
 
 																									$$ = new Function(funcSymbol, $8);
 																									context.popSymbolTable();
@@ -124,7 +145,10 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									for (const auto& param : *$4)
 																									{
 																										if (context.currentSymbolTable()->addVariable(param) == nullptr)
-																											YYACCEPT;
+																										{
+																											yyerror("Redefinition of function argument '%s'.", param->getName().c_str());
+																											YYERROR;
+																										}
 																									}
 																								}
 															   LEFT_CBRACE stmts RIGHT_CBRACE   {
@@ -132,7 +156,10 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
 																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, *$4, true)) == nullptr)
-																										YYACCEPT;
+																									{
+																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										YYERROR;
+																									}
 
 																									$$ = new Function(funcSymbol, $8);
 
@@ -192,12 +219,18 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
 													{
 														// We cannot shadow functions
 														if (symbol->getType() == Symbol::FUNCTION)
-															YYACCEPT;
+														{
+															yyerror("Redefinition of symbol '%s'. Cannot shadow functions.", symbol->getName().c_str());
+															YYERROR;
+														}
 													}
 
 													// Adding can fail if there is symbol in the same block, we cannot shadow in the same block
 													if ((symbol = context.currentSymbolTable()->addVariable(varName, Symbol::stringToDataType(*$1))) == nullptr)
-														YYACCEPT;
+													{
+														yyerror("Redefinition of symbol '%s'.", varName.c_str());
+														YYERROR;
+													}
 
 													variables.push_back(static_cast<VariableSymbol*>(symbol));
 												}
@@ -237,16 +270,26 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																// We can look for functions only in global space
 																Symbol* symbol = nullptr;
 																if ((symbol = context.globalSymbolTable()->findSymbol(*$1)) == nullptr)
-																	YYACCEPT;
+																{
+																	yyerror("Undeclared identifier '%s' used.", $1->c_str());
+																	YYERROR;
+																}
 
 																// Symbol needs to represent function
 																if (symbol->getType() != Symbol::FUNCTION)
-																	YYACCEPT;
+																{
+																	yyerror("Identifier '%s' is not a function.", symbol->getName().c_str());
+																	YYERROR;
+																}
 
 																// Check whether number of parameters match
 																FunctionSymbol* func = static_cast<FunctionSymbol*>(symbol);
 																if (func->getParameters().size() != $3->size())
-																	YYACCEPT;
+																{
+																	yyerror("Unexpected amount of arguments provided when calling '%s'. Expected %u, got %u.",
+																		func->getName().c_str(), func->getParameters().size(), $3->size());
+																	YYERROR;
+																}
 
 																$$ = new CallStatement(func, *$3);
 															}
@@ -283,24 +326,43 @@ expr    :   expr PLUS expr { $$ = new BinaryExpression(BINARY_OP_PLUS, $1, $3); 
 					// We can look for functions only in global space
 					Symbol* symbol = nullptr;
 					if ((symbol = context.globalSymbolTable()->findSymbol(*$1)) == nullptr)
-						YYACCEPT;
+					{
+						yyerror("Undeclared identifier '%s' used.", $1->c_str());
+						YYERROR;
+					}
 
 					// Symbol needs to represent function
 					if (symbol->getType() != Symbol::FUNCTION)
-						YYACCEPT;
+					{
+						yyerror("Identifier '%s' is not a function.", symbol->getName().c_str());
+						YYERROR;
+					}
 
 					// Check whether number of parameters match
 					FunctionSymbol* func = static_cast<FunctionSymbol*>(symbol);
 					if (func->getParameters().size() != $3->size())
-						YYACCEPT;
+					{
+						yyerror("Unexpected amount of arguments provided when calling '%s'. Expected %u, got %u.",
+							func->getName().c_str(), func->getParameters().size(), $3->size());
+						YYERROR;
+					}
 
 					$$ = new Call(func, *$3);
 				}
 		|   ID  {
 					// Find the symbol that represents the variable
 					Symbol* symbol = context.findSymbol(*$1);
-					if (symbol == nullptr || symbol->getType() != Symbol::VARIABLE)
-						YYACCEPT;
+					if (symbol == nullptr)
+					{
+						yyerror("Undeclared identifier '%s' used.", $1->c_str());
+						YYERROR;
+					}
+
+					if (symbol->getType() != Symbol::VARIABLE)
+					{
+						yyerror("Identifier '%s' is not a variable.", symbol->getName().c_str());
+						YYERROR;
+					}
 
 					$$ = new Variable(symbol);
 				}

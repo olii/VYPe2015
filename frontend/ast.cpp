@@ -158,13 +158,17 @@ ir::BasicBlock* IfStatement::generateIrBlocks(ir::Builder& builder)
 	builder.setActiveBasicBlock(ifBlock);
 	ir::BasicBlock* endIfBlock = _ifStatements->generateIrBlocks(builder);
 	builder.setActiveBasicBlock(endIfBlock);
-	builder.createJump(joinBlock);
+	// Create trailing jump only when the last instruction of basic block is not return
+	if (dynamic_cast<ir::ReturnInstruction*>(endIfBlock->getTerminalInstruction()) == nullptr)
+		builder.createJump(joinBlock);
 
 	builder.addBasicBlock(elseBlock);
 	builder.setActiveBasicBlock(elseBlock);
 	ir::BasicBlock* endElseBlock = _elseStatements->generateIrBlocks(builder);
 	builder.setActiveBasicBlock(endElseBlock);
-	builder.createJump(joinBlock);
+	// Create trailing jump only when the last instruction of basic block is not return
+	if (dynamic_cast<ir::ReturnInstruction*>(endElseBlock->getTerminalInstruction()) == nullptr)
+		builder.createJump(joinBlock);
 
 	builder.addBasicBlock(joinBlock);
 	builder.setActiveBasicBlock(joinBlock);
@@ -220,10 +224,25 @@ void Function::generateIr(ir::Builder& builder)
 		return;
 
 	builder.setActiveFunction(irFunction);
-	ir::BasicBlock* entryBlock = builder.createBasicBlock();
-	builder.addBasicBlock(entryBlock);
+	ir::BasicBlock* entryBlock = irFunction->getEntryBasicBlock();
 	builder.setActiveBasicBlock(entryBlock);
 	_body->generateIrBlocks(builder);
+
+	// Add jump to the terminal block of the function of every single basic block with no successor
+	for (auto& bb : irFunction->getBasicBlocks())
+	{
+		if (bb == irFunction->getTerminalBasicBlock())
+			continue;
+
+		if (bb->getTerminalInstruction() == nullptr ||
+			((dynamic_cast<ir::ReturnInstruction*>(bb->getTerminalInstruction()) == nullptr) &&
+			 (dynamic_cast<ir::JumpInstruction*>(bb->getTerminalInstruction()) == nullptr) &&
+			 (dynamic_cast<ir::CondJumpInstruction*>(bb->getTerminalInstruction()) == nullptr)))
+		{
+			builder.setActiveBasicBlock(bb);
+			builder.createJump(irFunction->getTerminalBasicBlock());
+		}
+	}
 }
 
 void Program::generateIr(ir::Builder& builder)

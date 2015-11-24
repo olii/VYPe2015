@@ -20,6 +20,7 @@ public:
 
 	uint64_t getId() const;
 
+	Instruction* getTerminalInstruction() const;
 	std::vector<Instruction*>& getInstructions();
 	void addInstruction(Instruction* instruction);
 

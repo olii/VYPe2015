@@ -22,6 +22,11 @@ BasicBlock* Function::getEntryBasicBlock() const
 	return _basicBlocks.front();
 }
 
+BasicBlock* Function::getTerminalBasicBlock() const
+{
+	return _basicBlocks.back();
+}
+
 std::vector<BasicBlock*>& Function::getBasicBlocks()
 {
 	return _basicBlocks;
@@ -29,7 +34,11 @@ std::vector<BasicBlock*>& Function::getBasicBlocks()
 
 void Function::addBasicBlock(BasicBlock* basicBlock)
 {
-	_basicBlocks.push_back(basicBlock);
+	// So far no entry and terminal block, just insert regularry
+	if (_basicBlocks.size() < 2)
+		_basicBlocks.push_back(basicBlock);
+	else
+		_basicBlocks.insert(_basicBlocks.end() - 1, basicBlock);
 }
 
 const std::string& Function::getName() const

@@ -18,8 +18,16 @@ Function* Builder::createFunction(const std::string& name, const std::vector<Val
 	if (getFunction(name) != nullptr)
 		return nullptr;
 
-	_functions[name] = new Function(name, arguments);
-	return _functions[name];
+	Function* func = new Function(name, arguments);
+	func->addBasicBlock(createBasicBlock()); // entry basic block
+	func->addBasicBlock(createBasicBlock()); // terminal basic block
+	_functions[name] = func;
+	return func;
+}
+
+Function* Builder::getActiveFunction() const
+{
+	return _activeFunction;
 }
 
 Function* Builder::getFunction(const std::string& name) const
@@ -181,6 +189,8 @@ void Builder::createReturn(Value* value)
 		_activeBasicBlock->addUse(value);
 
 	_activeBasicBlock->addInstruction(new ReturnInstruction(value));
+	_activeBasicBlock->addSuccessor(_activeFunction->getTerminalBasicBlock());
+	_activeFunction->getTerminalBasicBlock()->addPredecessor(_activeBasicBlock);
 }
 
 std::string Builder::codeText() const

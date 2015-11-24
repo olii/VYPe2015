@@ -17,6 +17,7 @@ public:
 	void accept(IrVisitor& visitor);
 
 	BasicBlock* getEntryBasicBlock() const;
+	BasicBlock* getTerminalBasicBlock() const;
 	std::vector<BasicBlock*>& getBasicBlocks();
 	void addBasicBlock(BasicBlock* basicBlock);
 
