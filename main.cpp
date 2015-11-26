@@ -6,6 +6,7 @@
 // Have to be included last
 #include "frontend/c_parser.h"
 
+extern FILE* yyin;
 extern int yyparse();
 extern int yydebug;
 
