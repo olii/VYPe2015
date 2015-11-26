@@ -43,10 +43,6 @@ void PrintIrVisitor::visit(Function* func)
 	{
 		_os << "@" << bb->getId() << ": ";
 		bb->accept(*this);
-		_os << "\n";
-
-		for (Instruction* inst : bb->getInstructions())
-			inst->accept(*this);
 	}
 
 	_os << "\n";
@@ -94,7 +90,10 @@ void PrintIrVisitor::visit(BasicBlock* block)
 		use->accept(*this);
 		prefix = ", ";
 	}
-	_os << (any ? "" : prefix) << "]";
+	_os << (any ? "" : prefix) << "]\n";
+
+	for (Instruction* inst : block->getInstructions())
+		inst->accept(*this);
 }
 
 void PrintIrVisitor::visit(NamedValue* value)
