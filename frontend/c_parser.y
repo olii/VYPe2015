@@ -264,7 +264,16 @@ decl_id_list    :   decl_id_list COMMA ID   { $$->push_back(*$3); }
 				|   ID                      { $$ = new std::vector<std::string>({*$1}); }
 				;
 
-if_stmt :   IF LEFT_PAREN expr RIGHT_PAREN          { context.newSymbolTable(); }
+if_stmt :   IF LEFT_PAREN expr RIGHT_PAREN          {
+														if ($3->getDataType() != Symbol::DataType::INT)
+														{
+															yyerror("Condition of if statement is of type '%s'. Must be 'int'.",
+																Symbol::dataTypeToString($3->getDataType()).c_str());
+															YYERROR;
+														}
+
+														context.newSymbolTable();
+													}
 				LEFT_CBRACE stmts RIGHT_CBRACE ELSE {
 														context.popSymbolTable();
 														context.newSymbolTable();
@@ -276,7 +285,16 @@ if_stmt :   IF LEFT_PAREN expr RIGHT_PAREN          { context.newSymbolTable(); 
 
 		;
 
-while_stmt  :   WHILE LEFT_PAREN expr RIGHT_PAREN   { context.newSymbolTable(); }
+while_stmt  :   WHILE LEFT_PAREN expr RIGHT_PAREN   {
+														if ($3->getDataType() != Symbol::DataType::INT)
+														{
+															yyerror("Condition of while statement is of type '%s'. Must be 'int'.",
+																Symbol::dataTypeToString($3->getDataType()).c_str());
+															YYERROR;
+														}
+
+														context.newSymbolTable();
+													}
 					LEFT_CBRACE stmts RIGHT_CBRACE  {
 														$$ = new WhileStatement($3, $7);
 														context.popSymbolTable();
