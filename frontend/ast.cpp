@@ -46,11 +46,13 @@ ir::Value* UnaryExpression::generateIrValue(ir::Builder& builder)
 	ir::Value* operand = _operand->generateIrValue(builder);
 
 	ir::Value* resultValue = nullptr;
-	switch (_operation)
+	switch (getType())
 	{
-		case UNARY_OP_NOT:
+		case Expression::Type::NOT:
 			resultValue = builder.createUnaryOperation<ir::NotInstruction>(operand);
 			break;
+		default:
+			return nullptr;
 	}
 
 	return resultValue;
@@ -62,47 +64,49 @@ ir::Value* BinaryExpression::generateIrValue(ir::Builder& builder)
 	ir::Value* rightOperandValue = _rightOperand->generateIrValue(builder);
 
 	ir::Value* resultValue = nullptr;
-	switch (_operation)
+	switch (getType())
 	{
-		case BINARY_OP_PLUS:
+		case Expression::Type::ADD:
 			resultValue = builder.createBinaryOperation<ir::AddInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_MINUS:
+		case Expression::Type::SUBTRACT:
 			resultValue = builder.createBinaryOperation<ir::SubtractInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_MULTIPLY:
+		case Expression::Type::MULTIPLY:
 			resultValue = builder.createBinaryOperation<ir::MultiplyInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_DIVIDE:
+		case Expression::Type::DIVIDE:
 			resultValue = builder.createBinaryOperation<ir::DivideInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_MODULO:
+		case Expression::Type::MODULO:
 			resultValue = builder.createBinaryOperation<ir::ModuloInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_LESS:
+		case Expression::Type::LESS:
 			resultValue = builder.createBinaryOperation<ir::LessInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_LESS_EQUAL:
+		case Expression::Type::LESS_EQUAL:
 			resultValue = builder.createBinaryOperation<ir::LessEqualInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_GREATER:
+		case Expression::Type::GREATER:
 			resultValue = builder.createBinaryOperation<ir::GreaterInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_GREATER_EQUAL:
+		case Expression::Type::GREATER_EQUAL:
 			resultValue = builder.createBinaryOperation<ir::GreaterEqualInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_EQUAL:
+		case Expression::Type::EQUAL:
 			resultValue = builder.createBinaryOperation<ir::EqualInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_NOT_EQUAL:
+		case Expression::Type::NOT_EQUAL:
 			resultValue = builder.createBinaryOperation<ir::NotEqualInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_AND:
+		case Expression::Type::AND:
 			resultValue = builder.createBinaryOperation<ir::AndInstruction>(leftOperandValue, rightOperandValue);
 			break;
-		case BINARY_OP_OR:
+		case Expression::Type::OR:
 			resultValue = builder.createBinaryOperation<ir::OrInstruction>(leftOperandValue, rightOperandValue);
 			break;
+		default:
+			return nullptr;
 	}
 
 	return resultValue;

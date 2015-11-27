@@ -10,6 +10,23 @@ Symbol::~Symbol()
 {
 }
 
+std::string Symbol::dataTypeToString(Symbol::DataType dataType)
+{
+	switch (dataType)
+	{
+		case Symbol::DataType::INT:
+			return "int";
+		case Symbol::DataType::STRING:
+			return "string";
+		case Symbol::DataType::CHAR:
+			return "char";
+		default:
+			break;
+	}
+
+	return "void";
+}
+
 Symbol::DataType Symbol::stringToDataType(const std::string& typeString)
 {
 	if (typeString == "int")

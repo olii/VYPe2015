@@ -36,14 +36,43 @@ private:
 class Expression : public ASTNode
 {
 public:
+	enum class Type
+	{
+		ADD,
+		SUBTRACT,
+		MULTIPLY,
+		DIVIDE,
+		MODULO,
+		LESS,
+		LESS_EQUAL,
+		GREATER,
+		GREATER_EQUAL,
+		EQUAL,
+		NOT_EQUAL,
+		AND,
+		OR,
+		NOT,
+		INT,
+		STRING,
+		CHAR,
+		VARIABLE,
+		CALL
+	};
+
 	Expression(const Expression&) = delete;
 	virtual ~Expression() {}
 
+	Type getType() const { return _type; }
+	Symbol::DataType getDataType() const { return _dataType; }
+
 protected:
-	Expression() {}
+	Expression(Type type, Symbol::DataType dataType) : _type(type), _dataType(dataType) {}
 
 private:
 	Expression& operator =(const Expression&);
+
+	Type _type;
+	Symbol::DataType _dataType;
 };
 
 template <typename T> class TerminalExpression : public Expression
@@ -53,7 +82,7 @@ public:
 	virtual ~TerminalExpression() {}
 
 protected:
-	TerminalExpression(const T& data) : Expression(), _data(data) {}
+	TerminalExpression(Type type, Symbol::DataType dataType, const T& data) : Expression(type, dataType), _data(data) {}
 
 	T _data;
 
@@ -64,7 +93,7 @@ private:
 class IntLiteral : public TerminalExpression<int>
 {
 public:
-	IntLiteral(int data) : TerminalExpression<int>(data) {}
+	IntLiteral(int data) : TerminalExpression<int>(Type::INT, Symbol::DataType::INT, data) {}
 	IntLiteral(const IntLiteral&) = delete;
 	virtual ~IntLiteral() {}
 
@@ -78,7 +107,7 @@ private:
 class CharLiteral : public TerminalExpression<char>
 {
 public:
-	CharLiteral(char data) : TerminalExpression<char>(data) {}
+	CharLiteral(char data) : TerminalExpression<char>(Type::CHAR, Symbol::DataType::CHAR, data) {}
 	CharLiteral(const IntLiteral&) = delete;
 	virtual ~CharLiteral() {}
 
@@ -92,7 +121,7 @@ private:
 class StringLiteral : public TerminalExpression<std::string>
 {
 public:
-	StringLiteral(const std::string& data) : TerminalExpression<std::string>(data) {}
+	StringLiteral(const std::string& data) : TerminalExpression<std::string>(Type::STRING, Symbol::DataType::STRING, data) {}
 	StringLiteral(const IntLiteral&) = delete;
 	virtual ~StringLiteral() {}
 
@@ -103,10 +132,10 @@ private:
 	StringLiteral& operator =(const StringLiteral&);
 };
 
-class Variable : public TerminalExpression<Symbol*>
+class Variable : public TerminalExpression<VariableSymbol*>
 {
 public:
-	Variable(Symbol* data) : TerminalExpression<Symbol*>(data) {}
+	Variable(VariableSymbol* data) : TerminalExpression<VariableSymbol*>(Type::VARIABLE, data->getDataType(), data) {}
 	Variable(const Variable&) = delete;
 	virtual ~Variable() {}
 
@@ -121,7 +150,7 @@ class Call : public TerminalExpression<FunctionSymbol*>
 {
 public:
 	Call(FunctionSymbol* function, const std::vector<Expression*>& parameters) :
-		TerminalExpression<FunctionSymbol*>(function), _parameters(parameters) {}
+		TerminalExpression<FunctionSymbol*>(Type::CALL, function->getReturnType(), function), _parameters(parameters) {}
 	Call(const Call&) = delete;
 	virtual ~Call() {}
 
@@ -134,15 +163,10 @@ private:
 	std::vector<Expression*> _parameters;
 };
 
-enum UnaryOp
-{
-	UNARY_OP_NOT    = 0
-};
-
 class UnaryExpression : public Expression
 {
 public:
-	UnaryExpression(UnaryOp operation, Expression* operand) : Expression(), _operation(operation), _operand(operand) {}
+	UnaryExpression(Type type, Symbol::DataType dataType, Expression* operand) : Expression(type, dataType), _operand(operand) {}
 	UnaryExpression(const UnaryExpression&) = delete;
 	virtual ~UnaryExpression() {}
 
@@ -152,32 +176,14 @@ public:
 private:
 	UnaryExpression& operator =(const UnaryExpression&);
 
-	UnaryOp _operation;
 	Expression* _operand;
-};
-
-enum BinaryOp
-{
-	BINARY_OP_PLUS          = 0,
-	BINARY_OP_MINUS,
-	BINARY_OP_MULTIPLY,
-	BINARY_OP_DIVIDE,
-	BINARY_OP_MODULO,
-	BINARY_OP_LESS,
-	BINARY_OP_LESS_EQUAL,
-	BINARY_OP_GREATER,
-	BINARY_OP_GREATER_EQUAL,
-	BINARY_OP_EQUAL,
-	BINARY_OP_NOT_EQUAL,
-	BINARY_OP_AND,
-	BINARY_OP_OR
 };
 
 class BinaryExpression : public Expression
 {
 public:
-	BinaryExpression(BinaryOp operation, Expression* leftOperand, Expression* rightOperand) :
-		Expression(), _operation(operation), _leftOperand(leftOperand), _rightOperand(rightOperand) {}
+	BinaryExpression(Type type, Symbol::DataType dataType, Expression* leftOperand, Expression* rightOperand) :
+		Expression(type, dataType), _leftOperand(leftOperand), _rightOperand(rightOperand) {}
 	BinaryExpression(const BinaryExpression&) = delete;
 	virtual ~BinaryExpression() {}
 
@@ -187,7 +193,6 @@ public:
 private:
 	BinaryExpression& operator =(const BinaryExpression&);
 
-	BinaryOp _operation;
 	Expression* _leftOperand;
 	Expression* _rightOperand;
 };
@@ -226,7 +231,7 @@ private:
 class AssignStatement : public Statement
 {
 public:
-	AssignStatement(Symbol* variable, Expression* expression) : Statement(), _variable(variable), _expression(expression) {}
+	AssignStatement(VariableSymbol* variable, Expression* expression) : Statement(), _variable(variable), _expression(expression) {}
 	AssignStatement(const AssignStatement&) = delete;
 	virtual ~AssignStatement() {}
 
@@ -236,7 +241,7 @@ public:
 private:
 	AssignStatement& operator =(const AssignStatement&);
 
-	Symbol* _variable;
+	VariableSymbol* _variable;
 	Expression* _expression;
 };
 

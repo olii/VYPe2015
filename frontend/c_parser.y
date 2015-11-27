@@ -204,9 +204,22 @@ stmt_list   :   stmt_list stmt              {
 assign_stmt :   ID ASSIGN expr SEMICOLON    {
 												Symbol* symbol = context.findSymbol(*$1);
 												if (symbol == nullptr || symbol->getType() != Symbol::VARIABLE)
-													YYACCEPT;
+												{
+													yyerror("Assignment to undefined symbol '%s'.", $1->c_str());
+													YYERROR;
+												}
 
-												$$ = new AssignStatement(symbol, $3);
+												VariableSymbol* varSymbol = static_cast<VariableSymbol*>(symbol);
+												if (varSymbol->getDataType() != $3->getDataType())
+												{
+													yyerror("Unable to assign '%s' to variable '%s' of type '%s'.",
+																Symbol::dataTypeToString($3->getDataType()).c_str(),
+																varSymbol->getName().c_str(),
+																Symbol::dataTypeToString(varSymbol->getDataType()).c_str());
+													YYERROR;
+												}
+
+												$$ = new AssignStatement(varSymbol, $3);
 											}
 			;
 
@@ -306,20 +319,159 @@ expr_list   :   expr_list COMMA expr    { $$->push_back($3); }
 			|   expr                    { $$ = new std::vector<Expression*>({$1}); }
 			;
 
-expr    :   expr PLUS expr { $$ = new BinaryExpression(BINARY_OP_PLUS, $1, $3); }
-		|   expr MINUS expr { $$ = new BinaryExpression(BINARY_OP_MINUS, $1, $3); }
-		|   expr MULTIPLY expr { $$ = new BinaryExpression(BINARY_OP_MULTIPLY, $1, $3); }
-		|   expr DIVIDE expr { $$ = new BinaryExpression(BINARY_OP_DIVIDE, $1, $3); }
-		|   expr MODULO expr { $$ = new BinaryExpression(BINARY_OP_MODULO, $1, $3); }
-		|   expr LESS expr { $$ = new BinaryExpression(BINARY_OP_LESS, $1, $3); }
-		|   expr LESS_EQUAL expr { $$ = new BinaryExpression(BINARY_OP_LESS_EQUAL, $1, $3); }
-		|   expr GREATER expr { $$ = new BinaryExpression(BINARY_OP_GREATER, $1, $3); }
-		|   expr GREATER_EQUAL expr { $$ = new BinaryExpression(BINARY_OP_GREATER_EQUAL, $1, $3); }
-		|   expr EQUAL expr { $$ = new BinaryExpression(BINARY_OP_EQUAL, $1, $3); }
-		|   expr NOT_EQUAL expr { $$ = new BinaryExpression(BINARY_OP_NOT_EQUAL, $1, $3); }
-		|   expr AND expr { $$ = new BinaryExpression(BINARY_OP_AND, $1, $3); }
-		|   expr OR expr { $$ = new BinaryExpression(BINARY_OP_OR, $1, $3); }
-		|   NOT expr { $$ = new UnaryExpression(UNARY_OP_NOT, $2); }
+expr    :   expr PLUS expr	{
+								if (($1->getDataType() != Symbol::DataType::INT) || ($3->getDataType() != Symbol::DataType::INT))
+								{
+									yyerror("No match for operation '%s + %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::ADD, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr MINUS expr	{
+								if (($1->getDataType() != Symbol::DataType::INT) || ($3->getDataType() != Symbol::DataType::INT))
+								{
+									yyerror("No match for operation '%s - %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::SUBTRACT, Symbol::DataType::INT, $1, $3);
+							}
+
+		|   expr MULTIPLY expr	{
+								if (($1->getDataType() != Symbol::DataType::INT) || ($3->getDataType() != Symbol::DataType::INT))
+								{
+									yyerror("No match for operation '%s * %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::MULTIPLY, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr DIVIDE expr	{
+								if (($1->getDataType() != Symbol::DataType::INT) || ($3->getDataType() != Symbol::DataType::INT))
+								{
+									yyerror("No match for operation '%s / %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::DIVIDE, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr MODULO expr	{
+								if (($1->getDataType() != Symbol::DataType::INT) || ($3->getDataType() != Symbol::DataType::INT))
+								{
+									yyerror("No match for operation '%s % %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::MODULO, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr LESS expr	{
+								if ($1->getDataType() != $3->getDataType())
+								{
+									yyerror("No match for operation '%s < %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::LESS, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr LESS_EQUAL expr	{
+								if ($1->getDataType() != $3->getDataType())
+								{
+									yyerror("No match for operation '%s <= %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::LESS_EQUAL, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr GREATER expr	{
+								if ($1->getDataType() != $3->getDataType())
+								{
+									yyerror("No match for operation '%s > %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::GREATER, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr GREATER_EQUAL expr	{
+								if ($1->getDataType() != $3->getDataType())
+								{
+									yyerror("No match for operation '%s >= %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::GREATER_EQUAL, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr EQUAL expr		{
+								if ($1->getDataType() != $3->getDataType())
+								{
+									yyerror("No match for operation '%s == %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::EQUAL, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr NOT_EQUAL expr	{
+								if ($1->getDataType() != $3->getDataType())
+								{
+									yyerror("No match for operation '%s != %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::NOT_EQUAL, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr AND expr	{
+								if (($1->getDataType() != Symbol::DataType::INT) || ($3->getDataType() != Symbol::DataType::INT))
+								{
+									yyerror("No match for operation '%s && %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::AND, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr OR expr	{
+								if (($1->getDataType() != Symbol::DataType::INT) || ($3->getDataType() != Symbol::DataType::INT))
+								{
+									yyerror("No match for operation '%s || %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::OR, Symbol::DataType::INT, $1, $3);
+							}
+		|   NOT expr		{
+								if ($2->getDataType() != Symbol::DataType::INT)
+								{
+									yyerror("No match for operation '! %s'.",
+										Symbol::dataTypeToString($2->getDataType()).c_str());
+									YYERROR;
+								}
+								$$ = new UnaryExpression(Expression::Type::NOT, Symbol::DataType::INT, $2);
+							}
 		|   LEFT_PAREN expr RIGHT_PAREN { $$ = $2; }
 		|   ID LEFT_PAREN exprs RIGHT_PAREN
 				{
@@ -364,7 +516,7 @@ expr    :   expr PLUS expr { $$ = new BinaryExpression(BINARY_OP_PLUS, $1, $3); 
 						YYERROR;
 					}
 
-					$$ = new Variable(symbol);
+					$$ = new Variable(static_cast<VariableSymbol*>(symbol));
 				}
 		|   INT_LIT { $$ = new IntLiteral($1); }
 		|   CHAR_LIT { $$ = new CharLiteral($1); }

@@ -31,6 +31,7 @@ public:
 	Symbol(const Symbol&) = delete;
 	virtual ~Symbol();
 
+	static std::string dataTypeToString(DataType dataType);
 	static DataType stringToDataType(const std::string& typeString);
 	static ir::Value::DataType dataTypeToIrDataType(DataType dataType);
 
