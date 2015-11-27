@@ -52,6 +52,7 @@ public:
 		AND,
 		OR,
 		NOT,
+		TYPECAST,
 		INT,
 		STRING,
 		CHAR,

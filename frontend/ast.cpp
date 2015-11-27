@@ -49,7 +49,10 @@ ir::Value* UnaryExpression::generateIrValue(ir::Builder& builder)
 	switch (getType())
 	{
 		case Expression::Type::NOT:
-			resultValue = builder.createUnaryOperation<ir::NotInstruction>(operand);
+			resultValue = builder.createUnaryOperation<ir::NotInstruction>(operand, Symbol::dataTypeToIrDataType(getDataType()));
+			break;
+		case Expression::Type::TYPECAST:
+			resultValue = builder.createUnaryOperation<ir::TypecastInstruction>(operand, Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		default:
 			return nullptr;
@@ -67,43 +70,56 @@ ir::Value* BinaryExpression::generateIrValue(ir::Builder& builder)
 	switch (getType())
 	{
 		case Expression::Type::ADD:
-			resultValue = builder.createBinaryOperation<ir::AddInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::AddInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::SUBTRACT:
-			resultValue = builder.createBinaryOperation<ir::SubtractInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::SubtractInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::MULTIPLY:
-			resultValue = builder.createBinaryOperation<ir::MultiplyInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::MultiplyInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::DIVIDE:
-			resultValue = builder.createBinaryOperation<ir::DivideInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::DivideInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::MODULO:
-			resultValue = builder.createBinaryOperation<ir::ModuloInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::ModuloInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::LESS:
-			resultValue = builder.createBinaryOperation<ir::LessInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::LessInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::LESS_EQUAL:
-			resultValue = builder.createBinaryOperation<ir::LessEqualInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::LessEqualInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::GREATER:
-			resultValue = builder.createBinaryOperation<ir::GreaterInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::GreaterInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::GREATER_EQUAL:
-			resultValue = builder.createBinaryOperation<ir::GreaterEqualInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::GreaterEqualInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::EQUAL:
-			resultValue = builder.createBinaryOperation<ir::EqualInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::EqualInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::NOT_EQUAL:
-			resultValue = builder.createBinaryOperation<ir::NotEqualInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::NotEqualInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::AND:
-			resultValue = builder.createBinaryOperation<ir::AndInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::AndInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		case Expression::Type::OR:
-			resultValue = builder.createBinaryOperation<ir::OrInstruction>(leftOperandValue, rightOperandValue);
+			resultValue = builder.createBinaryOperation<ir::OrInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		default:
 			return nullptr;
