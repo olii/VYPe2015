@@ -113,35 +113,36 @@ Value* Builder::createDeclaration(const std::string& name, Value::DataType dataT
 	return value;
 }
 
-template Value* Builder::createUnaryOperation<NotInstruction>(Value* operand);
+template Value* Builder::createUnaryOperation<NotInstruction>(Value* operand, Value::DataType resultDataType);
+template Value* Builder::createUnaryOperation<TypecastInstruction>(Value* operand, Value::DataType resultDataType);
 
-template <typename T> Value* Builder::createUnaryOperation(Value* operand)
+template <typename T> Value* Builder::createUnaryOperation(Value* operand, Value::DataType resultDataType)
 {
 	static_assert(std::is_base_of<UnaryInstruction, T>::value, "Builder::createUnaryOperation template type needs to be derived from UnaryInstruction.");
 
 	if (operand->getType() == Value::Type::NAMED)
 		_activeBasicBlock->addUse(operand);
 
-	Value* resultValue = createTemporaryValue(operand->getDataType());
+	Value* resultValue = createTemporaryValue(resultDataType);
 	_activeBasicBlock->addInstruction(new T(resultValue, operand));
 	return resultValue;
 }
 
-template Value* Builder::createBinaryOperation<AddInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<SubtractInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<MultiplyInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<DivideInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<ModuloInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<LessInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<LessEqualInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<GreaterInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<GreaterEqualInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<EqualInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<NotEqualInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<AndInstruction>(Value* leftOperand, Value* rightOperand);
-template Value* Builder::createBinaryOperation<OrInstruction>(Value* leftOperand, Value* rightOperand);
+template Value* Builder::createBinaryOperation<AddInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<SubtractInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<MultiplyInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<DivideInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<ModuloInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<LessInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<LessEqualInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<GreaterInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<GreaterEqualInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<EqualInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<NotEqualInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<AndInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<OrInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
 
-template <typename T> Value* Builder::createBinaryOperation(Value* leftOperand, Value* rightOperand)
+template <typename T> Value* Builder::createBinaryOperation(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType)
 {
 	static_assert(std::is_base_of<BinaryInstruction, T>::value, "Builder::createBinaryOperation template type needs to be derived from BinaryInstruction.");
 
@@ -151,7 +152,7 @@ template <typename T> Value* Builder::createBinaryOperation(Value* leftOperand, 
 	if (rightOperand->getType() == Value::Type::NAMED)
 		_activeBasicBlock->addUse(rightOperand);
 
-	Value* resultValue = createTemporaryValue(leftOperand->getDataType());
+	Value* resultValue = createTemporaryValue(resultDataType);
 	_activeBasicBlock->addInstruction(new T(resultValue, leftOperand, rightOperand));
 	return resultValue;
 }

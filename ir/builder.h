@@ -31,8 +31,8 @@ public:
 	Value* createConstantValue(const std::string& value);
 	Value* createCall(const std::string& functionName, const std::vector<Value*> arguments);
 	Value* createDeclaration(const std::string& name, Value::DataType dataType);
-	template <typename T> Value* createUnaryOperation(Value* operand);
-	template <typename T> Value* createBinaryOperation(Value* leftOperand, Value* rightOperand);
+	template <typename T> Value* createUnaryOperation(Value* operand, Value::DataType resultDataType);
+	template <typename T> Value* createBinaryOperation(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
 
 	void createAssignment(Value* dest, Value* value);
 	void createJump(BasicBlock* destBlock);

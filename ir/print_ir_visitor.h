@@ -41,6 +41,7 @@ public:
 	virtual void visit(AndInstruction* instr) override;
 	virtual void visit(OrInstruction* instr) override;
 	virtual void visit(NotInstruction* instr) override;
+	virtual void visit(TypecastInstruction* instr) override;
 
 private:
 	std::stringstream _os;

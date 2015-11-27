@@ -329,4 +329,15 @@ void PrintIrVisitor::visit(NotInstruction* instr)
 	_os << "\n";
 }
 
+void PrintIrVisitor::visit(TypecastInstruction* instr)
+{
+	_os << Indentation;
+	instr->getResult()->accept(*this);
+	_os << " = ";
+	_os << Value::dataTypeToString(instr->getResult()->getDataType());
+	_os << "(";
+	instr->getOperand()->accept(*this);
+	_os << ")\n";
+}
+
 } // namespace ir

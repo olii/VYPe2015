@@ -259,6 +259,15 @@ public:
 	virtual void accept(IrVisitor& visitor) override;
 };
 
+class TypecastInstruction : public ResultInstruction, public UnaryInstruction
+{
+public:
+	TypecastInstruction(Value* result, Value* operand);
+	virtual ~TypecastInstruction();
+
+	virtual void accept(IrVisitor& visitor) override;
+};
+
 } // namespace ir
 
 #endif // IR_INSTRUCTION_H

@@ -350,4 +350,17 @@ void NotInstruction::accept(IrVisitor& visitor)
 	visitor.visit(this);
 }
 
+TypecastInstruction::TypecastInstruction(Value* result, Value* operand) : ResultInstruction(result), UnaryInstruction(operand)
+{
+}
+
+TypecastInstruction::~TypecastInstruction()
+{
+}
+
+void TypecastInstruction::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
+}
+
 } // namespace ir
