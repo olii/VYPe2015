@@ -42,6 +42,16 @@ SymbolTable* Context::currentSymbolTable()
 	return _symTableStack.back();
 }
 
+void Context::setExpectedReturnType(Symbol::DataType dataType)
+{
+	_expectedReturnType = dataType;
+}
+
+Symbol::DataType Context::getExpectedReturnType() const
+{
+	return _expectedReturnType;
+}
+
 Symbol* Context::findSymbol(const std::string& name)
 {
 	Symbol* symbol = nullptr;

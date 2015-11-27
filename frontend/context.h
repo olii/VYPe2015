@@ -22,12 +22,16 @@ public:
 	SymbolTable* globalSymbolTable();
 	SymbolTable* currentSymbolTable();
 
+	void setExpectedReturnType(Symbol::DataType dataType);
+	Symbol::DataType getExpectedReturnType() const;
+
 	Symbol* findSymbol(const std::string& name);
 	const Symbol* findSymbol(const std::string& name) const;
 
 private:
 	Context& operator =(const Context&);
 
+	Symbol::DataType _expectedReturnType;
 	SymbolTable* _globalSymTable;
 	StackType _symTableStack;
 };
