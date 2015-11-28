@@ -15,3 +15,13 @@ vype-test
 
 " User specific files
 .ycm_extra_conf.py*
+
+" QtCreator
+VYPe.config
+VYPe.creator
+VYPe.creator.user
+VYPe.files
+VYPe.includes
+
+
+
