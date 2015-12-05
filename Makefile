@@ -3,7 +3,7 @@ APP=vype
 
 SRC_FILES=main.cpp
 
-LIBRARIES=frontend ir
+LIBRARIES=frontend ir backend
 
 include $(ROOT)/mak/config.mak
 
@@ -15,7 +15,10 @@ ir:
 frontend: ir
 	@$(MAKE) -C frontend
 
-DEPENDS=ir frontend
+backend: ir
+	@$(MAKE) -C backend
+
+DEPENDS=ir frontend backend
 include $(ROOT)/mak/app.mak
 
 clean: main-clean
@@ -23,6 +26,7 @@ main-clean:
 	@$(MAKE) -C frontend clean
 	@$(MAKE) -C testing clean
 	@$(MAKE) -C ir clean
+	@$(MAKE) -C backend clean
 
 test: all
 	@$(MAKE) -C testing

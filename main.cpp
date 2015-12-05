@@ -2,6 +2,7 @@
 
 #include "frontend/ast.h"
 #include "frontend/context.h"
+#include "backend/asmgenerator.h"
 
 // Have to be included last
 #include "frontend/c_parser.h"
@@ -27,6 +28,8 @@ int main()
 
 	ir::Builder builder;
 	program.generateIr(builder);
+    backend::ASMgenerator generator;
+    generator.translateIR(builder);
 
 	std::cout << builder.codeText() << std::endl;
 	return 0;
