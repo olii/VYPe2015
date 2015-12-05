@@ -41,6 +41,8 @@ public:
 
 	std::string codeText() const;
 
+    std::map<std::string, Function*>& getFunctions(){ return _functions;}
+
 private:
 	std::map<std::string, Function*> _functions;
 	Function* _activeFunction;
