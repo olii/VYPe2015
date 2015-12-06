@@ -32,6 +32,15 @@ ir::Value* Call::generateIrValue(ir::Builder& builder)
 	return builder.createCall(_data->getName(), paramValues);
 }
 
+ir::Value* BuiltinCall::generateIrValue(ir::Builder& builder)
+{
+	std::vector<ir::Value*> paramValues;
+	for (Expression* param : _parameters)
+		paramValues.push_back(param->generateIrValue(builder));
+
+	return builder.createBuiltinCall(_data, Symbol::dataTypeToIrDataType(getDataType()), paramValues);
+}
+
 ir::Value* CallStatement::generateIrValue(ir::Builder& builder)
 {
 	std::vector<ir::Value*> paramValues;
@@ -39,6 +48,15 @@ ir::Value* CallStatement::generateIrValue(ir::Builder& builder)
 		paramValues.push_back(param->generateIrValue(builder));
 
 	return builder.createCall(_function->getName(), paramValues);
+}
+
+ir::Value* BuiltinCallStatement::generateIrValue(ir::Builder& builder)
+{
+	std::vector<ir::Value*> paramValues;
+	for (Expression* param : _parameters)
+		paramValues.push_back(param->generateIrValue(builder));
+
+	return builder.createBuiltinCall(_functionName, Symbol::dataTypeToIrDataType(Symbol::DataType::VOID), paramValues);
 }
 
 ir::Value* UnaryExpression::generateIrValue(ir::Builder& builder)

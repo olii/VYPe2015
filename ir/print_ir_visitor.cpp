@@ -177,6 +177,19 @@ void PrintIrVisitor::visit(CallInstruction* instr)
 	_os << "\n";
 }
 
+void PrintIrVisitor::visit(BuiltinCallInstruction* instr)
+{
+	_os << Indentation;
+	instr->getResult()->accept(*this);
+	_os << " = builtin-call " << instr->getFunctionName();
+	for (Value* arg : instr->getArguments())
+	{
+		_os << ", ";
+		arg->accept(*this);
+	}
+	_os << "\n";
+}
+
 void PrintIrVisitor::visit(AddInstruction* instr)
 {
 	_os << Indentation;

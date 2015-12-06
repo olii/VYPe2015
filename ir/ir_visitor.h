@@ -24,6 +24,7 @@ public:
 	virtual void visit(CondJumpInstruction* instr) = 0;
 	virtual void visit(ReturnInstruction* instr) = 0;
 	virtual void visit(CallInstruction* instr) = 0;
+	virtual void visit(BuiltinCallInstruction* instr) = 0;
 	virtual void visit(AddInstruction* instr) = 0;
 	virtual void visit(SubtractInstruction* instr) = 0;
 	virtual void visit(MultiplyInstruction* instr) = 0;

@@ -57,7 +57,8 @@ public:
 		STRING,
 		CHAR,
 		VARIABLE,
-		CALL
+		CALL,
+		BUILTIN_CALL
 	};
 
 	Expression(const Expression&) = delete;
@@ -160,6 +161,23 @@ public:
 
 private:
 	Call& operator =(const Call&);
+
+	std::vector<Expression*> _parameters;
+};
+
+class BuiltinCall : public TerminalExpression<std::string>
+{
+public:
+	BuiltinCall(const std::string& functionName, Symbol::DataType returnDataType, const std::vector<Expression*>& parameters) :
+		TerminalExpression<std::string>(Type::BUILTIN_CALL, returnDataType, functionName), _parameters(parameters) {}
+	BuiltinCall(const BuiltinCall&) = delete;
+	virtual ~BuiltinCall() {}
+
+	virtual Generates generates() override { return Generates::VALUE; }
+	virtual ir::Value* generateIrValue(ir::Builder& builder) override;
+
+private:
+	BuiltinCall& operator =(const BuiltinCall&);
 
 	std::vector<Expression*> _parameters;
 };
@@ -330,6 +348,23 @@ private:
 	CallStatement& operator =(const CallStatement&);
 
 	FunctionSymbol* _function;
+	std::vector<Expression*> _parameters;
+};
+
+class BuiltinCallStatement : public Statement
+{
+public:
+	BuiltinCallStatement(const std::string& functionName, const std::vector<Expression*>& parameters) : Statement(), _functionName(functionName), _parameters(parameters) {}
+	BuiltinCallStatement(const BuiltinCallStatement&) = delete;
+	virtual ~BuiltinCallStatement() {}
+
+	virtual Generates generates() override { return Generates::VALUE; }
+	virtual ir::Value* generateIrValue(ir::Builder& builder) override;
+
+private:
+	CallStatement& operator =(const CallStatement&);
+
+	std::string _functionName;
 	std::vector<Expression*> _parameters;
 };
 

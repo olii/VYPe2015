@@ -133,6 +133,22 @@ private:
 	std::vector<Value*> _arguments;
 };
 
+class BuiltinCallInstruction : public ResultInstruction
+{
+public:
+	BuiltinCallInstruction(Value* result, const std::string& functionName, const std::vector<Value*>& arguments);
+	virtual ~BuiltinCallInstruction();
+
+	virtual void accept(IrVisitor& visitor) override;
+
+	const std::string& getFunctionName() const;
+	std::vector<Value*>& getArguments();
+
+private:
+	std::string _functionName;
+	std::vector<Value*> _arguments;
+};
+
 class AddInstruction : public ResultInstruction, public BinaryInstruction
 {
 public:

@@ -27,6 +27,7 @@ public:
 	virtual void visit(CondJumpInstruction* instr) override;
 	virtual void visit(ReturnInstruction* instr) override;
 	virtual void visit(CallInstruction* instr) override;
+	virtual void visit(BuiltinCallInstruction* instr) override;
 	virtual void visit(AddInstruction* instr) override;
 	virtual void visit(SubtractInstruction* instr) override;
 	virtual void visit(MultiplyInstruction* instr) override;

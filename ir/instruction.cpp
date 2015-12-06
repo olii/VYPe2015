@@ -168,6 +168,30 @@ void CallInstruction::accept(IrVisitor& visitor)
 	visitor.visit(this);
 }
 
+BuiltinCallInstruction::BuiltinCallInstruction(Value* returnValue, const std::string& functionName, const std::vector<Value*>& arguments)
+	: ResultInstruction(returnValue), _functionName(functionName), _arguments(arguments)
+{
+}
+
+BuiltinCallInstruction::~BuiltinCallInstruction()
+{
+}
+
+const std::string& BuiltinCallInstruction::getFunctionName() const
+{
+	return _functionName;
+}
+
+std::vector<Value*>& BuiltinCallInstruction::getArguments()
+{
+	return _arguments;
+}
+
+void BuiltinCallInstruction::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
+}
+
 AddInstruction::AddInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
 {
 }

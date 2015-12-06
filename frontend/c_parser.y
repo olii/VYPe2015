@@ -45,7 +45,7 @@ void yyerror(const char *s, ...)
 	IF ELSE WHILE RETURN VOID
 %token <intValue> INT_LIT
 %token <charValue> CHAR_LIT
-%token <strValue> STRING_LIT ID TYPE
+%token <strValue> STRING_LIT ID TYPE BUILTIN
 
 %type <function> func_impl
 %type <functionParameters> decl_param_list impl_param_list
@@ -351,7 +351,25 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 
 																$$ = new CallStatement(func, *$3);
 															}
-			;
+			|   BUILTIN LEFT_PAREN exprs RIGHT_PAREN        {
+																if (*$1 == "print")
+																{
+																	if ($3->size() < 1)
+																	{
+																		yyerror("Builtin function 'print' requires at least 1 argument.");
+																		YYERROR;
+																	}
+
+																}
+																else
+																{
+																	yyerror("Builtin function '%s' cannot be in form of statement.", $1->c_str());
+																	YYERROR;
+																}
+
+																$$ = new BuiltinCallStatement(*$1, *$3);
+															}
+														;
 
 empty_stmt  :   SEMICOLON { $$ = nullptr; }
 			;
@@ -563,6 +581,105 @@ expr    :   expr PLUS expr	{
 					}
 
 					$$ = new Call(func, *$3);
+				}
+		|   BUILTIN LEFT_PAREN exprs RIGHT_PAREN
+				{
+					Symbol::DataType returnType;
+					if (*$1 == "print")
+					{
+						if ($3->size() < 1)
+						{
+							yyerror("Builtin function 'print' requires at least 1 argument.");
+							YYERROR;
+						}
+
+						returnType = Symbol::DataType::VOID;
+					}
+					else if (*$1 == "read_char")
+					{
+						if ($3->size() != 0)
+						{
+							yyerror("Builtin function 'read_char' requires 0 arguments.");
+							YYERROR;
+						}
+
+						returnType = Symbol::DataType::CHAR;
+					}
+					else if (*$1 == "read_int")
+					{
+						if ($3->size() != 0)
+						{
+							yyerror("Builtin function 'read_int' requires 0 arguments.");
+							YYERROR;
+						}
+
+						returnType = Symbol::DataType::INT;
+					}
+					else if (*$1 == "read_string")
+					{
+						if ($3->size() != 0)
+						{
+							yyerror("Builtin function 'read_string' requires 0 arguments.");
+							YYERROR;
+						}
+
+						returnType = Symbol::DataType::STRING;
+					}
+					else if (*$1 == "get_at")
+					{
+						if ($3->size() != 2)
+						{
+							yyerror("Builtin function 'get_at' requires 2 arguments.");
+							YYERROR;
+						}
+
+						if (($3->at(0)->getDataType() != Symbol::DataType::STRING) || ($3->at(1)->getDataType() != Symbol::DataType::INT))
+						{
+							yyerror("Function 'get_at' requires its arguments type to be (string, int). Got (%s, %s).",
+								Symbol::dataTypeToString($3->at(0)->getDataType()),
+								Symbol::dataTypeToString($3->at(1)->getDataType()));
+						}
+
+						returnType = Symbol::DataType::CHAR;
+					}
+					else if (*$1 == "set_at")
+					{
+						if ($3->size() != 3)
+						{
+							yyerror("Builtin function 'set_at' requires 3 arguments.");
+							YYERROR;
+						}
+
+						if (($3->at(0)->getDataType() != Symbol::DataType::STRING) || ($3->at(1)->getDataType() != Symbol::DataType::INT)
+							|| ($3->at(2)->getDataType() != Symbol::DataType::CHAR))
+						{
+							yyerror("Function 'set_at' requires its arguments type to be (string, int, char). Got (%s, %s, %s).",
+								Symbol::dataTypeToString($3->at(0)->getDataType()),
+								Symbol::dataTypeToString($3->at(1)->getDataType()),
+								Symbol::dataTypeToString($3->at(2)->getDataType()));
+						}
+
+						returnType = Symbol::DataType::STRING;
+					}
+					else if (*$1 == "strcat")
+					{
+						if ($3->size() != 2)
+						{
+							yyerror("Builtin function 'strcat' requires 2 arguments.");
+							YYERROR;
+						}
+
+						if (($3->at(0)->getDataType() != Symbol::DataType::STRING) || ($3->at(1)->getDataType() != Symbol::DataType::STRING))
+						{
+							yyerror("Function 'strcat' requires its arguments type to be (string, string). Got (%s, %s).",
+								Symbol::dataTypeToString($3->at(0)->getDataType()),
+								Symbol::dataTypeToString($3->at(1)->getDataType()));
+						}
+
+						returnType = Symbol::DataType::STRING;
+					}
+
+					$$ = new BuiltinCall(*$1, returnType, *$3);
 				}
 		|   ID  {
 					// Find the symbol that represents the variable

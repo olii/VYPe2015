@@ -212,6 +212,11 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
 
 }
 
+void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
+{
+	// TODO: IMPLEMENT ME
+}
+
 void ASMgenerator::visit(ir::AddInstruction *instr)
 {
 

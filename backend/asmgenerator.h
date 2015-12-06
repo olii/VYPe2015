@@ -30,6 +30,7 @@ public:
     virtual void visit(ir::CondJumpInstruction* instr) override;
     virtual void visit(ir::ReturnInstruction* instr) override;
     virtual void visit(ir::CallInstruction* instr) override;
+    virtual void visit(ir::BuiltinCallInstruction* instr) override;
     virtual void visit(ir::AddInstruction* instr) override;
     virtual void visit(ir::SubtractInstruction* instr) override;
     virtual void visit(ir::MultiplyInstruction* instr) override;

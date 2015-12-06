@@ -23,8 +23,24 @@ int main()
 {
 	//yydebug = 1;
 	yyin = fopen("test.c", "r");
-	if (yyparse() != 0)
+	int result = yyparse();
+	std::cout << result << std::endl;
+	if (result != 0)
 		return 1;
+
+	// Check presence of main
+	frontend::Symbol* mainSymbol = context.globalSymbolTable()->findSymbol("main");
+	if (mainSymbol == nullptr)
+		return 2;
+
+	// It must be a function
+	if (mainSymbol->getType() != frontend::Symbol::Type::FUNCTION)
+		return 2;
+
+	// It has to always be int main(void)
+	frontend::FunctionSymbol* funcMainSymbol = static_cast<frontend::FunctionSymbol*>(mainSymbol);
+	if (funcMainSymbol->getReturnType() != frontend::Symbol::DataType::INT || funcMainSymbol->getParameters().size() != 0)
+		return 2;
 
 	ir::Builder builder;
 	program.generateIr(builder);

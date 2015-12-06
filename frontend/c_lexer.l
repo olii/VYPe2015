@@ -88,6 +88,10 @@ int|char|string         {
 							yylval.strValue = new std::string(yytext, yyleng);
 							return TYPE;
 						}
+print|read_char|read_int|read_string|get_at|set_at|strcat {
+							yylval.strValue = new std::string(yytext, yyleng);
+							return BUILTIN;
+						}
 {digit}+                {
 							yylval.intValue = atoi(yytext);
 							return INT_LIT;
