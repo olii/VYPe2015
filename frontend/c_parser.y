@@ -636,8 +636,8 @@ expr    :   expr PLUS expr	{
 						if (($3->at(0)->getDataType() != Symbol::DataType::STRING) || ($3->at(1)->getDataType() != Symbol::DataType::INT))
 						{
 							yyerror("Function 'get_at' requires its arguments type to be (string, int). Got (%s, %s).",
-								Symbol::dataTypeToString($3->at(0)->getDataType()),
-								Symbol::dataTypeToString($3->at(1)->getDataType()));
+								Symbol::dataTypeToString($3->at(0)->getDataType()).c_str(),
+								Symbol::dataTypeToString($3->at(1)->getDataType()).c_str());
 						}
 
 						returnType = Symbol::DataType::CHAR;
@@ -654,9 +654,9 @@ expr    :   expr PLUS expr	{
 							|| ($3->at(2)->getDataType() != Symbol::DataType::CHAR))
 						{
 							yyerror("Function 'set_at' requires its arguments type to be (string, int, char). Got (%s, %s, %s).",
-								Symbol::dataTypeToString($3->at(0)->getDataType()),
-								Symbol::dataTypeToString($3->at(1)->getDataType()),
-								Symbol::dataTypeToString($3->at(2)->getDataType()));
+								Symbol::dataTypeToString($3->at(0)->getDataType()).c_str(),
+								Symbol::dataTypeToString($3->at(1)->getDataType()).c_str(),
+								Symbol::dataTypeToString($3->at(2)->getDataType()).c_str());
 						}
 
 						returnType = Symbol::DataType::STRING;
@@ -672,8 +672,8 @@ expr    :   expr PLUS expr	{
 						if (($3->at(0)->getDataType() != Symbol::DataType::STRING) || ($3->at(1)->getDataType() != Symbol::DataType::STRING))
 						{
 							yyerror("Function 'strcat' requires its arguments type to be (string, string). Got (%s, %s).",
-								Symbol::dataTypeToString($3->at(0)->getDataType()),
-								Symbol::dataTypeToString($3->at(1)->getDataType()));
+								Symbol::dataTypeToString($3->at(0)->getDataType()).c_str(),
+								Symbol::dataTypeToString($3->at(1)->getDataType()).c_str());
 						}
 
 						returnType = Symbol::DataType::STRING;
