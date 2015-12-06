@@ -98,12 +98,17 @@ const std::vector<Register *> &MIPS::getCallerSavedRegisters()
     return callerSavedRegisters;
 }
 
+const Register *MIPS::getRetRegister()
+{
+    return &R2;
+}
+
 const std::string MIPS::getFunctionPrologue()
 {
-    std::string prologue = "sub $sp, $sp, 8 \n";
-    prologue +=            "sw $ra, 4($sp)  \n";
-    prologue +=            "sw $fp, 0($sp)  \n";
-    prologue +=            "move $fp, $sp  \n";
+    std::string prologue = "  addi $sp, $sp, -8 \n";
+    prologue +=            "  sw $ra, 4($sp)  \n";
+    prologue +=            "  sw $fp, 0($sp)  \n";
+    prologue +=            "  move $fp, $sp  \n";
 
     return prologue;
 }
@@ -111,10 +116,10 @@ const std::string MIPS::getFunctionPrologue()
 
 const std::string MIPS::getFunctionEpilogue()
 {
-    std::string prologue = "lw $fp, 0($sp)  \n";
-    prologue +=            "lw $ra, 4($sp)  \n";
-    prologue +=            "add $sp, $sp, 8 \n";
-    prologue +=            "jr $ra          \n";
+    std::string prologue = "  lw $ra, 4($fp)  \n";
+    prologue +=            "  lw $fp, 0($fp)  \n";
+    prologue +=            "  addi $sp, $fp, 8 \n";
+    prologue +=            "  jr $ra          \n";
 
     return prologue;
 }

@@ -86,11 +86,6 @@ void ASMgenerator::visit(ir::BasicBlock *block)
 //		use->accept(*this);
 //	}
 
-//	for (Instruction* inst : block->getInstructions())
-//		inst->accept(*this);
-
-    //activeContext->addInstruction(std::to_string(block->getId()) + ":");  // add label to function
-
     activeFunction->addBlock(block);
 
     for (ir::Instruction* inst : block->getInstructions())
@@ -99,12 +94,12 @@ void ASMgenerator::visit(ir::BasicBlock *block)
 
 void ASMgenerator::visit(ir::NamedValue *value)
 {
-
+    activeFunction->Active()->getRegister(value);
 }
 
 void ASMgenerator::visit(ir::TemporaryValue *value)
 {
-
+    activeFunction->Active()->getRegister(value);
 }
 
 void ASMgenerator::visit(ir::ConstantValue<int> *value)
@@ -124,11 +119,21 @@ void ASMgenerator::visit(ir::ConstantValue<std::string> *value)
 
 void ASMgenerator::visit(ir::AssignInstruction *instr)
 {
+    ir::Value *dest = instr->getResult();
+    ir::Value *operand = instr->getOperand();
+
+    arch::Register *destReg = activeFunction->Active()->getRegister(dest);
+    arch::Register *operandReg = activeFunction->Active()->getRegister(operand);
+
+    activeFunction->Active()->addInstruction("move", destReg->getIDName(), 0, operandReg->getIDName() );
+
 
 }
 
 void ASMgenerator::visit(ir::DeclarationInstruction *instr)
 {
+    ir::Value *operand = instr->getOperand();
+    activeFunction->Active()->getRegister(operand);
 }
 
 void ASMgenerator::visit(ir::JumpInstruction *instr)
@@ -143,16 +148,95 @@ void ASMgenerator::visit(ir::CondJumpInstruction *instr)
 
 void ASMgenerator::visit(ir::ReturnInstruction *instr)
 {
+    ir::Value *retVal = instr->getOperand();
+    arch::Register *retReg = activeFunction->Active()->getRegister(retVal);
 
+
+    activeFunction->Active()->addInstruction("move", activeFunction->getMips()->getRetRegister()->getIDName(),
+                                             0, retReg->getIDName() );
 }
 
 void ASMgenerator::visit(ir::CallInstruction *instr)
 {
 
+    // TODO: save all caller saved registers
+
+
+
+    bool hasStackTransfer = instr->getArguments().size() > arch.getParamRegisters().size();
+
+    if (hasStackTransfer)
+    {
+        // some parameters are stack transfered -> prepare place
+        int requiredSize = (instr->getArguments().size() - arch.getParamRegisters().size()) *4;
+        activeFunction->Active()->addInstruction("addi", "$sp", 0, "$sp", 0, std::to_string(-requiredSize));
+    }
+
+    int stackOffset = 0;
+    unsigned int i = 1;
+    for(auto &param : instr->getArguments()){
+        arch::Register *paramReg = activeFunction->Active()->getRegister(param);
+
+        if (i<=arch.getMaxRegisterParameters()) {
+            arch::Register *destReg = arch.getParamRegisters()[i-1];
+
+            activeFunction->Active()->addInstruction("move", destReg->getIDName(), 0, paramReg->getIDName());
+        }  else {
+            // cdecl convention
+            activeFunction->Active()->addInstruction("sw", paramReg->getIDName(), 0, std::to_string(stackOffset) + "($sp)");
+            stackOffset += 4;
+        }
+        i++;
+    }
+    // function call
+    activeFunction->Active()->addInstruction("jal", instr->getFunction()->getName());
+
+    // return stack to valid state
+    if (hasStackTransfer)
+    {
+        int requiredSize = (instr->getArguments().size() - arch.getParamRegisters().size()) *4;
+        activeFunction->Active()->addInstruction("addi", "$sp", 0, "$sp", 0, std::to_string(requiredSize));
+    }
+
+    if (instr->getResult())
+    {
+        // save result if has one
+        arch::Register *destReg = activeFunction->Active()->getRegister(instr->getResult());
+        activeFunction->Active()->addInstruction("move", destReg->getIDName(), 0, arch.getRetRegister()->getIDName());
+    }
+
+
 }
 
 void ASMgenerator::visit(ir::AddInstruction *instr)
 {
+
+    ir::Value *left = instr->getLeftOperand();
+    ir::Value *right = instr->getRightOperand();
+    ir::Value *dest = instr->getResult();
+
+    arch::Register *leftReg = nullptr;
+    arch::Register *rightReg = nullptr;
+
+
+    if ( left->getType() == ir::Value::Type::TEMPORARY )
+    {
+        leftReg = activeFunction->Active()->getRegister(left, true);
+        rightReg = activeFunction->Active()->getRegister(right);
+        activeFunction->Active()->unlockVar(left); // unlocking left
+    }
+    else
+    {
+        rightReg = activeFunction->Active()->getRegister(right, true);
+        leftReg = activeFunction->Active()->getRegister(left);
+        activeFunction->Active()->unlockVar(right); // unlocking left
+    }
+
+
+    arch::Register *destReg = activeFunction->Active()->getRegister(dest);
+
+    activeFunction->Active()->addInstruction("add", destReg->getIDName(),
+                                             0, leftReg->getIDName(), 0, rightReg->getIDName() );
 
 }
 

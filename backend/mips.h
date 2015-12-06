@@ -15,8 +15,9 @@ namespace arch{
 class Register{
 public:
     Register(std::string name, int id):_name(name),_id(id){}
-    const std::string & getName(){return _name;}
+    const std::string & getName() const {return _name;}
     unsigned getID(){return _id;}
+    const std::string getIDName() const {return "$" + std::to_string(_id);}
 private:
         const std::string _name;
         const unsigned _id;
@@ -41,6 +42,7 @@ public:
     const std::vector<Register *> &getEvalRegisters();
     const std::vector<Register *> &getCalleeSavedRegisters();
     const std::vector<Register *> &getCallerSavedRegisters();
+    const Register * getRetRegister();
 
 private:
     arch::Register R0; // always 0

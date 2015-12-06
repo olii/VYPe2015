@@ -6,11 +6,13 @@
 #include "mips.h"
 #include <map>
 #include <string>
+#include <cstdarg>
 
 
 namespace backend{
 
-using RegFlag =  struct REGFLAG{ arch::Register * reg; bool saved;};
+using RegFlag =  struct REGFLAG{ arch::Register * reg; bool saved; bool locked;};
+using VarFlag = struct VARFLAG{ ir::Value * val; bool saved;};
 
 class FunctionContext;
 
@@ -21,18 +23,22 @@ class BlockContext
 {
 public:
     BlockContext();
-    BlockContext(FunctionContext *parrent, ir::BasicBlock *block);
+    BlockContext(FunctionContext *parent, ir::BasicBlock *block);
     ~BlockContext(){}
 
-    void addInstruction(std::string &inst);
-    arch::Register *getRegister(ir::NamedValue);
-    //arch::Register* getRegister(ir::TemporaryValue);
+    void addCanonicalInstruction(std::string &inst);
+    void addInstruction(std::string inst,std::string dst, int offset = 0, std::string op2 = "",int offset2 = 0,std::string op3 = "");
+
+    arch::Register *getRegister(ir::Value *val, bool locked = false);
+    void unlockVar(ir::Value *val);
+    void removeVictim();
 
     std::string getInstructions();
 
 private:
-    std::map<ir::Value*, backend::RegFlag> varReg;
-    FunctionContext* parrent;
+    std::map<ir::Value*, backend::RegFlag> varToReg;
+    std::map<arch::Register*, VarFlag> RegToVar;
+    FunctionContext* parent;
     ir::BasicBlock *block;
 
     std::string text;
@@ -60,16 +66,22 @@ public:
     int getVarOffset(ir::NamedValue &var);
     std::string getInstructions();
 
+    arch::MIPS *getMips();
+
+    void calleeSaved(arch::Register * reg);
+
 
 
 private:
     std::map<ir::NamedValue*, int> varStackMap;
     std::map<ir::BasicBlock*, BlockContext> blocks;
     BlockContext *activeBlock;
-    int stackCounter = 0;
+    int stackCounter = 4; // start on 4 because at 0 there is previous FP
     ir::Function *func;
 
     std::string prolog;
+    std::set<arch::Register*> calleeSavedSet;
+
 
     arch::MIPS mips;
 
