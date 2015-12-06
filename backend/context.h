@@ -29,9 +29,10 @@ public:
     void addCanonicalInstruction(std::string &inst);
     void addInstruction(std::string inst,std::string dst, int offset = 0, std::string op2 = "",int offset2 = 0,std::string op3 = "");
 
-    arch::Register *getRegister(ir::Value *val, bool locked = false);
+    arch::Register *getRegister(ir::Value *val, bool locked = false, bool implicitCopy = true);
     void unlockVar(ir::Value *val);
     void removeVictim();
+    void markChanged(arch::Register * reg);
 
     std::string getInstructions();
 

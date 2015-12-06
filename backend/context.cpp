@@ -1,5 +1,6 @@
 #include "context.h"
 #include "ir/function.h"
+#include <random>
 
 namespace backend{
 
@@ -96,14 +97,69 @@ void BlockContext::removeVictim()
         }
     }
 
-    // todo -- remove mapped variable
+    // registers are full of NamedValue or locked vars
+    // try to remove first saved variable from register
+    for (auto &it :RegToVar ){
+        if ( it.second.saved && !(varToReg[it.second.val].locked))
+        {
+            // got victim - erase
+            varToReg.erase(it.second.val);
+            RegToVar.erase(it.first);
+            return;
+        }
+    }
+
+    // remove mapped variable UNSAVED
+    // MONTECARLO REMOVER
+
+    while( 1 ){
+        std::random_device rd; // obtain a random number from hardware
+        std::mt19937 eng(rd()); // seed the generator
+        std::uniform_int_distribution<> distr(0, RegToVar.size()-1); // define the range
+        int IndexOfRemoval = distr(eng);
+
+        arch::Register *rem = parent->getMips()->getEvalRegisters()[IndexOfRemoval];
+
+        if (varToReg[RegToVar[rem].val].locked || RegToVar[rem].val->getType() != ir::Value::Type::NAMED) {
+            continue; // cannot remove because locked
+        }
+        // do remove var:
+
+        //1. save to place
+        ir::NamedValue *value = static_cast<ir::NamedValue *>(RegToVar[rem].val);
+        int offset = parent->getVarOffset(*value);
+        addInstruction("sw", rem->getIDName(), -offset, "$fp");
+        //2. remove from mapping
+
+        varToReg.erase(RegToVar[rem].val);
+        RegToVar.erase(rem);
+        return;
+    }
+
 
 
     // TODO:: better remove algo
 
 }
 
-arch::Register *BlockContext::getRegister(ir::Value *val, bool locked)
+void BlockContext::markChanged(arch::Register *reg)
+{
+    if ( RegToVar.find(reg) == RegToVar.end() ) {
+        // not found
+        return;
+    }
+
+    if (RegToVar[reg].val->getType() == ir::Value::Type::NAMED){
+        RegToVar[reg].saved = false;
+    }
+    if (RegToVar[reg].val->getType() == ir::Value::Type::TEMPORARY){
+        // temp changed, we have to lock it for future use
+        varToReg[RegToVar[reg].val].locked = true;
+    }
+
+}
+
+arch::Register *BlockContext::getRegister(ir::Value *val, bool locked, bool implicitLoad)
 {
 
     if ( varToReg.find(val) != varToReg.end() ) {
@@ -134,8 +190,8 @@ arch::Register *BlockContext::getRegister(ir::Value *val, bool locked)
                 if (parent->getVarOffset(*namVal) == -1){
                     //not yet allocated on stack
                     parent->addVar(*namVal); // reserve place on stack
-                    varToReg[val] = RegFlag{ reg, false, locked};
-                    RegToVar[reg] = VarFlag{ val, false };
+                    varToReg[val] = RegFlag{ reg, true, locked};
+                    RegToVar[reg] = VarFlag{ val, true };
                 } else
                 {
                     // already on stack
@@ -143,7 +199,10 @@ arch::Register *BlockContext::getRegister(ir::Value *val, bool locked)
                     RegToVar[reg] = VarFlag{ val, true };
                     int offset = parent->getVarOffset(*namVal);
 
-                    addInstruction("lw", reg->getIDName(), 0, std::to_string(-offset) + "($fp)");
+                    if (implicitLoad){
+                        // load to register if required
+                        addInstruction("lw", reg->getIDName(), 0, std::to_string(-offset) + "($fp)");
+                    }
 
                 }
             } else if ( val->getType() == ir::Value::Type::CONSTANT )

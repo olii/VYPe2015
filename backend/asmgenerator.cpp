@@ -39,6 +39,7 @@ void ASMgenerator::visit(ir::Function *func)
 
     for (unsigned int i = 0; i<parameters.size(); i++)
     {
+        // TODO: static cast
         ir::NamedValue* param = dynamic_cast<ir::NamedValue*>(parameters[i]);
         if (param == nullptr){
             // error handling ....
@@ -122,8 +123,10 @@ void ASMgenerator::visit(ir::AssignInstruction *instr)
     ir::Value *dest = instr->getResult();
     ir::Value *operand = instr->getOperand();
 
-    arch::Register *destReg = activeFunction->Active()->getRegister(dest);
-    arch::Register *operandReg = activeFunction->Active()->getRegister(operand);
+    arch::Register *operandReg = activeFunction->Active()->getRegister(operand, true); // must be locked
+    arch::Register *destReg = activeFunction->Active()->getRegister(dest,false, false);
+    activeFunction->Active()->unlockVar(operand);
+    activeFunction->Active()->markChanged(destReg);
 
     activeFunction->Active()->addInstruction("move", destReg->getIDName(), 0, operandReg->getIDName() );
 
@@ -133,7 +136,8 @@ void ASMgenerator::visit(ir::AssignInstruction *instr)
 void ASMgenerator::visit(ir::DeclarationInstruction *instr)
 {
     ir::Value *operand = instr->getOperand();
-    activeFunction->Active()->getRegister(operand);
+    activeFunction->addVar(*(static_cast<ir::NamedValue*>(operand)));
+    // activeFunction->Active()->getRegister(operand);
 }
 
 void ASMgenerator::visit(ir::JumpInstruction *instr)
@@ -234,6 +238,7 @@ void ASMgenerator::visit(ir::AddInstruction *instr)
 
 
     arch::Register *destReg = activeFunction->Active()->getRegister(dest);
+    activeFunction->Active()->markChanged(destReg);
 
     activeFunction->Active()->addInstruction("add", destReg->getIDName(),
                                              0, leftReg->getIDName(), 0, rightReg->getIDName() );
