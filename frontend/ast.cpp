@@ -262,6 +262,26 @@ void Function::generateIr(ir::Builder& builder)
 		return;
 
 	builder.setActiveFunction(irFunction);
+
+	// Add default return
+	builder.setActiveBasicBlock(irFunction->getTerminalBasicBlock());
+	ir::Value* defaultRetValue = nullptr;
+	switch (_symbol->getReturnType())
+	{
+		case Symbol::INT:
+			defaultRetValue = builder.createConstantValue(0);
+			break;
+		case Symbol::CHAR:
+			defaultRetValue = builder.createConstantValue('\0');
+			break;
+		case Symbol::STRING:
+			defaultRetValue = builder.createConstantValue("");
+			break;
+		default:
+			break;
+	}
+	builder.createReturn(defaultRetValue);
+
 	ir::BasicBlock* entryBlock = irFunction->getEntryBasicBlock();
 	builder.setActiveBasicBlock(entryBlock);
 	_body->generateIrBlocks(builder);

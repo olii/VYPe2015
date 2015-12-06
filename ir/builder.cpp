@@ -202,8 +202,11 @@ void Builder::createReturn(Value* value)
 		_activeBasicBlock->addUse(value);
 
 	_activeBasicBlock->addInstruction(new ReturnInstruction(value));
-	_activeBasicBlock->addSuccessor(_activeFunction->getTerminalBasicBlock());
-	_activeFunction->getTerminalBasicBlock()->addPredecessor(_activeBasicBlock);
+	if (_activeBasicBlock != _activeFunction->getTerminalBasicBlock())
+	{
+		_activeBasicBlock->addSuccessor(_activeFunction->getTerminalBasicBlock());
+		_activeFunction->getTerminalBasicBlock()->addPredecessor(_activeBasicBlock);
+	}
 }
 
 std::string Builder::codeText() const
