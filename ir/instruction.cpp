@@ -20,6 +20,7 @@ UnaryInstruction::UnaryInstruction(Value* operand) : _operand(operand)
 
 UnaryInstruction::~UnaryInstruction()
 {
+	delete _operand;
 }
 
 Value* UnaryInstruction::getOperand()
@@ -33,6 +34,8 @@ BinaryInstruction::BinaryInstruction(Value* leftOperand, Value* rightOperand) : 
 
 BinaryInstruction::~BinaryInstruction()
 {
+	delete _leftOperand;
+	delete _rightOperand;
 }
 
 Value* BinaryInstruction::getLeftOperand()
@@ -51,6 +54,7 @@ ResultInstruction::ResultInstruction(Value* result) : _result(result)
 
 ResultInstruction::~ResultInstruction()
 {
+	delete _result;
 }
 
 Value* ResultInstruction::getResult()
@@ -109,6 +113,7 @@ CondJumpInstruction::CondJumpInstruction(Value* condition, BasicBlock* trueBasic
 
 CondJumpInstruction::~CondJumpInstruction()
 {
+	delete _condition;
 }
 
 Value* CondJumpInstruction::getCondition()
@@ -151,6 +156,8 @@ CallInstruction::CallInstruction(Value* returnValue, Function* function, const s
 
 CallInstruction::~CallInstruction()
 {
+	for (auto& arg : _arguments)
+		delete arg;
 }
 
 Function* CallInstruction::getFunction()
@@ -175,6 +182,8 @@ BuiltinCallInstruction::BuiltinCallInstruction(Value* returnValue, const std::st
 
 BuiltinCallInstruction::~BuiltinCallInstruction()
 {
+	for (auto& args : _arguments)
+		delete args;
 }
 
 const std::string& BuiltinCallInstruction::getFunctionName() const

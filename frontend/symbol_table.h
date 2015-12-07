@@ -8,7 +8,7 @@ namespace frontend {
 class SymbolTable
 {
 public:
-	typedef std::map<std::string, Symbol*> TableType;
+	using TableType = std::map<std::string, Symbol*>;
 
 	SymbolTable();
 	SymbolTable(const SymbolTable&);

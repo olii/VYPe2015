@@ -12,7 +12,7 @@ class Builder
 {
 public:
 	Builder();
-	~Builder();
+	virtual ~Builder();
 
 	Function* createFunction(const std::string& name, const std::vector<Value*>& parameters);
 	Function* getFunction(const std::string& name) const;

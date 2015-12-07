@@ -8,6 +8,8 @@ SymbolTable::SymbolTable() : _table()
 
 SymbolTable::~SymbolTable()
 {
+	for (auto& pair : _table)
+		delete pair.second;
 }
 
 size_t SymbolTable::getSize() const

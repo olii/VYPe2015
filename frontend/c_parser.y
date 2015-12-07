@@ -95,11 +95,15 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::stringToDataType(*$1), {}, true)) == nullptr)
 																									{
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										delete $1;
+																										delete $2;
 																										YYERROR;
 																									}
 
 																									$$ = new Function(funcSymbol, $8);
 																									context.popSymbolTable();
+																									delete $1;
+																									delete $2;
 																								}
 			|   TYPE ID LEFT_PAREN impl_param_list RIGHT_PAREN                                  {
 																									context.newSymbolTable();
@@ -111,6 +115,9 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																										if (context.currentSymbolTable()->addVariable(param) == nullptr)
 																										{
 																											yyerror("Redefinition of function argument '%s'.", param->getName().c_str());
+																											delete $1;
+																											delete $2;
+																											delete $4;
 																											YYERROR;
 																										}
 																									}
@@ -122,11 +129,17 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::stringToDataType(*$1), *$4, true)) == nullptr)
 																									{
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										delete $1;
+																										delete $2;
+																										delete $4;
 																										YYERROR;
 																									}
 
 																									$$ = new Function(funcSymbol, $8);
 																									context.popSymbolTable();
+																									delete $1;
+																									delete $2;
+																									delete $4;
 																								}
 			|   VOID ID LEFT_PAREN VOID RIGHT_PAREN                                             {
 																									context.newSymbolTable();
@@ -139,11 +152,13 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, {}, true)) == nullptr)
 																									{
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										delete $2;
 																										YYERROR;
 																									}
 
 																									$$ = new Function(funcSymbol, $8);
 																									context.popSymbolTable();
+																									delete $2;
 																								}
 			|   VOID ID LEFT_PAREN impl_param_list RIGHT_PAREN                                  {
 																									context.newSymbolTable();
@@ -155,6 +170,8 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																										if (context.currentSymbolTable()->addVariable(param) == nullptr)
 																										{
 																											yyerror("Redefinition of function argument '%s'.", param->getName().c_str());
+																											delete $2;
+																											delete $4;
 																											YYERROR;
 																										}
 																									}
@@ -166,21 +183,25 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, *$4, true)) == nullptr)
 																									{
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										delete $2;
+																										delete $4;
 																										YYERROR;
 																									}
 
 																									$$ = new Function(funcSymbol, $8);
 
 																									context.popSymbolTable();
+																									delete $2;
+																									delete $4;
 																								}
 			;
 
-decl_param_list :   decl_param_list COMMA TYPE      { $$->push_back(new VariableSymbol("", Symbol::stringToDataType({*$3}))); }
-				|   TYPE                            { $$ = new FunctionSymbol::ParameterList( { new VariableSymbol("", Symbol::stringToDataType({*$1})) } ); }
+decl_param_list :   decl_param_list COMMA TYPE      { $$->push_back(new VariableSymbol("", Symbol::stringToDataType({*$3}))); delete $3; }
+				|   TYPE                            { $$ = new FunctionSymbol::ParameterList( { new VariableSymbol("", Symbol::stringToDataType({*$1})) } ); delete $1; }
 				;
 
-impl_param_list :   impl_param_list COMMA TYPE ID   { $$->push_back(new VariableSymbol(*$4, Symbol::stringToDataType({*$3}))); }
-				|   TYPE ID                         { $$ = new FunctionSymbol::ParameterList( { new VariableSymbol(*$2, Symbol::stringToDataType({*$1})) } ); }
+impl_param_list :   impl_param_list COMMA TYPE ID   { $$->push_back(new VariableSymbol(*$4, Symbol::stringToDataType({*$3}))); delete $3; delete $4; }
+				|   TYPE ID                         { $$ = new FunctionSymbol::ParameterList( { new VariableSymbol(*$2, Symbol::stringToDataType({*$1})) } ); delete $1; delete $2; }
 				;
 
 stmts   :   stmt_list   { $$ = $1; }
@@ -214,6 +235,7 @@ assign_stmt :   ID ASSIGN expr SEMICOLON    {
 												if (symbol == nullptr || symbol->getType() != Symbol::VARIABLE)
 												{
 													yyerror("Assignment to undefined symbol '%s'.", $1->c_str());
+													delete $1;
 													YYERROR;
 												}
 
@@ -224,10 +246,12 @@ assign_stmt :   ID ASSIGN expr SEMICOLON    {
 																Symbol::dataTypeToString($3->getDataType()).c_str(),
 																varSymbol->getName().c_str(),
 																Symbol::dataTypeToString(varSymbol->getDataType()).c_str());
+													delete $1;
 													YYERROR;
 												}
 
 												$$ = new AssignStatement(varSymbol, $3);
+												delete $1;
 											}
 			;
 
@@ -242,6 +266,8 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
 														if (symbol->getType() == Symbol::FUNCTION)
 														{
 															yyerror("Redefinition of symbol '%s'. Cannot shadow functions.", symbol->getName().c_str());
+															delete $1;
+															delete $2;
 															YYERROR;
 														}
 													}
@@ -250,6 +276,8 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
 													if ((symbol = context.currentSymbolTable()->addVariable(varName, Symbol::stringToDataType(*$1))) == nullptr)
 													{
 														yyerror("Redefinition of symbol '%s'.", varName.c_str());
+														delete $1;
+														delete $2;
 														YYERROR;
 													}
 
@@ -257,11 +285,13 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
 												}
 
 												$$ = new DeclarationStatement(variables);
+												delete $1;
+												delete $2;
 											}
 			;
 
-decl_id_list    :   decl_id_list COMMA ID   { $$->push_back(*$3); }
-				|   ID                      { $$ = new std::vector<std::string>({*$1}); }
+decl_id_list    :   decl_id_list COMMA ID   { $$->push_back(*$3); delete $3; }
+				|   ID                      { $$ = new std::vector<std::string>({*$1}); delete $1; }
 				;
 
 if_stmt :   IF LEFT_PAREN expr RIGHT_PAREN          {
@@ -330,6 +360,8 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																if ((symbol = context.globalSymbolTable()->findSymbol(*$1)) == nullptr)
 																{
 																	yyerror("Undeclared identifier '%s' used.", $1->c_str());
+																	delete $1;
+																	delete $3;
 																	YYERROR;
 																}
 
@@ -337,6 +369,8 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																if (symbol->getType() != Symbol::FUNCTION)
 																{
 																	yyerror("Identifier '%s' is not a function.", symbol->getName().c_str());
+																	delete $1;
+																	delete $3;
 																	YYERROR;
 																}
 
@@ -346,10 +380,14 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																{
 																	yyerror("Unexpected amount of arguments provided when calling '%s'. Expected %u, got %u.",
 																		func->getName().c_str(), func->getParameters().size(), $3->size());
+																	delete $1;
+																	delete $3;
 																	YYERROR;
 																}
 
 																$$ = new CallStatement(func, *$3);
+																delete $1;
+																delete $3;
 															}
 			|   BUILTIN LEFT_PAREN exprs RIGHT_PAREN        {
 																if (*$1 == "print")
@@ -357,6 +395,8 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																	if ($3->size() < 1)
 																	{
 																		yyerror("Builtin function 'print' requires at least 1 argument.");
+																		delete $1;
+																		delete $3;
 																		YYERROR;
 																	}
 
@@ -364,10 +404,13 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																else
 																{
 																	yyerror("Builtin function '%s' cannot be in form of statement.", $1->c_str());
+																	delete $1;
 																	YYERROR;
 																}
 
 																$$ = new BuiltinCallStatement(*$1, *$3);
+																delete $1;
+																delete $3;
 															}
 														;
 
@@ -561,6 +604,8 @@ expr    :   expr PLUS expr	{
 					if ((symbol = context.globalSymbolTable()->findSymbol(*$1)) == nullptr)
 					{
 						yyerror("Undeclared identifier '%s' used.", $1->c_str());
+						delete $1;
+						delete $3;
 						YYERROR;
 					}
 
@@ -568,6 +613,8 @@ expr    :   expr PLUS expr	{
 					if (symbol->getType() != Symbol::FUNCTION)
 					{
 						yyerror("Identifier '%s' is not a function.", symbol->getName().c_str());
+						delete $1;
+						delete $3;
 						YYERROR;
 					}
 
@@ -577,10 +624,14 @@ expr    :   expr PLUS expr	{
 					{
 						yyerror("Unexpected amount of arguments provided when calling '%s'. Expected %u, got %u.",
 							func->getName().c_str(), func->getParameters().size(), $3->size());
+						delete $1;
+						delete $3;
 						YYERROR;
 					}
 
 					$$ = new Call(func, *$3);
+					delete $1;
+					delete $3;
 				}
 		|   BUILTIN LEFT_PAREN exprs RIGHT_PAREN
 				{
@@ -590,6 +641,8 @@ expr    :   expr PLUS expr	{
 						if ($3->size() < 1)
 						{
 							yyerror("Builtin function 'print' requires at least 1 argument.");
+							delete $1;
+							delete $3;
 							YYERROR;
 						}
 
@@ -600,6 +653,8 @@ expr    :   expr PLUS expr	{
 						if ($3->size() != 0)
 						{
 							yyerror("Builtin function 'read_char' requires 0 arguments.");
+							delete $1;
+							delete $3;
 							YYERROR;
 						}
 
@@ -610,6 +665,8 @@ expr    :   expr PLUS expr	{
 						if ($3->size() != 0)
 						{
 							yyerror("Builtin function 'read_int' requires 0 arguments.");
+							delete $1;
+							delete $3;
 							YYERROR;
 						}
 
@@ -620,6 +677,8 @@ expr    :   expr PLUS expr	{
 						if ($3->size() != 0)
 						{
 							yyerror("Builtin function 'read_string' requires 0 arguments.");
+							delete $1;
+							delete $3;
 							YYERROR;
 						}
 
@@ -630,6 +689,8 @@ expr    :   expr PLUS expr	{
 						if ($3->size() != 2)
 						{
 							yyerror("Builtin function 'get_at' requires 2 arguments.");
+							delete $1;
+							delete $3;
 							YYERROR;
 						}
 
@@ -638,6 +699,9 @@ expr    :   expr PLUS expr	{
 							yyerror("Function 'get_at' requires its arguments type to be (string, int). Got (%s, %s).",
 								Symbol::dataTypeToString($3->at(0)->getDataType()).c_str(),
 								Symbol::dataTypeToString($3->at(1)->getDataType()).c_str());
+							delete $1;
+							delete $3;
+							YYERROR;
 						}
 
 						returnType = Symbol::DataType::CHAR;
@@ -647,6 +711,8 @@ expr    :   expr PLUS expr	{
 						if ($3->size() != 3)
 						{
 							yyerror("Builtin function 'set_at' requires 3 arguments.");
+							delete $1;
+							delete $3;
 							YYERROR;
 						}
 
@@ -657,6 +723,9 @@ expr    :   expr PLUS expr	{
 								Symbol::dataTypeToString($3->at(0)->getDataType()).c_str(),
 								Symbol::dataTypeToString($3->at(1)->getDataType()).c_str(),
 								Symbol::dataTypeToString($3->at(2)->getDataType()).c_str());
+							delete $1;
+							delete $3;
+							YYERROR;
 						}
 
 						returnType = Symbol::DataType::STRING;
@@ -666,6 +735,8 @@ expr    :   expr PLUS expr	{
 						if ($3->size() != 2)
 						{
 							yyerror("Builtin function 'strcat' requires 2 arguments.");
+							delete $1;
+							delete $3;
 							YYERROR;
 						}
 
@@ -674,12 +745,17 @@ expr    :   expr PLUS expr	{
 							yyerror("Function 'strcat' requires its arguments type to be (string, string). Got (%s, %s).",
 								Symbol::dataTypeToString($3->at(0)->getDataType()).c_str(),
 								Symbol::dataTypeToString($3->at(1)->getDataType()).c_str());
+							delete $1;
+							delete $3;
+							YYERROR;
 						}
 
 						returnType = Symbol::DataType::STRING;
 					}
 
 					$$ = new BuiltinCall(*$1, returnType, *$3);
+					delete $1;
+					delete $3;
 				}
 		|   ID  {
 					// Find the symbol that represents the variable
@@ -687,20 +763,23 @@ expr    :   expr PLUS expr	{
 					if (symbol == nullptr)
 					{
 						yyerror("Undeclared identifier '%s' used.", $1->c_str());
+						delete $1;
 						YYERROR;
 					}
 
 					if (symbol->getType() != Symbol::VARIABLE)
 					{
 						yyerror("Identifier '%s' is not a variable.", symbol->getName().c_str());
+						delete $1;
 						YYERROR;
 					}
 
 					$$ = new Variable(static_cast<VariableSymbol*>(symbol));
+					delete $1;
 				}
 		|   INT_LIT { $$ = new IntLiteral($1); }
 		|   CHAR_LIT { $$ = new CharLiteral($1); }
-		|   STRING_LIT { $$ = new StringLiteral(*$1); }
+		|   STRING_LIT { $$ = new StringLiteral(*$1); delete $1; }
 		;
 
 %%

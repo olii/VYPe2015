@@ -10,6 +10,8 @@ Function::Function(const std::string& name, const std::vector<Value*>& parameter
 
 Function::~Function()
 {
+	for (auto& bb : _basicBlocks)
+		delete bb;
 }
 
 void Function::accept(IrVisitor& visitor)

@@ -154,7 +154,11 @@ public:
 	Call(FunctionSymbol* function, const std::vector<Expression*>& parameters) :
 		TerminalExpression<FunctionSymbol*>(Type::CALL, function->getReturnType(), function), _parameters(parameters) {}
 	Call(const Call&) = delete;
-	virtual ~Call() {}
+	virtual ~Call()
+	{
+		for (auto& param : _parameters)
+			delete param;
+	}
 
 	virtual Generates generates() override { return Generates::VALUE; }
 	virtual ir::Value* generateIrValue(ir::Builder& builder) override;
@@ -171,7 +175,11 @@ public:
 	BuiltinCall(const std::string& functionName, Symbol::DataType returnDataType, const std::vector<Expression*>& parameters) :
 		TerminalExpression<std::string>(Type::BUILTIN_CALL, returnDataType, functionName), _parameters(parameters) {}
 	BuiltinCall(const BuiltinCall&) = delete;
-	virtual ~BuiltinCall() {}
+	virtual ~BuiltinCall()
+	{
+		for (auto& param : _parameters)
+			delete param;
+	}
 
 	virtual Generates generates() override { return Generates::VALUE; }
 	virtual ir::Value* generateIrValue(ir::Builder& builder) override;
@@ -187,7 +195,10 @@ class UnaryExpression : public Expression
 public:
 	UnaryExpression(Type type, Symbol::DataType dataType, Expression* operand) : Expression(type, dataType), _operand(operand) {}
 	UnaryExpression(const UnaryExpression&) = delete;
-	virtual ~UnaryExpression() {}
+	virtual ~UnaryExpression()
+	{
+		delete _operand;
+	}
 
 	virtual Generates generates() override { return Generates::VALUE; }
 	virtual ir::Value* generateIrValue(ir::Builder& builder) override;
@@ -204,7 +215,11 @@ public:
 	BinaryExpression(Type type, Symbol::DataType dataType, Expression* leftOperand, Expression* rightOperand) :
 		Expression(type, dataType), _leftOperand(leftOperand), _rightOperand(rightOperand) {}
 	BinaryExpression(const BinaryExpression&) = delete;
-	virtual ~BinaryExpression() {}
+	virtual ~BinaryExpression()
+	{
+		delete _leftOperand;
+		delete _rightOperand;
+	}
 
 	virtual Generates generates() override { return Generates::VALUE; }
 	virtual ir::Value* generateIrValue(ir::Builder& builder) override;
@@ -234,7 +249,11 @@ class StatementBlock : public ASTNode
 public:
 	StatementBlock() {}
 	StatementBlock(const StatementBlock&) = delete;
-	virtual ~StatementBlock() {}
+	virtual ~StatementBlock()
+	{
+		for (auto& stmt : _statements)
+			delete stmt;
+	}
 
 	void addStatement(Statement* statement) { _statements.push_back(statement); }
 
@@ -252,7 +271,10 @@ class AssignStatement : public Statement
 public:
 	AssignStatement(VariableSymbol* variable, Expression* expression) : Statement(), _variable(variable), _expression(expression) {}
 	AssignStatement(const AssignStatement&) = delete;
-	virtual ~AssignStatement() {}
+	virtual ~AssignStatement()
+	{
+		delete _expression;
+	}
 
 	virtual Generates generates() override { return Generates::NOTHING; }
 	virtual void generateIr(ir::Builder& builder) override;
@@ -286,7 +308,12 @@ public:
 	IfStatement(Expression* expression, StatementBlock* ifStatements, StatementBlock* elseStatements) :
 		Statement(), _expression(expression), _ifStatements(ifStatements), _elseStatements(elseStatements) {}
 	IfStatement(const IfStatement&) = delete;
-	virtual ~IfStatement() {}
+	virtual ~IfStatement()
+	{
+		delete _expression;
+		delete _ifStatements;
+		delete _elseStatements;
+	}
 
 	virtual Generates generates() override { return Generates::BLOCKS; }
 	virtual ir::BasicBlock* generateIrBlocks(ir::Builder& builder) override;
@@ -305,7 +332,11 @@ public:
 	WhileStatement(Expression* expression, StatementBlock* statements) :
 		Statement(), _expression(expression), _statements(statements) {}
 	WhileStatement(const WhileStatement&) = delete;
-	virtual ~WhileStatement() {}
+	virtual ~WhileStatement()
+	{
+		delete _expression;
+		delete _statements;
+	}
 
 	virtual Generates generates() override { return Generates::BLOCKS; }
 	virtual ir::BasicBlock* generateIrBlocks(ir::Builder& builder) override;
@@ -323,7 +354,10 @@ public:
 	ReturnStatement() : Statement(), _expression(nullptr) {}
 	ReturnStatement(Expression* expression) : Statement(), _expression(expression) {}
 	ReturnStatement(const ReturnStatement&) = delete;
-	virtual ~ReturnStatement() {}
+	virtual ~ReturnStatement()
+	{
+		delete _expression;
+	}
 
 	virtual Generates generates() override { return Generates::NOTHING; }
 	virtual void generateIr(ir::Builder& builder) override;
@@ -339,7 +373,11 @@ class CallStatement : public Statement
 public:
 	CallStatement(FunctionSymbol* function, const std::vector<Expression*>& parameters) : Statement(), _function(function), _parameters(parameters) {}
 	CallStatement(const CallStatement&) = delete;
-	virtual ~CallStatement() {}
+	virtual ~CallStatement()
+	{
+		for (auto& param : _parameters)
+			delete param;
+	}
 
 	virtual Generates generates() override { return Generates::VALUE; }
 	virtual ir::Value* generateIrValue(ir::Builder& builder) override;
@@ -356,7 +394,11 @@ class BuiltinCallStatement : public Statement
 public:
 	BuiltinCallStatement(const std::string& functionName, const std::vector<Expression*>& parameters) : Statement(), _functionName(functionName), _parameters(parameters) {}
 	BuiltinCallStatement(const BuiltinCallStatement&) = delete;
-	virtual ~BuiltinCallStatement() {}
+	virtual ~BuiltinCallStatement()
+	{
+		for (auto& param : _parameters)
+			delete param;
+	}
 
 	virtual Generates generates() override { return Generates::VALUE; }
 	virtual ir::Value* generateIrValue(ir::Builder& builder) override;
@@ -373,7 +415,10 @@ class Function : public ASTNode
 public:
 	Function(FunctionSymbol* symbol, StatementBlock* body) : ASTNode(), _symbol(symbol), _body(body) {}
 	Function(const Function&) = delete;
-	virtual ~Function() {}
+	virtual ~Function()
+	{
+		delete _body;
+	}
 
 	virtual Generates generates() override { return Generates::NOTHING; }
 	virtual void generateIr(ir::Builder& builder) override;
@@ -390,7 +435,11 @@ class Program : public ASTNode
 public:
 	Program() : _functions() {}
 	Program(const Program&) = delete;
-	virtual ~Program() {}
+	virtual ~Program()
+	{
+		for (auto& func : _functions)
+			delete func;
+	}
 
 	void addFunction(Function* function) { _functions.push_back(function); }
 	virtual Generates generates() override { return Generates::NOTHING; }

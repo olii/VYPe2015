@@ -11,6 +11,8 @@ BasicBlock::BasicBlock() : _instructions(), _basicBlockId(BasicBlockIdPool++), _
 
 BasicBlock::~BasicBlock()
 {
+	for (auto& inst : _instructions)
+		delete inst;
 }
 
 void BasicBlock::accept(IrVisitor& visitor)

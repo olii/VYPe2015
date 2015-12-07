@@ -11,6 +11,8 @@ Builder::Builder() : _functions(), _activeBasicBlock(nullptr)
 
 Builder::~Builder()
 {
+	for (auto& pair : _functions)
+		delete pair.second;
 }
 
 Function* Builder::createFunction(const std::string& name, const std::vector<Value*>& arguments)

@@ -34,6 +34,7 @@ private:
 	Symbol::DataType _expectedReturnType;
 	SymbolTable* _globalSymTable;
 	StackType _symTableStack;
+	StackType _allSymbolTables;
 };
 
 } // namespace frontend

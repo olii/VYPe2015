@@ -2,22 +2,21 @@
 
 namespace frontend {
 
-Context::Context() : _globalSymTable(new SymbolTable), _symTableStack()
+Context::Context() : _globalSymTable(new SymbolTable), _symTableStack(), _allSymbolTables()
 {
 }
 
 Context::~Context()
 {
-	for (StackType::iterator itr = _symTableStack.begin(); itr != _symTableStack.end(); )
-	{
-		delete *itr;
-		itr = _symTableStack.erase(itr);
-	}
+	delete _globalSymTable;
+	for (auto& symTable : _allSymbolTables)
+		delete symTable;
 }
 
 void Context::newSymbolTable()
 {
 	_symTableStack.push_back(new SymbolTable());
+	_allSymbolTables.push_back(_symTableStack.back());
 }
 
 void Context::popSymbolTable()
@@ -25,7 +24,6 @@ void Context::popSymbolTable()
 	if (_symTableStack.empty())
 		return;
 
-	delete _symTableStack.back();
 	_symTableStack.pop_back();
 }
 
