@@ -17,6 +17,11 @@ size_t SymbolTable::getSize() const
 	return _table.size();
 }
 
+const SymbolTable::TableType& SymbolTable::getAllSymbols() const
+{
+	return _table;
+}
+
 VariableSymbol* SymbolTable::addVariable(VariableSymbol* variableSymbol)
 {
 	// Check whether symbol with this name already exists in the current table

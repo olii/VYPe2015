@@ -25,7 +25,6 @@ void terminate_compiler(int exit_code, const std::string& msg = "")
 	if (msg != "")
 		std::cerr << msg << std::endl;
 	yylex_destroy(); // Fix memory leaks from flex, bison doesn't call this
-	exit(exit_code);
 }
 
 int main()
@@ -36,19 +35,41 @@ int main()
 	if (result != 0)
 		terminate_compiler(3);
 
+	// Check if there is no undefined but declared function
+	for (const auto& pair : context.globalSymbolTable()->getAllSymbols())
+	{
+		if (pair.second->getType() != frontend::Symbol::FUNCTION)
+			continue;
+
+		if (!static_cast<frontend::FunctionSymbol*>(pair.second)->isDefined())
+		{
+			terminate_compiler(3);
+			return 3;
+		}
+	}
+
 	// Check presence of main
 	frontend::Symbol* mainSymbol = context.globalSymbolTable()->findSymbol("main");
 	if (mainSymbol == nullptr)
+	{
 		terminate_compiler(3);
+		return 3;
+	}
 
 	// It must be a function
 	if (mainSymbol->getType() != frontend::Symbol::Type::FUNCTION)
+	{
 		terminate_compiler(3);
+		return 3;
+	}
 
 	// It has to always be int main(void)
 	frontend::FunctionSymbol* funcMainSymbol = static_cast<frontend::FunctionSymbol*>(mainSymbol);
 	if (funcMainSymbol->getReturnType() != frontend::Symbol::DataType::INT || funcMainSymbol->getParameters().size() != 0)
+	{
 		terminate_compiler(3);
+		return 3;
+	}
 
 	ir::Builder builder;
 	program.generateIr(builder);

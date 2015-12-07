@@ -16,6 +16,8 @@ public:
 
 	size_t getSize() const;
 
+	const TableType& getAllSymbols() const;
+
 	VariableSymbol* addVariable(VariableSymbol* variableSymbol);
 	VariableSymbol* addVariable(const std::string& name, Symbol::DataType dataType);
 	FunctionSymbol* addFunction(const std::string& name, Symbol::DataType returnType, const FunctionSymbol::ParameterList& parameters, bool definition);

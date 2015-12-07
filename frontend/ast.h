@@ -420,6 +420,8 @@ public:
 		delete _body;
 	}
 
+	const FunctionSymbol* getSymbol() const { return _symbol; }
+
 	virtual Generates generates() override { return Generates::NOTHING; }
 	virtual void generateIr(ir::Builder& builder) override;
 
@@ -441,6 +443,7 @@ public:
 			delete func;
 	}
 
+	const std::vector<Function*>& getFunctions() const { return _functions; }
 	void addFunction(Function* function) { _functions.push_back(function); }
 	virtual Generates generates() override { return Generates::NOTHING; }
 	virtual void generateIr(ir::Builder& builder) override;

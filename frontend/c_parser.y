@@ -78,10 +78,66 @@ body    :   body func_decl
 		|   func_impl       { program.addFunction($1); }
 		;
 
-func_decl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON
-			|   TYPE ID LEFT_PAREN decl_param_list RIGHT_PAREN SEMICOLON
-			|   VOID ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON
-			|   VOID ID LEFT_PAREN decl_param_list RIGHT_PAREN SEMICOLON
+func_decl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON                                   {
+																									// We can look for functions only in global space
+																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
+																									FunctionSymbol* funcSymbol;
+																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::stringToDataType(*$1), {}, false)) == nullptr)
+																									{
+																										yyerror("Redeclaration of function '%s'.", $2->c_str());
+																										delete $1;
+																										delete $2;
+																										YYERROR;
+																									}
+
+																									delete $1;
+																									delete $2;
+																								}
+			|   TYPE ID LEFT_PAREN decl_param_list RIGHT_PAREN SEMICOLON                        {
+																									// We can look for functions only in global space
+																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
+																									FunctionSymbol* funcSymbol;
+																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::stringToDataType(*$1), *$4, false)) == nullptr)
+																									{
+																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										delete $1;
+																										delete $2;
+																										delete $4;
+																										YYERROR;
+																									}
+
+																									delete $1;
+																									delete $2;
+																									delete $4;
+																								}
+			|   VOID ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON                                   {
+																									// We can look for functions only in global space
+																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
+																									FunctionSymbol* funcSymbol;
+																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, {}, false)) == nullptr)
+																									{
+																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										delete $2;
+																										YYERROR;
+																									}
+
+																									delete $2;
+																								}
+			|   VOID ID LEFT_PAREN decl_param_list RIGHT_PAREN SEMICOLON                        {
+																									// We can look for functions only in global space
+																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
+																									FunctionSymbol* funcSymbol;
+																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, *$4, false)) == nullptr)
+																									{
+																										yyerror("Redefinition of function '%s'.", $2->c_str());
+																										delete $2;
+																										delete $4;
+																										YYERROR;
+																									}
+
+																									delete $2;
+																									delete $4;
+																								}
 			;
 
 func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                                             {
@@ -189,7 +245,6 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									}
 
 																									$$ = new Function(funcSymbol, $8);
-
 																									context.popSymbolTable();
 																									delete $2;
 																									delete $4;
