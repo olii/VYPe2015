@@ -162,7 +162,7 @@ void BlockContext::markChanged(arch::Register *reg)
 
 }
 
-const std::vector<std::pair<ir::Value* , int >> BlockContext::saveCallerRegisters()
+std::vector<std::pair<ir::Value* , int >> BlockContext::saveCallerRegisters()
 {
     std::vector<std::pair<ir::Value* , int >> map;
 
@@ -191,7 +191,7 @@ const std::vector<std::pair<ir::Value* , int >> BlockContext::saveCallerRegister
 
             if (!loader.empty())
             loader += "\n";
-            loader += "sw " +  varToReg[value].reg->getIDName() + ", "+ std::to_string(tempCount*4) + "($sp)";
+            loader += FunctionContext::Indentation + "sw " +  varToReg[value].reg->getIDName() + ", "+ std::to_string(tempCount*4) + "($sp)";
             tempCount++;
         }
 
@@ -207,16 +207,18 @@ const std::vector<std::pair<ir::Value* , int >> BlockContext::saveCallerRegister
     return map;
 }
 
-void BlockContext::loadMapingAfterCall(const std::vector<std::pair<ir::Value* , int >> &map)
+void BlockContext::loadMapingAfterCall(const std::vector<std::pair<ir::Value* , int >> &map, int size)
 {
     if (map.size() == 0) return;
 
     addCanonicalInstruction("#recover stack");
     for(auto &item: map){
+        if (item.first == nullptr) continue;
+
         arch::Register *reg = getRegister(item.first);
         addInstruction("lw", reg->getIDName(), 0, std::to_string(item.second)+"($sp)");
     }
-    addInstruction("addi", "$sp", 0, "$sp", 0, std::to_string(map.size()*4));
+    addInstruction("addi", "$sp", 0, "$sp", 0, std::to_string(size*4));
     addCanonicalInstruction("#recover stack end");
 }
 
@@ -248,6 +250,14 @@ void BlockContext::clearCallerRegisters()
 
 arch::Register *BlockContext::getRegister(ir::Value *val, bool locked, bool implicitLoad)
 {
+    // if int(0) return $0
+    if (val->getType() == ir::Value::Type::CONSTANT &&  (val->getDataType()) == ir::Value::DataType::INT)
+    {
+        const ir::ConstantValue<int> *tmp = static_cast<const ir::ConstantValue<int>*>(val);
+        if (tmp->getConstantValue() == 0)
+            return parent->getMips()->getZero();
+    }
+
 
     if ( varToReg.find(val) != varToReg.end() ) {
         if (val->getType() == ir::Value::Type::TEMPORARY){
