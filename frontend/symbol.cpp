@@ -30,13 +30,13 @@ std::string Symbol::dataTypeToString(Symbol::DataType dataType)
 Symbol::DataType Symbol::stringToDataType(const std::string& typeString)
 {
 	if (typeString == "int")
-		return INT;
+		return Symbol::DataType::INT;
 	else if (typeString == "char")
-		return CHAR;
+		return Symbol::DataType::CHAR;
 	else if (typeString == "string")
-		return STRING;
+		return Symbol::DataType::STRING;
 
-	return VOID;
+	return Symbol::DataType::VOID;
 }
 
 ir::Value::DataType Symbol::dataTypeToIrDataType(Symbol::DataType dataType)
@@ -77,7 +77,7 @@ void Symbol::setIrValue(ir::Value* irValue)
 }
 
 VariableSymbol::VariableSymbol(const std::string& name, Symbol::DataType dataType)
-	: Symbol(Symbol::VARIABLE, name), _dataType(dataType)
+	: Symbol(Symbol::Type::VARIABLE, name), _dataType(dataType)
 {
 }
 
@@ -96,7 +96,7 @@ void VariableSymbol::setDataType(Symbol::DataType dataType)
 }
 
 FunctionSymbol::FunctionSymbol(const std::string& name, Symbol::DataType returnType, const ParameterList& parameters, bool definition)
-		: Symbol(Symbol::FUNCTION, name), _returnType(returnType), _parameters(parameters), _defined(definition)
+		: Symbol(Symbol::Type::FUNCTION, name), _returnType(returnType), _parameters(parameters), _defined(definition)
 {
 }
 
@@ -132,6 +132,24 @@ bool FunctionSymbol::isDefined() const
 void FunctionSymbol::setDefined(bool set)
 {
 	_defined = set;
+}
+
+ManglingLinkSymbol::ManglingLinkSymbol(const std::string& name) : Symbol(Symbol::Type::MANGLING_LINK, name)
+{
+}
+
+ManglingLinkSymbol::~ManglingLinkSymbol()
+{
+}
+
+const ManglingLinkSymbol::FunctionList& ManglingLinkSymbol::getFunctions() const
+{
+	return _functions;
+}
+
+void ManglingLinkSymbol::addFunction(FunctionSymbol* functionSymbol)
+{
+	_functions.push_back(functionSymbol);
 }
 
 } // namespace frontend

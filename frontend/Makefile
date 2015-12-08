@@ -16,6 +16,7 @@ PARSER_OBJ=$(PARSER).o
 
 SRC_FILES= ast.cpp \
            context.cpp \
+           name_mangler.cpp \
            symbol.cpp \
            symbol_table.cpp
 

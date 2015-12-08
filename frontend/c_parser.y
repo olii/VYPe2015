@@ -1,9 +1,11 @@
 %{
+#include <algorithm>
 #include <vector>
 #include <cstdarg>
 
 #include "frontend/ast.h"
 #include "frontend/context.h"
+#include "frontend/name_mangler.h"
 
 using namespace frontend;
 
@@ -111,7 +113,7 @@ func_decl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON                   
 																									// We can look for functions only in global space
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
-																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, {}, false)) == nullptr)
+																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::DataType::VOID, {}, false)) == nullptr)
 																									{
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
 																										delete $2;
@@ -125,7 +127,7 @@ func_decl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON                   
 																									// We can look for functions only in global space
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
-																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, *$4, false)) == nullptr)
+																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::DataType::VOID, *$4, false)) == nullptr)
 																									{
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
 																										delete $2;
@@ -205,7 +207,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									// We can look for functions only in global space
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
-																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, {}, true)) == nullptr)
+																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::DataType::VOID, {}, true)) == nullptr)
 																									{
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
 																										delete $2;
@@ -238,7 +240,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									// We can look for functions only in global space
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
-																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::VOID, *$4, true)) == nullptr)
+																									if ((funcSymbol = globalSymbolTable->addFunction(*$2, Symbol::DataType::VOID, *$4, true)) == nullptr)
 																									{
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
 																										delete $2;
@@ -292,7 +294,7 @@ stmt_list   :   stmt_list stmt              {
 
 assign_stmt :   ID ASSIGN expr SEMICOLON    {
 												Symbol* symbol = context.findSymbol(*$1);
-												if (symbol == nullptr || symbol->getType() != Symbol::VARIABLE)
+												if (symbol == nullptr || symbol->getType() != Symbol::Type::VARIABLE)
 												{
 													yyerror("Assignment to undefined symbol '%s'.", $1->c_str());
 													delete $1;
@@ -325,7 +327,7 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
 													if ((symbol = context.findSymbol(varName)) != nullptr)
 													{
 														// We cannot shadow functions
-														if (symbol->getType() == Symbol::FUNCTION)
+														if (symbol->getType() == Symbol::Type::FUNCTION)
 														{
 															yyerror("Redefinition of symbol '%s'. Cannot shadow functions.", symbol->getName().c_str());
 															delete $1;
@@ -423,9 +425,13 @@ return_stmt :   RETURN expr SEMICOLON	{
 			;
 
 call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
+																std::vector<Symbol::DataType> paramDataTypes;
+																std::for_each($3->begin(), $3->end(), [&paramDataTypes](Expression* expr) { paramDataTypes.push_back(expr->getDataType()); });
+																std::string mangledName = NameMangler::mangle(*$1, paramDataTypes);
+
 																// We can look for functions only in global space
 																Symbol* symbol = nullptr;
-																if ((symbol = context.globalSymbolTable()->findSymbol(*$1)) == nullptr)
+																if ((symbol = context.globalSymbolTable()->findSymbol(mangledName)) == nullptr)
 																{
 																	yyerror("Undeclared identifier '%s' used.", $1->c_str());
 																	delete $1;
@@ -435,9 +441,9 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																}
 
 																// Symbol needs to represent function
-																if (symbol->getType() != Symbol::FUNCTION)
+																if (symbol->getType() != Symbol::Type::FUNCTION)
 																{
-																	yyerror("Identifier '%s' is not a function.", symbol->getName().c_str());
+																	yyerror("Identifier '%s' is not a function.", $1->c_str());
 																	delete $1;
 																	delete $3;
 																	finalize(3);
@@ -449,11 +455,27 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																if (func->getParameters().size() != $3->size())
 																{
 																	yyerror("Unexpected amount of arguments provided when calling '%s'. Expected %u, got %u.",
-																		func->getName().c_str(), func->getParameters().size(), $3->size());
+																		$1->c_str(), func->getParameters().size(), $3->size());
 																	delete $1;
 																	delete $3;
 																	finalize(3);
 																	YYERROR;
+																}
+
+																const FunctionSymbol::ParameterList& paramList = func->getParameters();
+																for (uint32_t i = 0; i < paramList.size(); ++i)
+																{
+																	if (paramList[i]->getDataType() != $3->at(i)->getDataType())
+																	{
+																		yyerror("Type mismatch for parameter on position %u in call of function '%s'. Expected %s, got %s.",
+																				i, $1->c_str(),
+																				Symbol::dataTypeToString($3->at(i)->getDataType()).c_str(),
+																				Symbol::dataTypeToString(paramList[i]->getDataType()).c_str());
+																		delete $1;
+																		delete $3;
+																		finalize(3);
+																		YYERROR;
+																	}
 																}
 
 																$$ = new CallStatement(func, *$3);
@@ -728,9 +750,13 @@ expr    :   expr PLUS expr	{
 		|   LEFT_PAREN expr RIGHT_PAREN { $$ = $2; }
 		|   ID LEFT_PAREN exprs RIGHT_PAREN
 				{
+					std::vector<Symbol::DataType> paramDataTypes;
+					std::for_each($3->begin(), $3->end(), [&paramDataTypes](Expression* expr) { paramDataTypes.push_back(expr->getDataType()); });
+					std::string mangledName = NameMangler::mangle(*$1, paramDataTypes);
+
 					// We can look for functions only in global space
 					Symbol* symbol = nullptr;
-					if ((symbol = context.globalSymbolTable()->findSymbol(*$1)) == nullptr)
+					if ((symbol = context.globalSymbolTable()->findSymbol(mangledName)) == nullptr)
 					{
 						yyerror("Undeclared identifier '%s' used.", $1->c_str());
 						delete $1;
@@ -740,9 +766,9 @@ expr    :   expr PLUS expr	{
 					}
 
 					// Symbol needs to represent function
-					if (symbol->getType() != Symbol::FUNCTION)
+					if (symbol->getType() != Symbol::Type::FUNCTION)
 					{
-						yyerror("Identifier '%s' is not a function.", symbol->getName().c_str());
+						yyerror("Identifier '%s' is not a function.", $1->c_str());
 						delete $1;
 						delete $3;
 						finalize(3);
@@ -754,11 +780,27 @@ expr    :   expr PLUS expr	{
 					if (func->getParameters().size() != $3->size())
 					{
 						yyerror("Unexpected amount of arguments provided when calling '%s'. Expected %u, got %u.",
-							func->getName().c_str(), func->getParameters().size(), $3->size());
+							$1->c_str(), func->getParameters().size(), $3->size());
 						delete $1;
 						delete $3;
 						finalize(3);
 						YYERROR;
+					}
+
+					const FunctionSymbol::ParameterList& paramList = func->getParameters();
+					for (uint32_t i = 0; i < paramList.size(); ++i)
+					{
+						if (paramList[i]->getDataType() != $3->at(i)->getDataType())
+						{
+							yyerror("Type mismatch for parameter on position %u in call of function '%s'. Expected %s, got %s.",
+									i, $1->c_str(),
+									Symbol::dataTypeToString($3->at(i)->getDataType()).c_str(),
+									Symbol::dataTypeToString(paramList[i]->getDataType()).c_str());
+							delete $1;
+							delete $3;
+							finalize(3);
+							YYERROR;
+						}
 					}
 
 					$$ = new Call(func, *$3);
@@ -910,7 +952,7 @@ expr    :   expr PLUS expr	{
 						YYERROR;
 					}
 
-					if (symbol->getType() != Symbol::VARIABLE)
+					if (symbol->getType() != Symbol::Type::VARIABLE)
 					{
 						yyerror("Identifier '%s' is not a variable.", symbol->getName().c_str());
 						delete $1;

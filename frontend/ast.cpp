@@ -279,13 +279,13 @@ void Function::generateIr(ir::Builder& builder)
 	ir::Value* defaultRetValue = nullptr;
 	switch (_symbol->getReturnType())
 	{
-		case Symbol::INT:
+		case Symbol::DataType::INT:
 			defaultRetValue = builder.createConstantValue(0);
 			break;
-		case Symbol::CHAR:
+		case Symbol::DataType::CHAR:
 			defaultRetValue = builder.createConstantValue('\0');
 			break;
-		case Symbol::STRING:
+		case Symbol::DataType::STRING:
 			defaultRetValue = builder.createConstantValue("");
 			break;
 		default:
