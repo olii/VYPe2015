@@ -665,22 +665,28 @@ expr    :   expr PLUS expr	{
 								$$ = new UnaryExpression(Expression::Type::NOT, Symbol::DataType::INT, $2);
 							}
 		|   LEFT_PAREN TYPE RIGHT_PAREN expr {
-								Symbol::DataType castToType;
-								if ((($4->getDataType() == Symbol::DataType::CHAR) && (Symbol::stringToDataType(*$2) == Symbol::DataType::INT)) ||
-									(($4->getDataType() == Symbol::DataType::STRING) && (Symbol::stringToDataType(*$2) == Symbol::DataType::CHAR)))
+								// In case of typecast to same type, do nothing
+								if ($4->getDataType() == Symbol::stringToDataType(*$2))
 								{
-									castToType = Symbol::stringToDataType(*$2);
+									$$ = $4;
+									delete $2;
+								}
+								if ((($4->getDataType() == Symbol::DataType::CHAR) && (Symbol::stringToDataType(*$2) == Symbol::DataType::INT)) ||
+									(($4->getDataType() == Symbol::DataType::STRING) && (Symbol::stringToDataType(*$2) == Symbol::DataType::CHAR)) ||
+									(($4->getDataType() == Symbol::DataType::INT) && (Symbol::stringToDataType(*$2) == Symbol::DataType::CHAR)))
+								{
+									$$ = new UnaryExpression(Expression::Type::TYPECAST, Symbol::stringToDataType(*$2), $4);
+									delete $2;
 								}
 								else
 								{
 									yyerror("Unable to cast type '%s' to type '%s'.",
 										Symbol::dataTypeToString($4->getDataType()).c_str(),
 										$2->c_str());
+									delete $2;
 									finalize(3);
 									YYERROR;
 								}
-
-								$$ = new UnaryExpression(Expression::Type::TYPECAST, castToType, $4);
 							}
 		|   LEFT_PAREN expr RIGHT_PAREN { $$ = $2; }
 		|   ID LEFT_PAREN exprs RIGHT_PAREN
