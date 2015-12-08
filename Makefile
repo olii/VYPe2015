@@ -24,7 +24,6 @@ include $(ROOT)/mak/app.mak
 clean: main-clean
 main-clean:
 	@$(MAKE) -C frontend clean
-	@$(MAKE) -C testing clean
 	@$(MAKE) -C ir clean
 	@$(MAKE) -C backend clean
 

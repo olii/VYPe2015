@@ -22,8 +22,8 @@ public:
 	SymbolTable* globalSymbolTable();
 	SymbolTable* currentSymbolTable();
 
-	void setExpectedReturnType(Symbol::DataType dataType);
-	Symbol::DataType getExpectedReturnType() const;
+	FunctionSymbol* getCurrentFunction() const;
+	void setCurrentFunction(FunctionSymbol* currentFunction);
 
 	Symbol* findSymbol(const std::string& name);
 	const Symbol* findSymbol(const std::string& name) const;
@@ -31,10 +31,10 @@ public:
 private:
 	Context& operator =(const Context&);
 
-	Symbol::DataType _expectedReturnType;
 	SymbolTable* _globalSymTable;
 	StackType _symTableStack;
 	StackType _allSymbolTables;
+	FunctionSymbol* _currentFunction;
 };
 
 } // namespace frontend

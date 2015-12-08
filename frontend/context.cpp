@@ -2,7 +2,7 @@
 
 namespace frontend {
 
-Context::Context() : _globalSymTable(new SymbolTable), _symTableStack(), _allSymbolTables()
+Context::Context() : _globalSymTable(new SymbolTable), _symTableStack(), _allSymbolTables(), _currentFunction(nullptr)
 {
 }
 
@@ -40,14 +40,14 @@ SymbolTable* Context::currentSymbolTable()
 	return _symTableStack.back();
 }
 
-void Context::setExpectedReturnType(Symbol::DataType dataType)
+void Context::setCurrentFunction(FunctionSymbol* currentFunction)
 {
-	_expectedReturnType = dataType;
+	_currentFunction = currentFunction;
 }
 
-Symbol::DataType Context::getExpectedReturnType() const
+FunctionSymbol* Context::getCurrentFunction() const
 {
-	return _expectedReturnType;
+	return _currentFunction;
 }
 
 Symbol* Context::findSymbol(const std::string& name)

@@ -139,9 +139,7 @@ func_decl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON                   
 
 func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                                             {
 																									context.newSymbolTable();
-																									context.setExpectedReturnType(Symbol::stringToDataType(*$1));
-																								}
-													LEFT_CBRACE stmts RIGHT_CBRACE              {
+
 																									// We can look for functions only in global space
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
@@ -153,15 +151,16 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																										finalize(3);
 																										YYERROR;
 																									}
-
-																									$$ = new Function(funcSymbol, $8);
+																									context.setCurrentFunction(funcSymbol);
+																								}
+													LEFT_CBRACE stmts RIGHT_CBRACE              {
+																									$$ = new Function(context.getCurrentFunction(), $8);
 																									context.popSymbolTable();
 																									delete $1;
 																									delete $2;
 																								}
 			|   TYPE ID LEFT_PAREN impl_param_list RIGHT_PAREN                                  {
 																									context.newSymbolTable();
-																									context.setExpectedReturnType(Symbol::stringToDataType(*$1));
 
 																									// Add parameters as variables to newly created symbol table
 																									for (const auto& param : *$4)
@@ -176,8 +175,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																											YYERROR;
 																										}
 																									}
-																								}
-																LEFT_CBRACE stmts RIGHT_CBRACE  {
+
 																									// We can look for functions only in global space
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
@@ -190,8 +188,10 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																										finalize(3);
 																										YYERROR;
 																									}
-
-																									$$ = new Function(funcSymbol, $8);
+																									context.setCurrentFunction(funcSymbol);
+																								}
+																LEFT_CBRACE stmts RIGHT_CBRACE  {
+																									$$ = new Function(context.getCurrentFunction(), $8);
 																									context.popSymbolTable();
 																									delete $1;
 																									delete $2;
@@ -199,9 +199,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																								}
 			|   VOID ID LEFT_PAREN VOID RIGHT_PAREN                                             {
 																									context.newSymbolTable();
-																									context.setExpectedReturnType(Symbol::DataType::VOID);
-																								}
-													LEFT_CBRACE stmts RIGHT_CBRACE              {
+
 																									// We can look for functions only in global space
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
@@ -212,14 +210,15 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																										finalize(3);
 																										YYERROR;
 																									}
-
-																									$$ = new Function(funcSymbol, $8);
+																									context.setCurrentFunction(funcSymbol);
+																								}
+													LEFT_CBRACE stmts RIGHT_CBRACE              {
+																									$$ = new Function(context.getCurrentFunction(), $8);
 																									context.popSymbolTable();
 																									delete $2;
 																								}
 			|   VOID ID LEFT_PAREN impl_param_list RIGHT_PAREN                                  {
 																									context.newSymbolTable();
-																									context.setExpectedReturnType(Symbol::DataType::VOID);
 
 																									// Add parameters as variables to newly created symbol table
 																									for (const auto& param : *$4)
@@ -233,8 +232,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																											YYERROR;
 																										}
 																									}
-																								}
-															   LEFT_CBRACE stmts RIGHT_CBRACE   {
+
 																									// We can look for functions only in global space
 																									SymbolTable* globalSymbolTable = context.globalSymbolTable();
 																									FunctionSymbol* funcSymbol;
@@ -246,8 +244,10 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																										finalize(3);
 																										YYERROR;
 																									}
-
-																									$$ = new Function(funcSymbol, $8);
+																									context.setCurrentFunction(funcSymbol);
+																								}
+															   LEFT_CBRACE stmts RIGHT_CBRACE   {
+																									$$ = new Function(context.getCurrentFunction(), $8);
 																									context.popSymbolTable();
 																									delete $2;
 																									delete $4;
@@ -396,10 +396,10 @@ while_stmt  :   WHILE LEFT_PAREN expr RIGHT_PAREN   {
 			;
 
 return_stmt :   RETURN expr SEMICOLON	{
-											if (context.getExpectedReturnType() != $2->getDataType())
+											if (context.getCurrentFunction()->getReturnType() != $2->getDataType())
 											{
 												yyerror("Return type mismatch. Expected '%s', got '%s'.",
-													Symbol::dataTypeToString(context.getExpectedReturnType()).c_str(),
+													Symbol::dataTypeToString(context.getCurrentFunction()->getReturnType()).c_str(),
 													Symbol::dataTypeToString($2->getDataType()).c_str());
 												finalize(3);
 												YYERROR;
@@ -408,10 +408,10 @@ return_stmt :   RETURN expr SEMICOLON	{
 											$$ = new ReturnStatement($2);
 										}
 			|   RETURN SEMICOLON		{
-											if (context.getExpectedReturnType() != Symbol::DataType::VOID)
+											if (context.getCurrentFunction()->getReturnType() != Symbol::DataType::VOID)
 											{
 												yyerror("Return type mismatch. Expected '%s', got 'void'.",
-													Symbol::dataTypeToString(context.getExpectedReturnType()).c_str());
+													Symbol::dataTypeToString(context.getCurrentFunction()->getReturnType()).c_str());
 												finalize(3);
 												YYERROR;
 											}
@@ -671,7 +671,7 @@ expr    :   expr PLUS expr	{
 									$$ = $4;
 									delete $2;
 								}
-								if ((($4->getDataType() == Symbol::DataType::CHAR) && (Symbol::stringToDataType(*$2) == Symbol::DataType::INT)) ||
+								else if ((($4->getDataType() == Symbol::DataType::CHAR) && (Symbol::stringToDataType(*$2) == Symbol::DataType::INT)) ||
 									(($4->getDataType() == Symbol::DataType::STRING) && (Symbol::stringToDataType(*$2) == Symbol::DataType::CHAR)) ||
 									(($4->getDataType() == Symbol::DataType::INT) && (Symbol::stringToDataType(*$2) == Symbol::DataType::CHAR)))
 								{
