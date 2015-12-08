@@ -103,6 +103,11 @@ const Register *MIPS::getRetRegister()
     return &R2;
 }
 
+Register *MIPS::getZero()
+{
+    return &R0;
+}
+
 const std::string MIPS::getFunctionPrologue()
 {
     std::string prologue = "  addi $sp, $sp, -8 \n";

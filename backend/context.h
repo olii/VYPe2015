@@ -37,9 +37,9 @@ public:
     void removeVictim();
     void markChanged(arch::Register * reg);
 
-    const std::vector<std::pair<ir::Value *, int> > saveCallerRegisters();
+    std::vector<std::pair<ir::Value *, int> > saveCallerRegisters();
     void clearCallerRegisters();
-    void loadMapingAfterCall(const std::vector<std::pair<ir::Value* , int >> &map);
+    void loadMapingAfterCall(const std::vector<std::pair<ir::Value* , int >> &map, int size);
     void saveUnsavedVariables();
 
     const std::string getInstructions();

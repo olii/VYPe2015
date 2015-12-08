@@ -42,7 +42,8 @@ public:
     const std::vector<Register *> &getEvalRegisters();
     const std::vector<Register *> &getCalleeSavedRegisters();
     const std::vector<Register *> &getCallerSavedRegisters();
-    const Register * getRetRegister();
+    const Register *getRetRegister();
+    Register *getZero();
 
 private:
     arch::Register R0; // always 0
