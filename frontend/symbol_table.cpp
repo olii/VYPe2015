@@ -84,6 +84,9 @@ FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataTy
 					return nullptr;
 			}
 
+			for (const auto& param : declParams)
+				delete param;
+
 			// Rewrite placeholder declaration parameters with the actual definition parameters and set the function as defined
 			func->setParameters(parameters);
 			func->setDefined(true);
