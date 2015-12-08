@@ -117,8 +117,9 @@ const std::string MIPS::getFunctionPrologue()
 const std::string MIPS::getFunctionEpilogue()
 {
     std::string prologue = "  lw $ra, 4($fp)  \n";
+    prologue +=            "  move $sp, $fp  \n";
     prologue +=            "  lw $fp, 0($fp)  \n";
-    prologue +=            "  addi $sp, $fp, 8 \n";
+    prologue +=            "  addi $sp, $sp, 8 \n";
     prologue +=            "  jr $ra          \n";
 
     return prologue;

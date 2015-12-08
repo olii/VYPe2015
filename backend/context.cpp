@@ -1,6 +1,7 @@
 #include "context.h"
 #include "ir/function.h"
 #include <random>
+#include <iostream> // remove me
 
 namespace backend{
 
@@ -15,13 +16,14 @@ BlockContext::BlockContext(backend::FunctionContext *parrent, ir::BasicBlock *bl
     this->parent = parrent;
     this->block = block;
 }
-void BlockContext::addCanonicalInstruction(std::string &inst)
+void BlockContext::addCanonicalInstruction(const std::string &inst)
 {
     text += FunctionContext::Indentation + inst + "\n";
 }
 
-void BlockContext::addInstruction(std::string inst, std::string dst, int offset, std::string op2, int offset2, std::string op3)
+void BlockContext::addInstruction(const std::string &inst, const std::string &dst, int offset, const std::string &op2, int offset2, const std::string &op3)
 {
+
     text += FunctionContext::Indentation + inst;
     text += " " + dst;
 
@@ -52,6 +54,7 @@ void BlockContext::addInstruction(std::string inst, std::string dst, int offset,
     }
 
     text += "\n";
+
     return;
 }
 
@@ -159,16 +162,104 @@ void BlockContext::markChanged(arch::Register *reg)
 
 }
 
+const std::vector<std::pair<ir::Value* , int >> BlockContext::saveCallerRegisters()
+{
+    std::vector<std::pair<ir::Value* , int >> map;
+
+
+    int tempCount = 0;
+    std::string loader;
+
+    for(auto item: parent->getMips()->getCallerSavedRegisters()){
+        if ( RegToVar.find(item) == RegToVar.end() )
+            continue;
+
+        if ( RegToVar[item].val->getType() == ir::Value::Type::NAMED &&
+             RegToVar[item].saved == false)
+        {
+            ir::NamedValue *value = static_cast<ir::NamedValue*>(RegToVar[item].val);
+            int offset = parent->getVarOffset(*value);
+            addInstruction("sw", item->getIDName(), -offset, "$fp");
+            RegToVar[item].saved = true;
+        }
+        if ( RegToVar[item].val->getType() == ir::Value::Type::TEMPORARY &&
+             varToReg[RegToVar[item].val].locked == true)
+        {
+            ir::Value *value = (RegToVar[item].val);
+            std::pair<ir::Value* , int > pair(value, tempCount*4);
+            map.push_back(std::move(pair));
+
+            if (!loader.empty())
+            loader += "\n";
+            loader += "sw " +  varToReg[value].reg->getIDName() + ", "+ std::to_string(tempCount*4) + "($sp)";
+            tempCount++;
+        }
+
+    }
+    if (!loader.empty())
+    {
+        addCanonicalInstruction("#preserve stack");
+        addInstruction("addi", "$sp", 0, "$sp", 0, std::to_string(-tempCount*4));
+        addCanonicalInstruction(loader);
+        addCanonicalInstruction("#preserve stack end");
+    }
+
+    return map;
+}
+
+void BlockContext::loadMapingAfterCall(const std::vector<std::pair<ir::Value* , int >> &map)
+{
+    if (map.size() == 0) return;
+
+    addCanonicalInstruction("#recover stack");
+    for(auto &item: map){
+        arch::Register *reg = getRegister(item.first);
+        addInstruction("lw", reg->getIDName(), 0, std::to_string(item.second)+"($sp)");
+    }
+    addInstruction("addi", "$sp", 0, "$sp", 0, std::to_string(map.size()*4));
+    addCanonicalInstruction("#recover stack end");
+}
+
+void BlockContext::saveUnsavedVariables()
+{
+    //todo
+    for(auto reg :RegToVar){
+        if (reg.second.val->getType() ==ir::Value::Type::NAMED  && reg.second.saved == false)
+        {
+            ir::NamedValue *value = static_cast<ir::NamedValue*>(reg.second.val);
+            int offset = parent->getVarOffset(*value);
+            addInstruction("sw", reg.first->getIDName(), -offset, "$fp");
+            reg.second.saved = true;
+        }
+    }
+}
+
+void BlockContext::clearCallerRegisters()
+{
+    for(auto item: parent->getMips()->getCallerSavedRegisters()){
+        if ( RegToVar.find(item) == RegToVar.end() )
+            continue;
+
+        varToReg.erase(RegToVar[item].val);
+        RegToVar.erase(item);
+
+    }
+}
+
 arch::Register *BlockContext::getRegister(ir::Value *val, bool locked, bool implicitLoad)
 {
 
     if ( varToReg.find(val) != varToReg.end() ) {
+        if (val->getType() == ir::Value::Type::TEMPORARY){
+            varToReg[val].locked = false;
+        }
+
         return varToReg[val].reg;
     }
 
     // there is no value in register -- alocating one
 
-    std::vector<arch::Register*> reglist = parent->getMips()->getEvalRegisters(); // possible eval registers
+    const std::vector<arch::Register*> &reglist = parent->getMips()->getEvalRegisters(); // possible eval registers
 
     //check if we have free space
     if ( RegToVar.size() >= reglist.size()  )  {
@@ -237,15 +328,48 @@ arch::Register *BlockContext::getRegister(ir::Value *val, bool locked, bool impl
     return nullptr;
 }
 
-std::string BlockContext::getInstructions()
+arch::Register *BlockContext::getFreeRegister()
+{
+    // there is no value in register -- alocating one
+    const std::vector<arch::Register*> &reglist = parent->getMips()->getEvalRegisters(); // possible eval registers
+
+    //check if we have free space
+    if ( RegToVar.size() >= reglist.size()  )  {
+        // no free space
+        removeVictim();
+    }
+
+    for (auto &reg: reglist)
+    {
+        if ( RegToVar.find(reg) == RegToVar.end() ) {
+            //this register is free
+            return reg;
+        }
+    }
+
+
+    return nullptr;
+}
+
+const std::string BlockContext::getInstructions()
 {
     std::string instr;
     //label
-    instr += parent->getFunction()->getName() + "_" + std::to_string(block->getId()) + " :    #BLOCK LABEL\n";
+    instr += getName() + " :    #BLOCK LABEL\n";
 
     instr += text;
 
     return instr;
+}
+
+const std::string BlockContext::getName()
+{
+    return parent->getFunction()->getName() + "_$" + std::to_string(block->getId());
+}
+
+const std::string BlockContext::getName(ir::BasicBlock *b, ir::Function *f)
+{
+    return f->getName() + "_$" + std::to_string(b->getId());
 }
 
 
@@ -334,13 +458,17 @@ std::string FunctionContext::getInstructions()
     instr += "  addi $sp, $sp, " + std::to_string(-(int)(varStackMap.size())*4) + " \n" ;
     instr += prolog;
 
+    epilog += func->getName() + "_$return:\n";
+
     // callee saved registers SAVING place
     instr += "  #callee saved registers\n";
     instr += "  addi $sp, $sp, " + std::to_string(-(int)calleeSavedSet.size()*4) + " \n" ;
     int offset = 0;
     for ( auto & item : calleeSavedSet)
     {
-        instr += "  sw " + item->getIDName()  + ", " +  std::to_string(-(int)(offset+stackCounter)) +"($fp)" + " \n" ;
+        instr +=  "  sw " + item->getIDName()  + ", " +  std::to_string(-(int)(offset+stackCounter)) +"($fp)" + " \n" ;
+        epilog += "  lw " + item->getIDName()  + ", " +  std::to_string(-(int)(offset+stackCounter)) +"($fp)" + " \n" ;
+
         offset += 4;
     }
 

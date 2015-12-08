@@ -42,7 +42,7 @@ public:
 
 	std::string codeText() const;
 
-    std::map<std::string, Function*>& getFunctions(){ return _functions;}
+    const std::map<std::string, Function *> &getFunctions();
 
 private:
 	std::map<std::string, Function*> _functions;

@@ -7,6 +7,7 @@
 #include <map>
 #include <string>
 #include <cstdarg>
+#include <utility>
 
 
 namespace backend{
@@ -26,15 +27,26 @@ public:
     BlockContext(FunctionContext *parent, ir::BasicBlock *block);
     ~BlockContext(){}
 
-    void addCanonicalInstruction(std::string &inst);
-    void addInstruction(std::string inst,std::string dst, int offset = 0, std::string op2 = "",int offset2 = 0,std::string op3 = "");
+    void addCanonicalInstruction(const std::string &inst);
+    void addInstruction(const std::string &inst, const std::string &dst, int offset = 0, const std::string &op2 = "", int offset2 = 0, const std::string &op3 = "");
 
     arch::Register *getRegister(ir::Value *val, bool locked = false, bool implicitCopy = true);
+    arch::Register *getFreeRegister();
+
     void unlockVar(ir::Value *val);
     void removeVictim();
     void markChanged(arch::Register * reg);
 
-    std::string getInstructions();
+    const std::vector<std::pair<ir::Value *, int> > saveCallerRegisters();
+    void clearCallerRegisters();
+    void loadMapingAfterCall(const std::vector<std::pair<ir::Value* , int >> &map);
+    void saveUnsavedVariables();
+
+    const std::string getInstructions();
+    const std::string getName();
+
+
+    static const std::string getName(ir::BasicBlock *b, ir::Function *f);
 
 private:
     std::map<ir::Value*, backend::RegFlag> varToReg;

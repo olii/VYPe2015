@@ -231,7 +231,12 @@ std::string Builder::codeText() const
 	for (auto& keyValue : _functions)
 		keyValue.second->accept(printVisitor);
 
-	return printVisitor.getText();
+    return printVisitor.getText();
+}
+
+const std::map<std::string, Function *> &Builder::getFunctions()
+{
+     return _functions;
 }
 
 }
