@@ -8,19 +8,12 @@
 using namespace frontend;
 
 extern int yylex();
-//extern void yyerror(const char* e);
+extern void yyerror(const char* e, ...);
 
 extern Program program;
 extern Context context;
 
-void yyerror(const char *s, ...)
-{
-	va_list ap;
-	va_start(ap, s);
-	fprintf(stderr, "Error: ");
-	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
-}
+extern void finalize(int exitCode);
 %}
 
 %define parse.error verbose // Better error reporting
@@ -87,6 +80,7 @@ func_decl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON                   
 																										yyerror("Redeclaration of function '%s'.", $2->c_str());
 																										delete $1;
 																										delete $2;
+																										finalize(3);
 																										YYERROR;
 																									}
 
@@ -103,6 +97,7 @@ func_decl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON                   
 																										delete $1;
 																										delete $2;
 																										delete $4;
+																										finalize(3);
 																										YYERROR;
 																									}
 
@@ -118,6 +113,7 @@ func_decl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON                   
 																									{
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
 																										delete $2;
+																										finalize(3);
 																										YYERROR;
 																									}
 
@@ -132,6 +128,7 @@ func_decl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN SEMICOLON                   
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
 																										delete $2;
 																										delete $4;
+																										finalize(3);
 																										YYERROR;
 																									}
 
@@ -153,6 +150,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
 																										delete $1;
 																										delete $2;
+																										finalize(3);
 																										YYERROR;
 																									}
 
@@ -174,6 +172,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																											delete $1;
 																											delete $2;
 																											delete $4;
+																											finalize(3);
 																											YYERROR;
 																										}
 																									}
@@ -188,6 +187,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																										delete $1;
 																										delete $2;
 																										delete $4;
+																										finalize(3);
 																										YYERROR;
 																									}
 
@@ -209,6 +209,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																									{
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
 																										delete $2;
+																										finalize(3);
 																										YYERROR;
 																									}
 
@@ -228,6 +229,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																											yyerror("Redefinition of function argument '%s'.", param->getName().c_str());
 																											delete $2;
 																											delete $4;
+																											finalize(3);
 																											YYERROR;
 																										}
 																									}
@@ -241,6 +243,7 @@ func_impl   :   TYPE ID LEFT_PAREN VOID RIGHT_PAREN                             
 																										yyerror("Redefinition of function '%s'.", $2->c_str());
 																										delete $2;
 																										delete $4;
+																										finalize(3);
 																										YYERROR;
 																									}
 
@@ -291,6 +294,7 @@ assign_stmt :   ID ASSIGN expr SEMICOLON    {
 												{
 													yyerror("Assignment to undefined symbol '%s'.", $1->c_str());
 													delete $1;
+													finalize(3);
 													YYERROR;
 												}
 
@@ -302,6 +306,7 @@ assign_stmt :   ID ASSIGN expr SEMICOLON    {
 																varSymbol->getName().c_str(),
 																Symbol::dataTypeToString(varSymbol->getDataType()).c_str());
 													delete $1;
+													finalize(3);
 													YYERROR;
 												}
 
@@ -323,6 +328,7 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
 															yyerror("Redefinition of symbol '%s'. Cannot shadow functions.", symbol->getName().c_str());
 															delete $1;
 															delete $2;
+															finalize(3);
 															YYERROR;
 														}
 													}
@@ -333,6 +339,7 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
 														yyerror("Redefinition of symbol '%s'.", varName.c_str());
 														delete $1;
 														delete $2;
+														finalize(3);
 														YYERROR;
 													}
 
@@ -354,6 +361,7 @@ if_stmt :   IF LEFT_PAREN expr RIGHT_PAREN          {
 														{
 															yyerror("Condition of if statement is of type '%s'. Must be 'int'.",
 																Symbol::dataTypeToString($3->getDataType()).c_str());
+															finalize(3);
 															YYERROR;
 														}
 
@@ -375,6 +383,7 @@ while_stmt  :   WHILE LEFT_PAREN expr RIGHT_PAREN   {
 														{
 															yyerror("Condition of while statement is of type '%s'. Must be 'int'.",
 																Symbol::dataTypeToString($3->getDataType()).c_str());
+															finalize(3);
 															YYERROR;
 														}
 
@@ -392,6 +401,7 @@ return_stmt :   RETURN expr SEMICOLON	{
 												yyerror("Return type mismatch. Expected '%s', got '%s'.",
 													Symbol::dataTypeToString(context.getExpectedReturnType()).c_str(),
 													Symbol::dataTypeToString($2->getDataType()).c_str());
+												finalize(3);
 												YYERROR;
 											}
 
@@ -402,6 +412,7 @@ return_stmt :   RETURN expr SEMICOLON	{
 											{
 												yyerror("Return type mismatch. Expected '%s', got 'void'.",
 													Symbol::dataTypeToString(context.getExpectedReturnType()).c_str());
+												finalize(3);
 												YYERROR;
 											}
 
@@ -417,6 +428,7 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																	yyerror("Undeclared identifier '%s' used.", $1->c_str());
 																	delete $1;
 																	delete $3;
+																	finalize(3);
 																	YYERROR;
 																}
 
@@ -426,6 +438,7 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																	yyerror("Identifier '%s' is not a function.", symbol->getName().c_str());
 																	delete $1;
 																	delete $3;
+																	finalize(3);
 																	YYERROR;
 																}
 
@@ -437,6 +450,7 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																		func->getName().c_str(), func->getParameters().size(), $3->size());
 																	delete $1;
 																	delete $3;
+																	finalize(3);
 																	YYERROR;
 																}
 
@@ -452,6 +466,7 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																		yyerror("Builtin function 'print' requires at least 1 argument.");
 																		delete $1;
 																		delete $3;
+																		finalize(3);
 																		YYERROR;
 																	}
 
@@ -460,6 +475,7 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																{
 																	yyerror("Builtin function '%s' cannot be in form of statement.", $1->c_str());
 																	delete $1;
+																	finalize(3);
 																	YYERROR;
 																}
 
@@ -486,6 +502,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s + %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -497,6 +514,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s - %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -509,6 +527,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s * %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -520,6 +539,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s / %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -531,6 +551,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s % %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -542,6 +563,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s < %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -553,6 +575,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s <= %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -564,6 +587,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s > %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -575,6 +599,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s >= %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -586,6 +611,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s == %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -597,6 +623,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s != %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -608,6 +635,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s && %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -619,6 +647,7 @@ expr    :   expr PLUS expr	{
 									yyerror("No match for operation '%s || %s'.",
 										Symbol::dataTypeToString($1->getDataType()).c_str(),
 										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -629,6 +658,7 @@ expr    :   expr PLUS expr	{
 								{
 									yyerror("No match for operation '! %s'.",
 										Symbol::dataTypeToString($2->getDataType()).c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -646,6 +676,7 @@ expr    :   expr PLUS expr	{
 									yyerror("Unable to cast type '%s' to type '%s'.",
 										Symbol::dataTypeToString($4->getDataType()).c_str(),
 										$2->c_str());
+									finalize(3);
 									YYERROR;
 								}
 
@@ -661,6 +692,7 @@ expr    :   expr PLUS expr	{
 						yyerror("Undeclared identifier '%s' used.", $1->c_str());
 						delete $1;
 						delete $3;
+						finalize(3);
 						YYERROR;
 					}
 
@@ -670,6 +702,7 @@ expr    :   expr PLUS expr	{
 						yyerror("Identifier '%s' is not a function.", symbol->getName().c_str());
 						delete $1;
 						delete $3;
+						finalize(3);
 						YYERROR;
 					}
 
@@ -681,6 +714,7 @@ expr    :   expr PLUS expr	{
 							func->getName().c_str(), func->getParameters().size(), $3->size());
 						delete $1;
 						delete $3;
+						finalize(3);
 						YYERROR;
 					}
 
@@ -698,6 +732,7 @@ expr    :   expr PLUS expr	{
 							yyerror("Builtin function 'print' requires at least 1 argument.");
 							delete $1;
 							delete $3;
+							finalize(3);
 							YYERROR;
 						}
 
@@ -710,6 +745,7 @@ expr    :   expr PLUS expr	{
 							yyerror("Builtin function 'read_char' requires 0 arguments.");
 							delete $1;
 							delete $3;
+							finalize(3);
 							YYERROR;
 						}
 
@@ -722,6 +758,7 @@ expr    :   expr PLUS expr	{
 							yyerror("Builtin function 'read_int' requires 0 arguments.");
 							delete $1;
 							delete $3;
+							finalize(3);
 							YYERROR;
 						}
 
@@ -734,6 +771,7 @@ expr    :   expr PLUS expr	{
 							yyerror("Builtin function 'read_string' requires 0 arguments.");
 							delete $1;
 							delete $3;
+							finalize(3);
 							YYERROR;
 						}
 
@@ -746,6 +784,7 @@ expr    :   expr PLUS expr	{
 							yyerror("Builtin function 'get_at' requires 2 arguments.");
 							delete $1;
 							delete $3;
+							finalize(3);
 							YYERROR;
 						}
 
@@ -756,6 +795,7 @@ expr    :   expr PLUS expr	{
 								Symbol::dataTypeToString($3->at(1)->getDataType()).c_str());
 							delete $1;
 							delete $3;
+							finalize(3);
 							YYERROR;
 						}
 
@@ -768,6 +808,7 @@ expr    :   expr PLUS expr	{
 							yyerror("Builtin function 'set_at' requires 3 arguments.");
 							delete $1;
 							delete $3;
+							finalize(3);
 							YYERROR;
 						}
 
@@ -780,6 +821,7 @@ expr    :   expr PLUS expr	{
 								Symbol::dataTypeToString($3->at(2)->getDataType()).c_str());
 							delete $1;
 							delete $3;
+							finalize(3);
 							YYERROR;
 						}
 
@@ -792,6 +834,7 @@ expr    :   expr PLUS expr	{
 							yyerror("Builtin function 'strcat' requires 2 arguments.");
 							delete $1;
 							delete $3;
+							finalize(3);
 							YYERROR;
 						}
 
@@ -802,6 +845,7 @@ expr    :   expr PLUS expr	{
 								Symbol::dataTypeToString($3->at(1)->getDataType()).c_str());
 							delete $1;
 							delete $3;
+							finalize(3);
 							YYERROR;
 						}
 
@@ -819,6 +863,7 @@ expr    :   expr PLUS expr	{
 					{
 						yyerror("Undeclared identifier '%s' used.", $1->c_str());
 						delete $1;
+						finalize(3);
 						YYERROR;
 					}
 
@@ -826,6 +871,7 @@ expr    :   expr PLUS expr	{
 					{
 						yyerror("Identifier '%s' is not a variable.", symbol->getName().c_str());
 						delete $1;
+						finalize(3);
 						YYERROR;
 					}
 

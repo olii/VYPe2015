@@ -12,19 +12,23 @@ extern int yyparse();
 extern int yydebug;
 extern int yylex_destroy();
 
+int exitCode = 0;
 frontend::Program program;
 frontend::Context context;
 
-void yyerror(const char* e)
+void finalize(int _exitCode)
 {
-	std::cerr << e << std::endl;
+	exitCode = _exitCode;
+	yylex_destroy(); // Fix memory leaks from flex, bison doesn't call this
 }
 
-void terminate_compiler(int exit_code, const std::string& msg = "")
+void yyerror(const char *s, ...)
 {
-	if (msg != "")
-		std::cerr << msg << std::endl;
-	yylex_destroy(); // Fix memory leaks from flex, bison doesn't call this
+	va_list ap;
+	va_start(ap, s);
+	fprintf(stderr, "Error: ");
+	vfprintf(stderr, s, ap);
+	fprintf(stderr, "\n");
 }
 
 int main()
@@ -33,7 +37,12 @@ int main()
 	yyin = fopen("test.c", "r");
 	int result = yyparse();
 	if (result != 0)
-		terminate_compiler(3);
+	{
+		if (exitCode == 0)
+			exitCode = 2;
+		finalize(exitCode);
+		return exitCode;
+	}
 
 	// Check if there is no undefined but declared function
 	for (const auto& pair : context.globalSymbolTable()->getAllSymbols())
@@ -43,8 +52,8 @@ int main()
 
 		if (!static_cast<frontend::FunctionSymbol*>(pair.second)->isDefined())
 		{
-			terminate_compiler(3);
-			return 3;
+			finalize(exitCode);
+			return exitCode;
 		}
 	}
 
@@ -52,23 +61,23 @@ int main()
 	frontend::Symbol* mainSymbol = context.globalSymbolTable()->findSymbol("main");
 	if (mainSymbol == nullptr)
 	{
-		terminate_compiler(3);
-		return 3;
+		finalize(exitCode);
+		return exitCode;
 	}
 
 	// It must be a function
 	if (mainSymbol->getType() != frontend::Symbol::Type::FUNCTION)
 	{
-		terminate_compiler(3);
-		return 3;
+		finalize(exitCode);
+		return exitCode;
 	}
 
 	// It has to always be int main(void)
 	frontend::FunctionSymbol* funcMainSymbol = static_cast<frontend::FunctionSymbol*>(mainSymbol);
 	if (funcMainSymbol->getReturnType() != frontend::Symbol::DataType::INT || funcMainSymbol->getParameters().size() != 0)
 	{
-		terminate_compiler(3);
-		return 3;
+		finalize(exitCode);
+		return exitCode;
 	}
 
 	ir::Builder builder;

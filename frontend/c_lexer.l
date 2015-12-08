@@ -10,7 +10,7 @@
 static char inputChar = '\0';
 static std::string inputString = "";
 
-extern void terminate_compiler(int exit_code, const std::string& msg);
+extern void finalize(int exitCode);
 %}
 
 digit       [0-9]
@@ -40,7 +40,7 @@ whitespace  [ \r\n\t]
 <CHR>\\t                { inputChar = '\t'; BEGIN(CHR_END); }
 <CHR>\\n                { inputChar = '\n'; BEGIN(CHR_END); }
 <CHR>[^'"\t\n\\]        { inputChar = yytext[0]; BEGIN(CHR_END); }
-<CHR>.                  { terminate_compiler(1, "Lexical error"); }
+<CHR>.                  { finalize(1); yyterminate(); }
 <CHR_END>\'             {
 							BEGIN(0);
 							yylval.charValue = inputChar;
@@ -102,6 +102,6 @@ print|read_char|read_int|read_string|get_at|set_at|strcat {
 							yylval.strValue = new std::string(yytext, yyleng);
 							return ID;
 						}
-.                       { terminate_compiler(1, "Lexical error."); }
+.                       { finalize(1); yyterminate(); }
 
 %%
