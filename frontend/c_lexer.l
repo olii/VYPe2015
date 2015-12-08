@@ -81,6 +81,9 @@ whitespace  [ \r\n\t]
 "!="                    { return NOT_EQUAL; }
 "&&"                    { return AND; }
 "||"                    { return OR; }
+"&"                     { return BIT_AND; }
+"|"                     { return BIT_OR; }
+"~"                     { return BIT_NOT; }
 if                      { return IF; }
 else                    { return ELSE; }
 while                   { return WHILE; }

@@ -44,8 +44,11 @@ public:
     virtual void visit(ir::NotEqualInstruction* instr) override;
     virtual void visit(ir::AndInstruction* instr) override;
     virtual void visit(ir::OrInstruction* instr) override;
+    virtual void visit(ir::BitwiseAndInstruction* instr) override;
+    virtual void visit(ir::BitwiseOrInstruction* instr) override;
     virtual void visit(ir::NotInstruction* instr) override;
     virtual void visit(ir::TypecastInstruction* instr) override;
+    virtual void visit(ir::BitwiseNotInstruction* instr) override;
 private:
     arch::MIPS arch;
     std::map<ir::Function*,FunctionContext> context;

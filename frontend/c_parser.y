@@ -35,7 +35,7 @@ extern void finalize(int exitCode);
 
 %token COMMA SEMICOLON ASSIGN LEFT_PAREN RIGHT_PAREN LEFT_CBRACE RIGHT_CBRACE PLUS MINUS
 	MULTIPLY DIVIDE MODULO NOT LESS LESS_EQUAL GREATER GREATER_EQUAL EQUAL NOT_EQUAL AND OR
-	IF ELSE WHILE RETURN VOID
+	IF ELSE WHILE RETURN VOID BIT_AND BIT_OR BIT_NOT
 %token <intValue> INT_LIT
 %token <charValue> CHAR_LIT
 %token <strValue> STRING_LIT ID TYPE BUILTIN
@@ -50,11 +50,13 @@ extern void finalize(int exitCode);
 
 %left OR
 %left AND
+%left BIT_OR
+%left BIT_AND
 %left EQUAL NOT_EQUAL
 %left LESS LESS_EQUAL GREATER GREATER_EQUAL
 %left PLUS MINUS
 %left MULTIPLY DIVIDE MODULO
-%right NOT
+%right NOT BIT_NOT
 %nonassoc LEFT_PAREN RIGHT_PAREN
 
 %start program
@@ -629,6 +631,30 @@ expr    :   expr PLUS expr	{
 
 								$$ = new BinaryExpression(Expression::Type::NOT_EQUAL, Symbol::DataType::INT, $1, $3);
 							}
+		|   expr BIT_AND expr	{
+								if ($1->getDataType() != $3->getDataType())
+								{
+									yyerror("No match for operation '%s & %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::BIT_AND, Symbol::DataType::INT, $1, $3);
+							}
+		|   expr BIT_OR expr	{
+								if ($1->getDataType() != $3->getDataType())
+								{
+									yyerror("No match for operation '%s | %s'.",
+										Symbol::dataTypeToString($1->getDataType()).c_str(),
+										Symbol::dataTypeToString($3->getDataType()).c_str());
+									finalize(3);
+									YYERROR;
+								}
+
+								$$ = new BinaryExpression(Expression::Type::BIT_OR, Symbol::DataType::INT, $1, $3);
+							}
 		|   expr AND expr	{
 								if (($1->getDataType() != Symbol::DataType::INT) || ($3->getDataType() != Symbol::DataType::INT))
 								{
@@ -663,6 +689,17 @@ expr    :   expr PLUS expr	{
 								}
 
 								$$ = new UnaryExpression(Expression::Type::NOT, Symbol::DataType::INT, $2);
+							}
+		|   BIT_NOT expr	{
+								if ($2->getDataType() != Symbol::DataType::INT)
+								{
+									yyerror("No match for operation '~ %s'.",
+										Symbol::dataTypeToString($2->getDataType()).c_str());
+									finalize(3);
+									YYERROR;
+								}
+
+								$$ = new UnaryExpression(Expression::Type::BIT_NOT, Symbol::DataType::INT, $2);
 							}
 		|   LEFT_PAREN TYPE RIGHT_PAREN expr {
 								// In case of typecast to same type, do nothing

@@ -361,6 +361,32 @@ void OrInstruction::accept(IrVisitor& visitor)
 	visitor.visit(this);
 }
 
+BitwiseAndInstruction::BitwiseAndInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
+{
+}
+
+BitwiseAndInstruction::~BitwiseAndInstruction()
+{
+}
+
+void BitwiseAndInstruction::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
+}
+
+BitwiseOrInstruction::BitwiseOrInstruction(Value* result, Value* leftOperand, Value* rightOperand) : ResultInstruction(result), BinaryInstruction(leftOperand, rightOperand)
+{
+}
+
+BitwiseOrInstruction::~BitwiseOrInstruction()
+{
+}
+
+void BitwiseOrInstruction::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
+}
+
 NotInstruction::NotInstruction(Value* result, Value* operand) : ResultInstruction(result), UnaryInstruction(operand)
 {
 }
@@ -383,6 +409,19 @@ TypecastInstruction::~TypecastInstruction()
 }
 
 void TypecastInstruction::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
+}
+
+BitwiseNotInstruction::BitwiseNotInstruction(Value* result, Value* operand) : ResultInstruction(result), UnaryInstruction(operand)
+{
+}
+
+BitwiseNotInstruction::~BitwiseNotInstruction()
+{
+}
+
+void BitwiseNotInstruction::accept(IrVisitor& visitor)
 {
 	visitor.visit(this);
 }

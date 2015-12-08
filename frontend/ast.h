@@ -58,7 +58,10 @@ public:
 		CHAR,
 		VARIABLE,
 		CALL,
-		BUILTIN_CALL
+		BUILTIN_CALL,
+		BIT_AND,
+		BIT_OR,
+		BIT_NOT
 	};
 
 	Expression(const Expression&) = delete;

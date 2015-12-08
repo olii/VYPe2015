@@ -72,6 +72,9 @@ ir::Value* UnaryExpression::generateIrValue(ir::Builder& builder)
 		case Expression::Type::TYPECAST:
 			resultValue = builder.createUnaryOperation<ir::TypecastInstruction>(operand, Symbol::dataTypeToIrDataType(getDataType()));
 			break;
+		case Expression::Type::BIT_NOT:
+			resultValue = builder.createUnaryOperation<ir::BitwiseNotInstruction>(operand, Symbol::dataTypeToIrDataType(getDataType()));
+			break;
 		default:
 			return nullptr;
 	}
@@ -137,6 +140,14 @@ ir::Value* BinaryExpression::generateIrValue(ir::Builder& builder)
 			break;
 		case Expression::Type::OR:
 			resultValue = builder.createBinaryOperation<ir::OrInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
+			break;
+		case Expression::Type::BIT_AND:
+			resultValue = builder.createBinaryOperation<ir::BitwiseAndInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
+			break;
+		case Expression::Type::BIT_OR:
+			resultValue = builder.createBinaryOperation<ir::BitwiseOrInstruction>(leftOperandValue, rightOperandValue,
 				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
 		default:

@@ -376,12 +376,27 @@ void ASMgenerator::visit(ir::OrInstruction *instr)
 
 }
 
+void ASMgenerator::visit(ir::BitwiseAndInstruction *instr)
+{
+
+}
+
+void ASMgenerator::visit(ir::BitwiseOrInstruction *instr)
+{
+
+}
+
 void ASMgenerator::visit(ir::NotInstruction *instr)
 {
 
 }
 
 void ASMgenerator::visit(ir::TypecastInstruction *instr)
+{
+
+}
+
+void ASMgenerator::visit(ir::BitwiseNotInstruction *instr)
 {
 
 }

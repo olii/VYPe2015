@@ -41,8 +41,11 @@ public:
 	virtual void visit(NotEqualInstruction* instr) override;
 	virtual void visit(AndInstruction* instr) override;
 	virtual void visit(OrInstruction* instr) override;
+	virtual void visit(BitwiseAndInstruction* instr) override;
+	virtual void visit(BitwiseOrInstruction* instr) override;
 	virtual void visit(NotInstruction* instr) override;
 	virtual void visit(TypecastInstruction* instr) override;
+	virtual void visit(BitwiseNotInstruction* instr) override;
 
 private:
 	std::stringstream _os;

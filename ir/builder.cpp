@@ -142,6 +142,7 @@ Value* Builder::createDeclaration(const std::string& name, Value::DataType dataT
 
 template Value* Builder::createUnaryOperation<NotInstruction>(Value* operand, Value::DataType resultDataType);
 template Value* Builder::createUnaryOperation<TypecastInstruction>(Value* operand, Value::DataType resultDataType);
+template Value* Builder::createUnaryOperation<BitwiseNotInstruction>(Value* operand, Value::DataType resultDataType);
 
 template <typename T> Value* Builder::createUnaryOperation(Value* operand, Value::DataType resultDataType)
 {
@@ -168,6 +169,8 @@ template Value* Builder::createBinaryOperation<EqualInstruction>(Value* leftOper
 template Value* Builder::createBinaryOperation<NotEqualInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
 template Value* Builder::createBinaryOperation<AndInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
 template Value* Builder::createBinaryOperation<OrInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<BitwiseAndInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
+template Value* Builder::createBinaryOperation<BitwiseOrInstruction>(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType);
 
 template <typename T> Value* Builder::createBinaryOperation(Value* leftOperand, Value* rightOperand, Value::DataType resultDataType)
 {
