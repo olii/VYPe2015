@@ -48,6 +48,7 @@ private:
 	std::map<std::string, Function*> _functions;
 	Function* _activeFunction;
 	BasicBlock* _activeBasicBlock;
+	std::vector<Value*> _managedValues;
 };
 
 } // namespace ir

@@ -5,7 +5,7 @@
 
 namespace ir {
 
-Builder::Builder() : _functions(), _activeBasicBlock(nullptr)
+Builder::Builder() : _functions(), _activeBasicBlock(nullptr), _managedValues()
 {
 }
 
@@ -13,6 +13,9 @@ Builder::~Builder()
 {
 	for (auto& pair : _functions)
 		delete pair.second;
+
+	for (auto& value : _managedValues)
+		delete value;
 }
 
 Function* Builder::createFunction(const std::string& name, const std::vector<Value*>& arguments)
@@ -71,27 +74,37 @@ void Builder::addBasicBlock(BasicBlock* basicBlock)
 
 Value* Builder::createNamedValue(Value::DataType dataType, const std::string& name)
 {
-	return new NamedValue(dataType, name);
+	NamedValue* value = new NamedValue(dataType, name);
+	_managedValues.push_back(value);
+	return value;
 }
 
 Value* Builder::createTemporaryValue(Value::DataType dataType)
 {
-	return new TemporaryValue(dataType);
+	TemporaryValue* value = new TemporaryValue(dataType);
+	_managedValues.push_back(value);
+	return value;
 }
 
 Value* Builder::createConstantValue(int value)
 {
-	return new ConstantValue<int>(Value::DataType::INT, value);
+	ConstantValue<int>* intValue = new ConstantValue<int>(Value::DataType::INT, value);
+	_managedValues.push_back(intValue);
+	return intValue;
 }
 
 Value* Builder::createConstantValue(char value)
 {
-	return new ConstantValue<char>(Value::DataType::CHAR, value);
+	ConstantValue<char>* charValue = new ConstantValue<char>(Value::DataType::CHAR, value);
+	_managedValues.push_back(charValue);
+	return charValue;
 }
 
 Value* Builder::createConstantValue(const std::string& value)
 {
-	return new ConstantValue<std::string>(Value::DataType::STRING, value);
+	ConstantValue<std::string>* strValue = new ConstantValue<std::string>(Value::DataType::STRING, value);
+	_managedValues.push_back(strValue);
+	return strValue;
 }
 
 Value* Builder::createCall(const std::string& functionName, const std::vector<Value*> arguments)
