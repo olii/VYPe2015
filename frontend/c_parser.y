@@ -29,7 +29,7 @@ extern void finalize(int exitCode);
 	frontend::Statement* statement;
 	std::vector<frontend::Expression*>* expressions;
 	frontend::Expression* expression;
-	std::vector<std::string>* strList;
+	std::vector<frontend::Declaration*>* declList;
 	std::string* strValue;
 	char charValue;
 	int intValue;
@@ -47,8 +47,8 @@ extern void finalize(int exitCode);
 %type <statements> stmts stmt_list
 %type <statement> stmt assign_stmt decl_stmt if_stmt while_stmt return_stmt call_stmt empty_stmt
 %type <expressions> exprs expr_list
-%type <expression> expr
-%type <strList> decl_id_list
+%type <expression> expr decl_init_expr
+%type <declList> decl_id_list
 
 %left OR
 %left AND
@@ -320,14 +320,13 @@ assign_stmt :   ID ASSIGN expr SEMICOLON    {
 			;
 
 decl_stmt   :   TYPE decl_id_list SEMICOLON {
-												std::vector<VariableSymbol*> variables;
-												for (auto& varName : *$2)
+												for (auto& varDecl : *$2)
 												{
 													Symbol* symbol = nullptr;
-													if ((symbol = context.findSymbol(varName)) != nullptr)
+													if ((symbol = context.findSymbol(varDecl->getVariableName())) != nullptr)
 													{
 														// We cannot shadow functions
-														if (symbol->getType() == Symbol::Type::FUNCTION)
+														if (symbol->getType() != Symbol::Type::VARIABLE)
 														{
 															yyerror("Redefinition of symbol '%s'. Cannot shadow functions.", symbol->getName().c_str());
 															delete $1;
@@ -338,26 +337,36 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
 													}
 
 													// Adding can fail if there is symbol in the same block, we cannot shadow in the same block
-													if ((symbol = context.currentSymbolTable()->addVariable(varName, Symbol::stringToDataType(*$1))) == nullptr)
+													if ((symbol = context.currentSymbolTable()->addVariable(varDecl->getVariableName(), Symbol::stringToDataType(*$1))) == nullptr)
 													{
-														yyerror("Redefinition of symbol '%s'.", varName.c_str());
+														yyerror("Redefinition of symbol '%s'.", varDecl->getVariableName().c_str());
 														delete $1;
 														delete $2;
 														finalize(3);
 														YYERROR;
 													}
 
-													variables.push_back(static_cast<VariableSymbol*>(symbol));
+													varDecl->setVariableSymbol(static_cast<VariableSymbol*>(symbol));
 												}
 
-												$$ = new DeclarationStatement(variables);
+												$$ = new DeclarationStatement(*$2);
 												delete $1;
 												delete $2;
 											}
 			;
 
-decl_id_list    :   decl_id_list COMMA ID   { $$->push_back(*$3); delete $3; }
-				|   ID                      { $$ = new std::vector<std::string>({*$1}); delete $1; }
+decl_id_list    :   decl_id_list COMMA ID decl_init_expr   {
+														$$->push_back(new Declaration(*$3, $4));
+														delete $3;
+													}
+				|   ID decl_init_expr               {
+														$$ = new std::vector<Declaration*>( { new Declaration(*$1, $2) } );
+														delete $1;
+													}
+				;
+
+decl_init_expr  :   ASSIGN expr                     { $$ = $2; }
+				|   %empty                          { $$ = nullptr; }
 				;
 
 if_stmt :   IF LEFT_PAREN expr RIGHT_PAREN          {

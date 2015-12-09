@@ -290,12 +290,44 @@ private:
 	Expression* _expression;
 };
 
+class Declaration : public ASTNode
+{
+public:
+	Declaration(const std::string& variableName, Expression* initialization) : ASTNode(),
+		_variable(nullptr), _variableName(variableName), _initialization(initialization) {}
+	Declaration(const Declaration&) = delete;
+	virtual ~Declaration()
+	{
+		delete _initialization;
+	}
+
+	virtual Generates generates() override { return Generates::NOTHING; }
+	virtual void generateIr(ir::Builder& builder) override;
+
+	void setVariableSymbol(VariableSymbol* symbol) { _variable = symbol; }
+	VariableSymbol* getVariableSymbol() const { return _variable; }
+
+	Expression* getInitialization() const { return _initialization; }
+	const std::string& getVariableName() const { return _variableName; }
+
+private:
+	Declaration& operator =(const Declaration&);
+
+	VariableSymbol* _variable;
+	std::string _variableName;
+	Expression* _initialization;
+};
+
 class DeclarationStatement : public Statement
 {
 public:
-	DeclarationStatement(const std::vector<VariableSymbol*>& variables) : Statement(), _variables(variables) {}
+	DeclarationStatement(const std::vector<Declaration*>& declarations) : Statement(), _declarations(declarations) {}
 	DeclarationStatement(const DeclarationStatement&) = delete;
-	virtual ~DeclarationStatement() {}
+	virtual ~DeclarationStatement()
+	{
+		for (auto& decl : _declarations)
+			delete decl;
+	}
 
 	virtual Generates generates() override { return Generates::NOTHING; }
 	virtual void generateIr(ir::Builder& builder) override;
@@ -303,11 +335,12 @@ public:
 private:
 	DeclarationStatement& operator =(const DeclarationStatement&);
 
-	std::vector<VariableSymbol*> _variables;
+	std::vector<Declaration*> _declarations;
 };
 
 class IfStatement : public Statement
 {
+
 public:
 	IfStatement(Expression* expression, StatementBlock* ifStatements, StatementBlock* elseStatements) :
 		Statement(), _expression(expression), _ifStatements(ifStatements), _elseStatements(elseStatements) {}

@@ -166,13 +166,39 @@ void AssignStatement::generateIr(ir::Builder& builder)
 	builder.createAssignment(_variable->getIrValue(), exprValue);
 }
 
+void Declaration::generateIr(ir::Builder& builder)
+{
+	ir::Value* varValue = builder.createDeclaration(_variable->getName(), Symbol::dataTypeToIrDataType(_variable->getDataType()));
+	_variable->setIrValue(varValue);
+
+	if (_initialization != nullptr)
+	{
+		ir::Value* initValue = _initialization->generateIrValue(builder);
+		builder.createAssignment(_variable->getIrValue(), initValue);
+	}
+	else
+	{
+		switch (_variable->getDataType())
+		{
+			case Symbol::DataType::INT:
+				builder.createAssignment(_variable->getIrValue(), builder.createConstantValue(0));
+				break;
+			case Symbol::DataType::CHAR:
+				builder.createAssignment(_variable->getIrValue(), builder.createConstantValue('\0'));
+				break;
+			case Symbol::DataType::STRING:
+				builder.createAssignment(_variable->getIrValue(), builder.createConstantValue(""));
+				break;
+			default:
+				break;
+		}
+	}
+}
+
 void DeclarationStatement::generateIr(ir::Builder& builder)
 {
-	for (VariableSymbol* var : _variables)
-	{
-		ir::Value* varValue = builder.createDeclaration(var->getName(), Symbol::dataTypeToIrDataType(var->getDataType()));
-		var->setIrValue(varValue);
-	}
+	for (auto& declaration : _declarations)
+		declaration->generateIr(builder);
 }
 
 ir::BasicBlock* StatementBlock::generateIrBlocks(ir::Builder& builder)
