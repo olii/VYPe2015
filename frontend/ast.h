@@ -385,6 +385,57 @@ private:
 	StatementBlock* _statements;
 };
 
+class ForIterationStatement : public ASTNode
+{
+public:
+	ForIterationStatement(AssignStatement* assignment) : ASTNode(), _assignment(assignment), _expression(nullptr) {}
+	ForIterationStatement(Expression* expression) : ASTNode(), _assignment(nullptr), _expression(expression) {}
+	ForIterationStatement(const ForIterationStatement&) = delete;
+	virtual ~ForIterationStatement()
+	{
+		delete _assignment;
+		delete _expression;
+	}
+
+	bool usesAssignment() const { return (_assignment != nullptr); }
+	bool usesExpression() const { return (_expression != nullptr); }
+
+	virtual Generates generates() override { return Generates::NOTHING; }
+	virtual void generateIr(ir::Builder& builder) override;
+
+private:
+	ForIterationStatement& operator =(const ForIterationStatement&);
+
+	AssignStatement* _assignment;
+	Expression* _expression;
+};
+
+class ForStatement : public Statement
+{
+public:
+	ForStatement(AssignStatement* initialization, Expression* condition, ForIterationStatement* iteration, StatementBlock* statements) :
+		Statement(), _initialization(initialization), _condition(condition), _iteration(iteration), _statements(statements) {}
+	ForStatement(const ForStatement&) = delete;
+	virtual ~ForStatement()
+	{
+		delete _initialization;
+		delete _condition;
+		delete _iteration;
+		delete _statements;
+	}
+
+	virtual Generates generates() override { return Generates::BLOCKS; }
+	virtual ir::BasicBlock* generateIrBlocks(ir::Builder& builder) override;
+
+private:
+	ForStatement& operator =(const ForStatement&);
+
+	AssignStatement* _initialization;
+	Expression* _condition;
+	ForIterationStatement* _iteration;
+	StatementBlock* _statements;
+};
+
 class ReturnStatement : public Statement
 {
 public:

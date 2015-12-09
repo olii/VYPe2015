@@ -30,6 +30,8 @@ extern void finalize(int exitCode);
 	std::vector<frontend::Expression*>* expressions;
 	frontend::Expression* expression;
 	std::vector<frontend::Declaration*>* declList;
+	frontend::AssignStatement* forInitStmt;
+	frontend::ForIterationStatement* forIterStmt;
 	std::string* strValue;
 	char charValue;
 	int intValue;
@@ -37,7 +39,7 @@ extern void finalize(int exitCode);
 
 %token COMMA SEMICOLON ASSIGN LEFT_PAREN RIGHT_PAREN LEFT_CBRACE RIGHT_CBRACE PLUS MINUS
 	MULTIPLY DIVIDE MODULO NOT LESS LESS_EQUAL GREATER GREATER_EQUAL EQUAL NOT_EQUAL AND OR
-	IF ELSE WHILE RETURN VOID BIT_AND BIT_OR BIT_NOT
+	IF ELSE WHILE FOR RETURN VOID BIT_AND BIT_OR BIT_NOT
 %token <intValue> INT_LIT
 %token <charValue> CHAR_LIT
 %token <strValue> STRING_LIT ID TYPE BUILTIN
@@ -45,10 +47,12 @@ extern void finalize(int exitCode);
 %type <function> func_impl
 %type <functionParameters> decl_param_list impl_param_list
 %type <statements> stmts stmt_list
-%type <statement> stmt assign_stmt decl_stmt if_stmt while_stmt return_stmt call_stmt empty_stmt
+%type <statement> stmt assign_stmt decl_stmt if_stmt while_stmt for_stmt return_stmt call_stmt empty_stmt
 %type <expressions> exprs expr_list
-%type <expression> expr decl_init_expr
+%type <expression> expr decl_init_expr for_cond
 %type <declList> decl_id_list
+%type <forInitStmt> for_init
+%type <forIterStmt> for_iter
 
 %left OR
 %left AND
@@ -274,6 +278,7 @@ stmt    :   assign_stmt { $$ = $1; }
 		|   decl_stmt   { $$ = $1; }
 		|   if_stmt     { $$ = $1; }
 		|   while_stmt  { $$ = $1; }
+		|   for_stmt    { $$ = $1; }
 		|   return_stmt { $$ = $1; }
 		|   call_stmt   { $$ = $1; }
 		|   empty_stmt  { $$ = $1; }
@@ -406,6 +411,85 @@ while_stmt  :   WHILE LEFT_PAREN expr RIGHT_PAREN   {
 														$$ = new WhileStatement($3, $7);
 														context.popSymbolTable();
 													}
+			;
+
+for_stmt    :   FOR LEFT_PAREN for_init SEMICOLON for_cond SEMICOLON for_iter RIGHT_PAREN
+													{
+														if ($5 && $5->getDataType() != Symbol::DataType::INT)
+														{
+															yyerror("Condition of for statement is of type '%s'. Must be 'int'.",
+																Symbol::dataTypeToString($5->getDataType()).c_str());
+															finalize(3);
+															YYERROR;
+														}
+
+														context.newSymbolTable();
+													}
+					LEFT_CBRACE stmts RIGHT_CBRACE  {
+														$$ = new ForStatement($3, $5, $7, $11);
+														context.popSymbolTable();
+													}
+			;
+
+for_init    :   ID ASSIGN expr                      {
+														Symbol* symbol = context.findSymbol(*$1);
+														if (symbol == nullptr || symbol->getType() != Symbol::Type::VARIABLE)
+														{
+															yyerror("Assignment to undefined symbol '%s'.", $1->c_str());
+															delete $1;
+															finalize(3);
+															YYERROR;
+														}
+
+														VariableSymbol* varSymbol = static_cast<VariableSymbol*>(symbol);
+														if (varSymbol->getDataType() != $3->getDataType())
+														{
+															yyerror("Unable to assign '%s' to variable '%s' of type '%s'.",
+																		Symbol::dataTypeToString($3->getDataType()).c_str(),
+																		varSymbol->getName().c_str(),
+																		Symbol::dataTypeToString(varSymbol->getDataType()).c_str());
+															delete $1;
+															finalize(3);
+															YYERROR;
+														}
+
+														$$ = new AssignStatement(varSymbol, $3);
+														delete $1;
+													}
+			|   %empty                              { $$ = nullptr; }
+			;
+
+for_cond    :   expr                                { $$ = $1; }
+			|   %empty                              { $$ = nullptr; }
+			;
+
+for_iter    :   ID ASSIGN expr                      {
+														Symbol* symbol = context.findSymbol(*$1);
+														if (symbol == nullptr || symbol->getType() != Symbol::Type::VARIABLE)
+														{
+															yyerror("Assignment to undefined symbol '%s'.", $1->c_str());
+															delete $1;
+															finalize(3);
+															YYERROR;
+														}
+
+														VariableSymbol* varSymbol = static_cast<VariableSymbol*>(symbol);
+														if (varSymbol->getDataType() != $3->getDataType())
+														{
+															yyerror("Unable to assign '%s' to variable '%s' of type '%s'.",
+																		Symbol::dataTypeToString($3->getDataType()).c_str(),
+																		varSymbol->getName().c_str(),
+																		Symbol::dataTypeToString(varSymbol->getDataType()).c_str());
+															delete $1;
+															finalize(3);
+															YYERROR;
+														}
+
+														$$ = new ForIterationStatement(new AssignStatement(varSymbol, $3));
+														delete $1;
+													}
+			|   expr                                { $$ = new ForIterationStatement($1); }
+			|   %empty                              { $$ = nullptr; }
 			;
 
 return_stmt :   RETURN expr SEMICOLON	{

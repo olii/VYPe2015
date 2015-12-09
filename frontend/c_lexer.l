@@ -87,6 +87,7 @@ whitespace  [ \r\n\t]
 if                      { return IF; }
 else                    { return ELSE; }
 while                   { return WHILE; }
+for                     { return FOR; }
 return                  { return RETURN; }
 void                    { return VOID; }
 int|char|string         {

@@ -277,6 +277,48 @@ ir::BasicBlock* WhileStatement::generateIrBlocks(ir::Builder& builder)
 	return endBlock;
 }
 
+void ForIterationStatement::generateIr(ir::Builder& builder)
+{
+	if (usesExpression())
+		_expression->generateIrValue(builder);
+	else if (usesAssignment())
+		_assignment->generateIr(builder);
+}
+
+ir::BasicBlock* ForStatement::generateIrBlocks(ir::Builder& builder)
+{
+	if (_initialization != nullptr)
+		_initialization->generateIr(builder);
+
+	ir::BasicBlock* condBlock = builder.createBasicBlock();
+	ir::BasicBlock* bodyBlock = builder.createBasicBlock();
+	ir::BasicBlock* endBlock = builder.createBasicBlock();
+
+	builder.addBasicBlock(condBlock);
+	builder.createJump(condBlock);
+	builder.setActiveBasicBlock(condBlock);
+	if (_condition != nullptr)
+	{
+		ir::Value* condValue = _condition->generateIrValue(builder);
+		builder.createConditionalJump(condValue, bodyBlock, endBlock);
+	}
+	else
+		builder.createConditionalJump(builder.createConstantValue(1), bodyBlock, endBlock);
+
+	builder.addBasicBlock(bodyBlock);
+	builder.setActiveBasicBlock(bodyBlock);
+	ir::BasicBlock* endBodyBlock = _statements->generateIrBlocks(builder);
+	builder.setActiveBasicBlock(endBodyBlock);
+
+	if (_iteration != nullptr)
+		_iteration->generateIr(builder);
+
+	builder.addBasicBlock(endBlock);
+	builder.createJump(condBlock);
+	builder.setActiveBasicBlock(endBlock);
+	return endBlock;
+}
+
 void ReturnStatement::generateIr(ir::Builder& builder)
 {
 	ir::Value* returnValue = nullptr;
