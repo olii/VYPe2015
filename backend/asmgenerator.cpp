@@ -303,12 +303,44 @@ void ASMgenerator::visit(ir::MultiplyInstruction *instr)
 
 void ASMgenerator::visit(ir::DivideInstruction *instr)
 {
+    ir::Value *left = instr->getLeftOperand();
+    ir::Value *right = instr->getRightOperand();
+    ir::Value *dest = instr->getResult();
 
+    arch::Register *leftReg = nullptr;
+    arch::Register *rightReg = nullptr;
+
+    leftReg = activeFunction->Active()->getRegister(left, true);
+    rightReg = activeFunction->Active()->getRegister(right);
+    activeFunction->Active()->unlockVar(left); // unlocking left
+
+
+    arch::Register *destReg = activeFunction->Active()->getRegister(dest);
+    activeFunction->Active()->markChanged(destReg);
+
+    activeFunction->Active()->addInstruction("DIV", destReg->getIDName(),
+                                             0, leftReg->getIDName(), 0, rightReg->getIDName() );
 }
 
 void ASMgenerator::visit(ir::ModuloInstruction *instr)
 {
+    ir::Value *left = instr->getLeftOperand();
+    ir::Value *right = instr->getRightOperand();
+    ir::Value *dest = instr->getResult();
 
+    arch::Register *leftReg = nullptr;
+    arch::Register *rightReg = nullptr;
+
+    leftReg = activeFunction->Active()->getRegister(left, true);
+    rightReg = activeFunction->Active()->getRegister(right);
+    activeFunction->Active()->unlockVar(left); // unlocking left
+
+
+    arch::Register *destReg = activeFunction->Active()->getRegister(dest);
+    activeFunction->Active()->markChanged(destReg);
+
+    activeFunction->Active()->addInstruction("div", leftReg->getIDName(), 0, rightReg->getIDName() );
+    activeFunction->Active()->addInstruction("mfhi", destReg->getIDName() );
 }
 
 void ASMgenerator::visit(ir::LessInstruction *instr)
@@ -462,11 +494,9 @@ void ASMgenerator::visit(ir::NotEqualInstruction *instr)
     activeFunction->Active()->addInstruction("XOR",destReg->getIDName(),
                                              0, leftReg->getIDName(), 0, rightReg->getIDName() );
 
-    activeFunction->Active()->addInstruction("SLTIU", destReg->getIDName(),
-                                             0, destReg->getIDName(), 0, "1");
+    activeFunction->Active()->addInstruction("SLTU", destReg->getIDName(),
+                                             0, arch.getZero()->getIDName(), 0, destReg->getIDName());
 
-    activeFunction->Active()->addInstruction("SLTIU", destReg->getIDName(),
-                                             0, destReg->getIDName(), 0, "1");
 }
 
 void ASMgenerator::visit(ir::AndInstruction *instr)
@@ -484,9 +514,14 @@ void ASMgenerator::visit(ir::AndInstruction *instr)
 
     arch::Register *destReg = activeFunction->Active()->getRegister(dest);
     activeFunction->Active()->markChanged(destReg);
+    arch::Register *tempReg = activeFunction->Active()->getFreeRegister();
 
+    activeFunction->Active()->addInstruction("SLTU",tempReg->getIDName(),
+                                             0, arch.getZero()->getIDName(), 0, leftReg->getIDName() );
+    activeFunction->Active()->addInstruction("SLTU",destReg->getIDName(),
+                                             0, arch.getZero()->getIDName(), 0, rightReg->getIDName() );
     activeFunction->Active()->addInstruction("AND",destReg->getIDName(),
-                                             0, leftReg->getIDName(), 0, rightReg->getIDName() );
+                                             0, destReg->getIDName(), 0, tempReg->getIDName() );
 }
 
 void ASMgenerator::visit(ir::OrInstruction *instr)
@@ -501,13 +536,17 @@ void ASMgenerator::visit(ir::OrInstruction *instr)
     leftReg = activeFunction->Active()->getRegister(left, true);
     rightReg = activeFunction->Active()->getRegister(right);
     activeFunction->Active()->unlockVar(left); // unlocking left
-    activeFunction->Active()->unlockVar(right);
 
     arch::Register *destReg = activeFunction->Active()->getRegister(dest);
     activeFunction->Active()->markChanged(destReg);
+    arch::Register *tempReg = activeFunction->Active()->getFreeRegister();
 
+    activeFunction->Active()->addInstruction("SLTU",tempReg->getIDName(),
+                                             0, arch.getZero()->getIDName(), 0, leftReg->getIDName() );
+    activeFunction->Active()->addInstruction("SLTU",destReg->getIDName(),
+                                             0, arch.getZero()->getIDName(), 0, rightReg->getIDName() );
     activeFunction->Active()->addInstruction("OR",destReg->getIDName(),
-                                             0, leftReg->getIDName(), 0, rightReg->getIDName() );
+                                             0, destReg->getIDName(), 0, tempReg->getIDName() );
 }
 
 void ASMgenerator::visit(ir::NotInstruction *instr)
