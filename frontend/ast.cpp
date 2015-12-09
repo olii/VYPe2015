@@ -75,6 +75,9 @@ ir::Value* UnaryExpression::generateIrValue(ir::Builder& builder)
 		case Expression::Type::BIT_NOT:
 			resultValue = builder.createUnaryOperation<ir::BitwiseNotInstruction>(operand, Symbol::dataTypeToIrDataType(getDataType()));
 			break;
+		case Expression::Type::NEG:
+			resultValue = builder.createUnaryOperation<ir::NegInstruction>(operand, Symbol::dataTypeToIrDataType(getDataType()));
+			break;
 		default:
 			return nullptr;
 	}

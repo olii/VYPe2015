@@ -311,6 +311,15 @@ public:
 	virtual void accept(IrVisitor& visitor) override;
 };
 
+class NegInstruction : public ResultInstruction, public UnaryInstruction
+{
+public:
+	NegInstruction(Value* result, Value* operand);
+	virtual ~NegInstruction();
+
+	virtual void accept(IrVisitor& visitor) override;
+};
+
 } // namespace ir
 
 #endif // IR_INSTRUCTION_H

@@ -426,4 +426,17 @@ void BitwiseNotInstruction::accept(IrVisitor& visitor)
 	visitor.visit(this);
 }
 
+NegInstruction::NegInstruction(Value* result, Value* operand) : ResultInstruction(result), UnaryInstruction(operand)
+{
+}
+
+NegInstruction::~NegInstruction()
+{
+}
+
+void NegInstruction::accept(IrVisitor& visitor)
+{
+	visitor.visit(this);
+}
+
 } // namespace ir

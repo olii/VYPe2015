@@ -58,7 +58,7 @@ extern void finalize(int exitCode);
 %left LESS LESS_EQUAL GREATER GREATER_EQUAL
 %left PLUS MINUS
 %left MULTIPLY DIVIDE MODULO
-%right NOT BIT_NOT
+%right NOT BIT_NOT UNARY_PLUS UNARY_MINUS
 %nonassoc LEFT_PAREN RIGHT_PAREN
 
 %start program
@@ -722,6 +722,28 @@ expr    :   expr PLUS expr	{
 								}
 
 								$$ = new UnaryExpression(Expression::Type::BIT_NOT, Symbol::DataType::INT, $2);
+							}
+		|   PLUS expr %prec UNARY_PLUS {
+								if ($2->getDataType() != Symbol::DataType::INT)
+								{
+									yyerror("No match for operation '+ %s'.",
+										Symbol::dataTypeToString($2->getDataType()).c_str());
+									finalize(3);
+									YYERROR;
+								}
+
+								$$ = $2; // Unary plus doesn't change anything
+							}
+		|   MINUS expr %prec UNARY_MINUS {
+								if ($2->getDataType() != Symbol::DataType::INT)
+								{
+									yyerror("No match for operation '- %s'.",
+										Symbol::dataTypeToString($2->getDataType()).c_str());
+									finalize(3);
+									YYERROR;
+								}
+
+								$$ = new UnaryExpression(Expression::Type::NEG, Symbol::DataType::INT, $2);
 							}
 		|   LEFT_PAREN TYPE RIGHT_PAREN expr {
 								// In case of typecast to same type, do nothing

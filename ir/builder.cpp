@@ -143,6 +143,7 @@ Value* Builder::createDeclaration(const std::string& name, Value::DataType dataT
 template Value* Builder::createUnaryOperation<NotInstruction>(Value* operand, Value::DataType resultDataType);
 template Value* Builder::createUnaryOperation<TypecastInstruction>(Value* operand, Value::DataType resultDataType);
 template Value* Builder::createUnaryOperation<BitwiseNotInstruction>(Value* operand, Value::DataType resultDataType);
+template Value* Builder::createUnaryOperation<NegInstruction>(Value* operand, Value::DataType resultDataType);
 
 template <typename T> Value* Builder::createUnaryOperation(Value* operand, Value::DataType resultDataType)
 {

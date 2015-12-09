@@ -43,6 +43,7 @@ public:
 	virtual void visit(NotInstruction* instr) = 0;
 	virtual void visit(TypecastInstruction* instr) = 0;
 	virtual void visit(BitwiseNotInstruction* instr) = 0;
+	virtual void visit(NegInstruction* instr) = 0;
 
 protected:
 	IrVisitor() {}

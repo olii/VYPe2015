@@ -61,7 +61,8 @@ public:
 		BUILTIN_CALL,
 		BIT_AND,
 		BIT_OR,
-		BIT_NOT
+		BIT_NOT,
+		NEG
 	};
 
 	Expression(const Expression&) = delete;

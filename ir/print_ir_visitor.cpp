@@ -384,4 +384,13 @@ void PrintIrVisitor::visit(BitwiseNotInstruction* instr)
 	_os << "\n";
 }
 
+void PrintIrVisitor::visit(NegInstruction* instr)
+{
+	_os << Indentation;
+	instr->getResult()->accept(*this);
+	_os << " = neg ";
+	instr->getOperand()->accept(*this);
+	_os << "\n";
+}
+
 } // namespace ir

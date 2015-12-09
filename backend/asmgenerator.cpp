@@ -527,6 +527,10 @@ void ASMgenerator::visit(ir::BitwiseNotInstruction *instr)
 
 }
 
+void ASMgenerator::visit(ir::NegInstruction *instr)
+{
+}
+
 }
 
 

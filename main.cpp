@@ -47,11 +47,12 @@ int main()
 	// Check if there is no undefined but declared function
 	for (const auto& pair : context.globalSymbolTable()->getAllSymbols())
 	{
-		if (pair.second->getType() != frontend::Symbol::FUNCTION)
+		if (pair.second->getType() != frontend::Symbol::Type::FUNCTION)
 			continue;
 
 		if (!static_cast<frontend::FunctionSymbol*>(pair.second)->isDefined())
 		{
+			exitCode = 3;
 			finalize(exitCode);
 			return exitCode;
 		}
@@ -61,21 +62,33 @@ int main()
 	frontend::Symbol* mainSymbol = context.globalSymbolTable()->findSymbol("main");
 	if (mainSymbol == nullptr)
 	{
+		exitCode = 3;
 		finalize(exitCode);
 		return exitCode;
 	}
 
 	// It must be a function
-	if (mainSymbol->getType() != frontend::Symbol::Type::FUNCTION)
+	if (mainSymbol->getType() != frontend::Symbol::Type::MANGLING_LINK)
 	{
+		exitCode = 3;
+		finalize(exitCode);
+		return exitCode;
+	}
+
+	// Only one main has to be defined
+	frontend::ManglingLinkSymbol* manglingLinkMainSymbol = static_cast<frontend::ManglingLinkSymbol*>(mainSymbol);
+	if (manglingLinkMainSymbol->getFunctions().size() != 1)
+	{
+		exitCode = 3;
 		finalize(exitCode);
 		return exitCode;
 	}
 
 	// It has to always be int main(void)
-	frontend::FunctionSymbol* funcMainSymbol = static_cast<frontend::FunctionSymbol*>(mainSymbol);
+	frontend::FunctionSymbol* funcMainSymbol = manglingLinkMainSymbol->getFunctions().front();
 	if (funcMainSymbol->getReturnType() != frontend::Symbol::DataType::INT || funcMainSymbol->getParameters().size() != 0)
 	{
+		exitCode = 3;
 		finalize(exitCode);
 		return exitCode;
 	}
