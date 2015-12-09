@@ -72,6 +72,12 @@ ir::Value* UnaryExpression::generateIrValue(ir::Builder& builder)
 		case Expression::Type::TYPECAST:
 			resultValue = builder.createUnaryOperation<ir::TypecastInstruction>(operand, Symbol::dataTypeToIrDataType(getDataType()));
 			break;
+		case Expression::Type::BIT_NOT:
+			resultValue = builder.createUnaryOperation<ir::BitwiseNotInstruction>(operand, Symbol::dataTypeToIrDataType(getDataType()));
+			break;
+		case Expression::Type::NEG:
+			resultValue = builder.createUnaryOperation<ir::NegInstruction>(operand, Symbol::dataTypeToIrDataType(getDataType()));
+			break;
 		default:
 			return nullptr;
 	}
@@ -139,6 +145,14 @@ ir::Value* BinaryExpression::generateIrValue(ir::Builder& builder)
 			resultValue = builder.createBinaryOperation<ir::OrInstruction>(leftOperandValue, rightOperandValue,
 				Symbol::dataTypeToIrDataType(getDataType()));
 			break;
+		case Expression::Type::BIT_AND:
+			resultValue = builder.createBinaryOperation<ir::BitwiseAndInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
+			break;
+		case Expression::Type::BIT_OR:
+			resultValue = builder.createBinaryOperation<ir::BitwiseOrInstruction>(leftOperandValue, rightOperandValue,
+				Symbol::dataTypeToIrDataType(getDataType()));
+			break;
 		default:
 			return nullptr;
 	}
@@ -152,13 +166,39 @@ void AssignStatement::generateIr(ir::Builder& builder)
 	builder.createAssignment(_variable->getIrValue(), exprValue);
 }
 
+void Declaration::generateIr(ir::Builder& builder)
+{
+	ir::Value* varValue = builder.createDeclaration(_variable->getName(), Symbol::dataTypeToIrDataType(_variable->getDataType()));
+	_variable->setIrValue(varValue);
+
+	if (_initialization != nullptr)
+	{
+		ir::Value* initValue = _initialization->generateIrValue(builder);
+		builder.createAssignment(_variable->getIrValue(), initValue);
+	}
+	else
+	{
+		switch (_variable->getDataType())
+		{
+			case Symbol::DataType::INT:
+				builder.createAssignment(_variable->getIrValue(), builder.createConstantValue(0));
+				break;
+			case Symbol::DataType::CHAR:
+				builder.createAssignment(_variable->getIrValue(), builder.createConstantValue('\0'));
+				break;
+			case Symbol::DataType::STRING:
+				builder.createAssignment(_variable->getIrValue(), builder.createConstantValue(""));
+				break;
+			default:
+				break;
+		}
+	}
+}
+
 void DeclarationStatement::generateIr(ir::Builder& builder)
 {
-	for (VariableSymbol* var : _variables)
-	{
-		ir::Value* varValue = builder.createDeclaration(var->getName(), Symbol::dataTypeToIrDataType(var->getDataType()));
-		var->setIrValue(varValue);
-	}
+	for (auto& declaration : _declarations)
+		declaration->generateIr(builder);
 }
 
 ir::BasicBlock* StatementBlock::generateIrBlocks(ir::Builder& builder)
@@ -237,6 +277,48 @@ ir::BasicBlock* WhileStatement::generateIrBlocks(ir::Builder& builder)
 	return endBlock;
 }
 
+void ForIterationStatement::generateIr(ir::Builder& builder)
+{
+	if (usesExpression())
+		_expression->generateIrValue(builder);
+	else if (usesAssignment())
+		_assignment->generateIr(builder);
+}
+
+ir::BasicBlock* ForStatement::generateIrBlocks(ir::Builder& builder)
+{
+	if (_initialization != nullptr)
+		_initialization->generateIr(builder);
+
+	ir::BasicBlock* condBlock = builder.createBasicBlock();
+	ir::BasicBlock* bodyBlock = builder.createBasicBlock();
+	ir::BasicBlock* endBlock = builder.createBasicBlock();
+
+	builder.addBasicBlock(condBlock);
+	builder.createJump(condBlock);
+	builder.setActiveBasicBlock(condBlock);
+	if (_condition != nullptr)
+	{
+		ir::Value* condValue = _condition->generateIrValue(builder);
+		builder.createConditionalJump(condValue, bodyBlock, endBlock);
+	}
+	else
+		builder.createConditionalJump(builder.createConstantValue(1), bodyBlock, endBlock);
+
+	builder.addBasicBlock(bodyBlock);
+	builder.setActiveBasicBlock(bodyBlock);
+	ir::BasicBlock* endBodyBlock = _statements->generateIrBlocks(builder);
+	builder.setActiveBasicBlock(endBodyBlock);
+
+	if (_iteration != nullptr)
+		_iteration->generateIr(builder);
+
+	builder.addBasicBlock(endBlock);
+	builder.createJump(condBlock);
+	builder.setActiveBasicBlock(endBlock);
+	return endBlock;
+}
+
 void ReturnStatement::generateIr(ir::Builder& builder)
 {
 	ir::Value* returnValue = nullptr;
@@ -268,13 +350,13 @@ void Function::generateIr(ir::Builder& builder)
 	ir::Value* defaultRetValue = nullptr;
 	switch (_symbol->getReturnType())
 	{
-		case Symbol::INT:
+		case Symbol::DataType::INT:
 			defaultRetValue = builder.createConstantValue(0);
 			break;
-		case Symbol::CHAR:
+		case Symbol::DataType::CHAR:
 			defaultRetValue = builder.createConstantValue('\0');
 			break;
-		case Symbol::STRING:
+		case Symbol::DataType::STRING:
 			defaultRetValue = builder.createConstantValue("");
 			break;
 		default:

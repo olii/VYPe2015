@@ -549,6 +549,16 @@ void ASMgenerator::visit(ir::OrInstruction *instr)
                                              0, destReg->getIDName(), 0, tempReg->getIDName() );
 }
 
+void ASMgenerator::visit(ir::BitwiseAndInstruction *instr)
+{
+
+}
+
+void ASMgenerator::visit(ir::BitwiseOrInstruction *instr)
+{
+
+}
+
 void ASMgenerator::visit(ir::NotInstruction *instr)
 {
     ir::Value *op = instr->getOperand();
@@ -567,6 +577,15 @@ void ASMgenerator::visit(ir::NotInstruction *instr)
 void ASMgenerator::visit(ir::TypecastInstruction *instr)
 {
 
+}
+
+void ASMgenerator::visit(ir::BitwiseNotInstruction *instr)
+{
+
+}
+
+void ASMgenerator::visit(ir::NegInstruction *instr)
+{
 }
 
 }

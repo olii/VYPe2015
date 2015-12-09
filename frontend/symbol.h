@@ -13,15 +13,16 @@ class SymbolTable;
 class Symbol
 {
 public:
-	enum Type
+	enum class Type
 	{
-		VARIABLE    = 0,
-		FUNCTION
+		VARIABLE,
+		FUNCTION,
+		MANGLING_LINK
 	};
 
-	enum DataType
+	enum class DataType
 	{
-		VOID        = 0,
+		VOID,
 		INT,
 		CHAR,
 		STRING
@@ -94,7 +95,23 @@ private:
 	DataType _returnType;
 	ParameterList _parameters;
 	bool _defined;
+};
 
+class ManglingLinkSymbol : public Symbol
+{
+public:
+	using FunctionList = std::vector<FunctionSymbol*>;
+
+	ManglingLinkSymbol() = delete;
+	ManglingLinkSymbol(const std::string& name);
+	ManglingLinkSymbol(const ManglingLinkSymbol&) = delete;
+	virtual ~ManglingLinkSymbol();
+
+	const std::vector<FunctionSymbol*>& getFunctions() const;
+	void addFunction(FunctionSymbol* functionSymbol);
+
+private:
+	FunctionList _functions;
 };
 
 } // namespace frontend

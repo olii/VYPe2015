@@ -38,8 +38,12 @@ public:
 	virtual void visit(NotEqualInstruction* instr) = 0;
 	virtual void visit(AndInstruction* instr) = 0;
 	virtual void visit(OrInstruction* instr) = 0;
+	virtual void visit(BitwiseAndInstruction* instr) = 0;
+	virtual void visit(BitwiseOrInstruction* instr) = 0;
 	virtual void visit(NotInstruction* instr) = 0;
 	virtual void visit(TypecastInstruction* instr) = 0;
+	virtual void visit(BitwiseNotInstruction* instr) = 0;
+	virtual void visit(NegInstruction* instr) = 0;
 
 protected:
 	IrVisitor() {}

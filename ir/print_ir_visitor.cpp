@@ -333,6 +333,28 @@ void PrintIrVisitor::visit(OrInstruction* instr)
 	_os << "\n";
 }
 
+void PrintIrVisitor::visit(BitwiseAndInstruction* instr)
+{
+	_os << Indentation;
+	instr->getResult()->accept(*this);
+	_os << " = bitwise and ";
+	instr->getLeftOperand()->accept(*this);
+	_os << ", ";
+	instr->getRightOperand()->accept(*this);
+	_os << "\n";
+}
+
+void PrintIrVisitor::visit(BitwiseOrInstruction* instr)
+{
+	_os << Indentation;
+	instr->getResult()->accept(*this);
+	_os << " = bitwise or ";
+	instr->getLeftOperand()->accept(*this);
+	_os << ", ";
+	instr->getRightOperand()->accept(*this);
+	_os << "\n";
+}
+
 void PrintIrVisitor::visit(NotInstruction* instr)
 {
 	_os << Indentation;
@@ -351,6 +373,24 @@ void PrintIrVisitor::visit(TypecastInstruction* instr)
 	_os << "(";
 	instr->getOperand()->accept(*this);
 	_os << ")\n";
+}
+
+void PrintIrVisitor::visit(BitwiseNotInstruction* instr)
+{
+	_os << Indentation;
+	instr->getResult()->accept(*this);
+	_os << " = bitwise not ";
+	instr->getOperand()->accept(*this);
+	_os << "\n";
+}
+
+void PrintIrVisitor::visit(NegInstruction* instr)
+{
+	_os << Indentation;
+	instr->getResult()->accept(*this);
+	_os << " = neg ";
+	instr->getOperand()->accept(*this);
+	_os << "\n";
 }
 
 } // namespace ir

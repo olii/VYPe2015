@@ -266,6 +266,24 @@ public:
 	virtual void accept(IrVisitor& visitor) override;
 };
 
+class BitwiseAndInstruction : public ResultInstruction, public BinaryInstruction
+{
+public:
+	BitwiseAndInstruction(Value* result, Value* leftOperand, Value* rightOperand);
+	virtual ~BitwiseAndInstruction();
+
+	virtual void accept(IrVisitor& visitor) override;
+};
+
+class BitwiseOrInstruction : public ResultInstruction, public BinaryInstruction
+{
+public:
+	BitwiseOrInstruction(Value* result, Value* leftOperand, Value* rightOperand);
+	virtual ~BitwiseOrInstruction();
+
+	virtual void accept(IrVisitor& visitor) override;
+};
+
 class NotInstruction : public ResultInstruction, public UnaryInstruction
 {
 public:
@@ -280,6 +298,24 @@ class TypecastInstruction : public ResultInstruction, public UnaryInstruction
 public:
 	TypecastInstruction(Value* result, Value* operand);
 	virtual ~TypecastInstruction();
+
+	virtual void accept(IrVisitor& visitor) override;
+};
+
+class BitwiseNotInstruction : public ResultInstruction, public UnaryInstruction
+{
+public:
+	BitwiseNotInstruction(Value* result, Value* operand);
+	virtual ~BitwiseNotInstruction();
+
+	virtual void accept(IrVisitor& visitor) override;
+};
+
+class NegInstruction : public ResultInstruction, public UnaryInstruction
+{
+public:
+	NegInstruction(Value* result, Value* operand);
+	virtual ~NegInstruction();
 
 	virtual void accept(IrVisitor& visitor) override;
 };

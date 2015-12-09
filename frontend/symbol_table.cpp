@@ -1,3 +1,5 @@
+#include <algorithm>
+#include "frontend/name_mangler.h"
 #include "frontend/symbol_table.h"
 
 namespace frontend {
@@ -43,8 +45,12 @@ VariableSymbol* SymbolTable::addVariable(const std::string& name, Symbol::DataTy
 
 FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataType returnType, const FunctionSymbol::ParameterList& parameters, bool definition)
 {
+	std::vector<Symbol::DataType> dataTypes;
+	std::for_each(parameters.begin(), parameters.end(), [&dataTypes](VariableSymbol* symbol) { dataTypes.push_back(symbol->getDataType()); } );
+	std::string mangledName = NameMangler::mangle(name, dataTypes);
+
 	// Check whether symbol with this name already exists in the current table
-	Symbol* symbol = findSymbol(name);
+	Symbol* symbol = findSymbol(mangledName);
 
 	// If it is declaration of function
 	if (!definition)
@@ -90,12 +96,28 @@ FunctionSymbol* SymbolTable::addFunction(const std::string& name, Symbol::DataTy
 			// Rewrite placeholder declaration parameters with the actual definition parameters and set the function as defined
 			func->setParameters(parameters);
 			func->setDefined(true);
+
+			Symbol* manglingLink = findSymbol(name);
+			if (manglingLink == nullptr)
+				_table[name] = new ManglingLinkSymbol(name);
+			static_cast<ManglingLinkSymbol*>(_table[name])->addFunction(func);
+
 			return func;
 		}
 	}
 
-	_table[name] = new FunctionSymbol(name, returnType, parameters, definition);
-	return static_cast<FunctionSymbol*>(_table[name]);
+	FunctionSymbol* functionSymbol = new FunctionSymbol(mangledName, returnType, parameters, definition);
+	_table[mangledName] = functionSymbol;
+
+	if (definition)
+	{
+		Symbol* manglingLink = findSymbol(name);
+		if (manglingLink == nullptr)
+			_table[name] = new ManglingLinkSymbol(name);
+		static_cast<ManglingLinkSymbol*>(_table[name])->addFunction(functionSymbol);
+	}
+
+	return functionSymbol;
 }
 
 Symbol* SymbolTable::findSymbol(const std::string& name)

@@ -58,7 +58,11 @@ public:
 		CHAR,
 		VARIABLE,
 		CALL,
-		BUILTIN_CALL
+		BUILTIN_CALL,
+		BIT_AND,
+		BIT_OR,
+		BIT_NOT,
+		NEG
 	};
 
 	Expression(const Expression&) = delete;
@@ -286,12 +290,44 @@ private:
 	Expression* _expression;
 };
 
+class Declaration : public ASTNode
+{
+public:
+	Declaration(const std::string& variableName, Expression* initialization) : ASTNode(),
+		_variable(nullptr), _variableName(variableName), _initialization(initialization) {}
+	Declaration(const Declaration&) = delete;
+	virtual ~Declaration()
+	{
+		delete _initialization;
+	}
+
+	virtual Generates generates() override { return Generates::NOTHING; }
+	virtual void generateIr(ir::Builder& builder) override;
+
+	void setVariableSymbol(VariableSymbol* symbol) { _variable = symbol; }
+	VariableSymbol* getVariableSymbol() const { return _variable; }
+
+	Expression* getInitialization() const { return _initialization; }
+	const std::string& getVariableName() const { return _variableName; }
+
+private:
+	Declaration& operator =(const Declaration&);
+
+	VariableSymbol* _variable;
+	std::string _variableName;
+	Expression* _initialization;
+};
+
 class DeclarationStatement : public Statement
 {
 public:
-	DeclarationStatement(const std::vector<VariableSymbol*>& variables) : Statement(), _variables(variables) {}
+	DeclarationStatement(const std::vector<Declaration*>& declarations) : Statement(), _declarations(declarations) {}
 	DeclarationStatement(const DeclarationStatement&) = delete;
-	virtual ~DeclarationStatement() {}
+	virtual ~DeclarationStatement()
+	{
+		for (auto& decl : _declarations)
+			delete decl;
+	}
 
 	virtual Generates generates() override { return Generates::NOTHING; }
 	virtual void generateIr(ir::Builder& builder) override;
@@ -299,11 +335,12 @@ public:
 private:
 	DeclarationStatement& operator =(const DeclarationStatement&);
 
-	std::vector<VariableSymbol*> _variables;
+	std::vector<Declaration*> _declarations;
 };
 
 class IfStatement : public Statement
 {
+
 public:
 	IfStatement(Expression* expression, StatementBlock* ifStatements, StatementBlock* elseStatements) :
 		Statement(), _expression(expression), _ifStatements(ifStatements), _elseStatements(elseStatements) {}
@@ -345,6 +382,57 @@ private:
 	WhileStatement& operator =(const WhileStatement&);
 
 	Expression* _expression;
+	StatementBlock* _statements;
+};
+
+class ForIterationStatement : public ASTNode
+{
+public:
+	ForIterationStatement(AssignStatement* assignment) : ASTNode(), _assignment(assignment), _expression(nullptr) {}
+	ForIterationStatement(Expression* expression) : ASTNode(), _assignment(nullptr), _expression(expression) {}
+	ForIterationStatement(const ForIterationStatement&) = delete;
+	virtual ~ForIterationStatement()
+	{
+		delete _assignment;
+		delete _expression;
+	}
+
+	bool usesAssignment() const { return (_assignment != nullptr); }
+	bool usesExpression() const { return (_expression != nullptr); }
+
+	virtual Generates generates() override { return Generates::NOTHING; }
+	virtual void generateIr(ir::Builder& builder) override;
+
+private:
+	ForIterationStatement& operator =(const ForIterationStatement&);
+
+	AssignStatement* _assignment;
+	Expression* _expression;
+};
+
+class ForStatement : public Statement
+{
+public:
+	ForStatement(AssignStatement* initialization, Expression* condition, ForIterationStatement* iteration, StatementBlock* statements) :
+		Statement(), _initialization(initialization), _condition(condition), _iteration(iteration), _statements(statements) {}
+	ForStatement(const ForStatement&) = delete;
+	virtual ~ForStatement()
+	{
+		delete _initialization;
+		delete _condition;
+		delete _iteration;
+		delete _statements;
+	}
+
+	virtual Generates generates() override { return Generates::BLOCKS; }
+	virtual ir::BasicBlock* generateIrBlocks(ir::Builder& builder) override;
+
+private:
+	ForStatement& operator =(const ForStatement&);
+
+	AssignStatement* _initialization;
+	Expression* _condition;
+	ForIterationStatement* _iteration;
 	StatementBlock* _statements;
 };
 
