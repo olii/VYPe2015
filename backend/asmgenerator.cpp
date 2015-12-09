@@ -195,6 +195,8 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
 
     }
 
+    activeFunction->Active()->clearCallerRegisters();
+
     // function call
     activeFunction->Active()->addInstruction("jal", instr->getFunction()->getName());
 
@@ -280,7 +282,23 @@ void ASMgenerator::visit(ir::SubtractInstruction *instr)
 
 void ASMgenerator::visit(ir::MultiplyInstruction *instr)
 {
+    ir::Value *left = instr->getLeftOperand();
+    ir::Value *right = instr->getRightOperand();
+    ir::Value *dest = instr->getResult();
 
+    arch::Register *leftReg = nullptr;
+    arch::Register *rightReg = nullptr;
+
+    leftReg = activeFunction->Active()->getRegister(left, true);
+    rightReg = activeFunction->Active()->getRegister(right);
+    activeFunction->Active()->unlockVar(left); // unlocking left
+
+
+    arch::Register *destReg = activeFunction->Active()->getRegister(dest);
+    activeFunction->Active()->markChanged(destReg);
+
+    activeFunction->Active()->addInstruction("MUL", destReg->getIDName(),
+                                             0, leftReg->getIDName(), 0, rightReg->getIDName() );
 }
 
 void ASMgenerator::visit(ir::DivideInstruction *instr)
