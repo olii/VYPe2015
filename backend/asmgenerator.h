@@ -55,6 +55,9 @@ private:
     mips::MIPS mips;
     std::map<ir::Function*,FunctionContext> context;
     FunctionContext* activeFunction;
+
+
+    void builtin_print(std::vector<ir::Value*> &params);
 };
 
 

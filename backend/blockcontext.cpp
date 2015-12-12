@@ -67,7 +67,7 @@ void BlockContext::addLabel(const std::string &label)
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &reg)
 {
     text << backend::Indent;
-    text << inst << " " << reg.getAsmName();
+    text << inst << " " << reg.getAsmName() << "\n";;
 }
 
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &dst, const mips::Register &src)
@@ -128,10 +128,6 @@ void BlockContext::addInstruction(const std::string &inst, const mips::Register 
     text << inst << " " << dst.getAsmName() << ", "  << op1.getAsmName() << ", " << imm << "(" << op2.getAsmName() << ")" << "\n";
 }
 
-std::vector<std::pair<ir::Value *, int> > BlockContext::saveCallerRegisters()
-{
-
-}
 
 void BlockContext::saveUnsavedVariables()
 {
@@ -241,7 +237,12 @@ const mips::Register *BlockContext::getRegister(ir::Value *val, bool load)
         if (val->getDataType() == ir::Value::DataType::INT){
             ir::ConstantValue<int> *tmp = static_cast<ir::ConstantValue<int>*>(val);
             addInstruction("li", *(item->reg), tmp->getConstantValue());
+        } else if (val->getDataType() == ir::Value::DataType::CHAR){
+            ir::ConstantValue<char> *tmp = static_cast<ir::ConstantValue<char>*>(val);
+            addInstruction("li", *(item->reg), tmp->getConstantValue());
         }
+
+
     } else if (val->getType() == ir::Value::Type::NAMED){
         ir::NamedValue *namVal = static_cast<ir::NamedValue*>(val);
 

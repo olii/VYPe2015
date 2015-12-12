@@ -61,7 +61,6 @@ public:
     void addInstruction(const std::string &inst, const mips::Register &dst , const mips::Register &op1, const mips::Register &op2);
     void addInstruction(const std::string &inst, const mips::Register &dst , const mips::Register &op1, const int imm, const mips::Register &op2);
 
-    std::vector<std::pair<ir::Value *, int> > saveCallerRegisters();
     void saveUnsavedVariables();
     void saveTemporaries();
     void clearCallerRegisters();

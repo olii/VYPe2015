@@ -41,6 +41,12 @@ void ASMgenerator::visit(ir::Function *func)
         activeFunction->addVar(*param, i);
     }
 
+    // load basic blocks
+    for (ir::BasicBlock* bb : func->getBasicBlocks())
+    {
+        activeFunction->addBlock(bb);
+    }
+
     // iterate over each basicblock
     for (ir::BasicBlock* bb : func->getBasicBlocks())
     {
@@ -91,7 +97,6 @@ void ASMgenerator::visit(ir::ConstantValue<std::string> *value)
 void ASMgenerator::visit(ir::AssignInstruction *instr)
 {
     ir::Value *dest = instr->getResult();
-    return;
     ir::Value *operand = instr->getOperand();
 
     const mips::Register *operandReg = activeFunction->Active()->getRegister(operand);
@@ -203,7 +208,28 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
 
 void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
 {
-	// TODO: IMPLEMENT ME
+    const mips::Register *destReg = nullptr;
+
+    const std::string &name = instr->getFunctionName();
+    if (name.compare("print") == 0){
+        builtin_print(instr->getArguments());
+    } else if (name.compare("read_char") == 0){
+        destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
+        activeFunction->Active()->markChanged(destReg);
+        activeFunction->Active()->addInstruction("READ_CHAR", *destReg);
+    } else if (name.compare("read_int") == 0){
+        destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
+        activeFunction->Active()->markChanged(destReg);
+        activeFunction->Active()->addInstruction("READ_INT", *destReg);
+    } else if (name.compare("read_string") == 0){
+
+    } else if (name.compare("get_at") == 0){
+
+    } else if (name.compare("set_at") == 0){
+
+    } else if (name.compare("strcat") == 0){
+
+    }
 }
 
 void ASMgenerator::visit(ir::AddInstruction *instr)
@@ -237,7 +263,7 @@ void ASMgenerator::visit(ir::SubtractInstruction *instr)
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
 
-    activeFunction->Active()->addInstruction("ADD", *destReg, *leftReg, *rightReg );
+    activeFunction->Active()->addInstruction("SUB", *destReg, *leftReg, *rightReg );
 }
 
 void ASMgenerator::visit(ir::MultiplyInstruction *instr)
@@ -382,7 +408,7 @@ void ASMgenerator::visit(ir::NotEqualInstruction *instr)
     activeFunction->Active()->markChanged(destReg);
 
     activeFunction->Active()->addInstruction("XOR",*destReg, *leftReg, *rightReg);
-    activeFunction->Active()->addInstruction("SLTU", *destReg, *destReg, mips.getZero());
+    activeFunction->Active()->addInstruction("SLTU", *destReg, *destReg, *mips.getZero());
 }
 
 void ASMgenerator::visit(ir::AndInstruction *instr)
@@ -468,7 +494,74 @@ void ASMgenerator::visit(ir::NotInstruction *instr)
 
 void ASMgenerator::visit(ir::TypecastInstruction *instr)
 {
+    ir::Value *op = instr->getOperand();
+    ir::Value *dest = instr->getResult();
+    const mips::Register *opReg = activeFunction->Active()->getRegister(op);
+    const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
+    activeFunction->Active()->markChanged(destReg);
 
+
+    activeFunction->Active()->addCanonicalInstruction("#Typecast");
+
+    switch(op->getDataType()){
+    case ir::Value::DataType::CHAR:
+    {
+        switch(dest->getDataType()){
+            case ir::Value::DataType::INT:
+            {
+                //char to int - noop
+                break;
+            }
+            case ir::Value::DataType::STRING:
+            {
+                //char to str -- make new string str("char");
+                break;
+            }
+        default: break;
+        }
+
+        break;
+    }
+    case ir::Value::DataType::INT:
+    {
+        switch(dest->getDataType()){
+            case ir::Value::DataType::CHAR:
+            {
+                //int to char -> only least significant
+                activeFunction->Active()->addInstruction("MOVE", *destReg, *opReg);
+                activeFunction->Active()->addInstruction("ANDI", *destReg, 0xFF);
+                break;
+            }
+            case ir::Value::DataType::STRING:
+            {
+                //int to string
+                break;
+            }
+        default: break;
+        }
+
+        break;
+    }
+    case ir::Value::DataType::STRING:
+    {
+        switch(dest->getDataType()){
+            case ir::Value::DataType::CHAR:
+            {
+                //string to char
+                break;
+            }
+            case ir::Value::DataType::INT:
+            {
+                //string to int
+                break;
+            }
+        default: break;
+        }
+
+        break;
+    }
+    default: break;
+    }
 }
 
 void ASMgenerator::visit(ir::BitwiseNotInstruction *instr)
@@ -485,6 +578,35 @@ void ASMgenerator::visit(ir::BitwiseNotInstruction *instr)
 
 void ASMgenerator::visit(ir::NegInstruction *instr)
 {
+    ir::Value *op = instr->getOperand();
+    ir::Value *dest = instr->getResult();
+
+    const mips::Register *opReg = activeFunction->Active()->getRegister(op);
+    const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
+    activeFunction->Active()->markChanged(destReg);
+
+    activeFunction->Active()->addInstruction("SUB", *destReg, *mips.getZero(),*opReg);
+}
+
+void ASMgenerator::builtin_print(std::vector<ir::Value *> &params)
+{
+    for(auto &item : params){
+        const mips::Register *opReg = activeFunction->Active()->getRegister(item);
+
+        switch (item->getDataType()) {
+        case ir::Value::DataType::INT:
+            activeFunction->Active()->addInstruction("print_int", *opReg);
+            break;
+        case ir::Value::DataType::CHAR:
+            activeFunction->Active()->addInstruction("print_char", *opReg);
+            break;
+        case ir::Value::DataType::STRING:
+            activeFunction->Active()->addInstruction("print_string", *opReg);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 }
