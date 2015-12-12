@@ -1,0 +1,58 @@
+#ifndef FUNCTIONCONTEXT_H
+#define FUNCTIONCONTEXT_H
+
+
+#include <map>
+#include <string>
+#include <utility>
+
+#include "ir/value.h"
+#include "ir/instruction.h"
+#include "ir/basic_block.h"
+#include "backend/blockcontext.h"
+#include "backend/mips.h"
+
+
+namespace backend{
+
+extern const std::string Indent;
+
+class FunctionContext
+{
+public:
+    FunctionContext ( FunctionContext && ) = default;
+    //FunctionContext ( FunctionContext & ) = default;
+    //FunctionContext(){}
+    FunctionContext(ir::Function *func, mips::MIPS *mips);
+
+    BlockContext* Active() const;
+    void addBlock(const ir::BasicBlock *block);
+    void setActiveBlock(const ir::BasicBlock *block);
+    const BlockContext *getBlockContext(const ir::BasicBlock *block) const;
+
+    void addVar(ir::NamedValue &var);
+    void addVar(ir::NamedValue &var, unsigned paramPos);
+    const ir::Function *getFunction() const;
+    int getVarOffset(ir::NamedValue &var) const;
+    const std::stringstream getInstructions() const;
+    const mips::MIPS *getMips() const;
+    void testCalleeSaved(const mips::Register * reg);
+
+private:
+    std::map<ir::NamedValue*, int> varToStackTable; // map a NamedValue to its place on stack
+    std::vector<BlockContext> blockContextTable;
+    BlockContext *activeBlock;
+
+    int stackCounter = 4; // start on 4 because at 0 there is previous FP
+
+    const ir::Function *func;   // function this context is joined to
+    std::stringstream EntryCode; // this will be appended to code right after MIPS function entry
+    std::set<const mips::Register*> calleeSavedSet; // set of registers a function has to preserve
+
+
+    const mips::MIPS *mips;
+
+};
+
+} // namespace backend
+#endif // FUNCTIONCONTEXT_H

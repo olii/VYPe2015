@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdarg>
 
 #include "frontend/ast.h"
 #include "frontend/context.h"

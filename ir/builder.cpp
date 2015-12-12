@@ -238,7 +238,7 @@ std::string Builder::codeText() const
     return printVisitor.getText();
 }
 
-const std::map<std::string, Function *> &Builder::getFunctions()
+const std::map<std::string, Function *> &Builder::getFunctions() const
 {
      return _functions;
 }

@@ -5,7 +5,7 @@
 #include "ir/function.h"
 #include "mips.h"
 #include <list>
-#include "context.h"
+#include "functioncontext.h"
 
 namespace backend {
 
@@ -52,10 +52,11 @@ public:
     virtual void visit(ir::NegInstruction* instr) override;
 
 private:
-    arch::MIPS arch;
+    mips::MIPS mips;
     std::map<ir::Function*,FunctionContext> context;
     FunctionContext* activeFunction;
 };
+
 
 }
 

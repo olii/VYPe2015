@@ -8,19 +8,22 @@
 
 
 
-namespace arch{
+namespace mips{
+extern const std::string Indent;
+
 
 
 
 class Register{
 public:
-    Register(std::string name, int id):_name(name),_id(id){}
-    const std::string & getName() const {return _name;}
-    unsigned getID(){return _id;}
-    const std::string getIDName() const {return "$" + std::to_string(_id);}
+    Register(std::string name, int id, bool alias = false):_name(name),_id(id), use_alias_name(alias){}
+    const std::string getName() const {return "$" + _name;}
+    unsigned getID() const        {return _id;}
+    const std::string getAsmName() const {return "$" + ((use_alias_name)?_name:std::to_string(_id)) ;}
 private:
         const std::string _name;
         const unsigned _id;
+        const bool use_alias_name;
 };
 
 
@@ -30,64 +33,63 @@ class MIPS
 public:
     MIPS();
      ~MIPS();
-    unsigned getMaxRegisterParameters();
-    const arch::Register& getStackPointer();
-    const arch::Register& getFramePointer();
-    const arch::Register& getRAPointer();
-    const std::vector<Register *>& getParamRegisters();
+    const Register& getStackPointer() const;
+    const Register& getFramePointer() const;
+    const Register& getRAPointer() const;
+    const std::vector<const Register *>& getParamRegisters() const;
 
-    const std::string getFunctionPrologue();
-    const std::string getFunctionEpilogue();
+    const std::string getFunctionPrologue() const;
+    const std::string getFunctionEpilogue() const;
 
-    const std::vector<Register *> &getEvalRegisters();
-    const std::vector<Register *> &getCalleeSavedRegisters();
-    const std::vector<Register *> &getCallerSavedRegisters();
-    const Register *getRetRegister();
-    Register *getZero();
+    const std::vector<const Register *> &getEvalRegisters() const;
+    const std::vector<const Register *> &getCalleeSavedRegisters() const;
+    const std::vector<const Register *> &getCallerSavedRegisters() const;
+    const Register *getRetRegister() const;
+    const Register *getZero() const;
 
 private:
-    arch::Register R0; // always 0
-    arch::Register R1; // reserved for assembler
+    const Register R0; // always 0
+    const Register R1; // reserved for assembler
 
-    arch::Register R2; // return value + eval
-    arch::Register R3; // R2
+    const Register R2; // return value + eval
+    const Register R3; // R2
 
-    arch::Register R4; // PARAM
-    arch::Register R5;
-    arch::Register R6;
-    arch::Register R7;
+    const Register R4; // PARAM
+    const Register R5;
+    const Register R6;
+    const Register R7;
 
-    arch::Register R8; // EVAL caller saved
-    arch::Register R9;
-    arch::Register R10;
-    arch::Register R11;
-    arch::Register R12;
-    arch::Register R13;
-    arch::Register R14;
-    arch::Register R15;
+    const Register R8; // EVAL caller saved
+    const Register R9;
+    const Register R10;
+    const Register R11;
+    const Register R12;
+    const Register R13;
+    const Register R14;
+    const Register R15;
 
 
-    arch::Register R16; // EVAL calle saved registers
-    arch::Register R17;
-    arch::Register R18;
-    arch::Register R19;
-    arch::Register R20;
-    arch::Register R21;
-    arch::Register R22;
-    arch::Register R23;
+    const Register R16; // EVAL calle saved registers
+    const Register R17;
+    const Register R18;
+    const Register R19;
+    const Register R20;
+    const Register R21;
+    const Register R22;
+    const Register R23;
 
-    arch::Register R24; // EVAL
-    arch::Register R25;
+    const Register R24; // EVAL
+    const Register R25;
 
-    arch::Register R28; // GP
-    arch::Register R29; // SP
-    arch::Register R30; // FramePointer, alt. EBP
-    arch::Register R31; // Return Address register
+    const Register R28; // GP
+    const Register R29; // SP
+    const Register R30; // FramePointer, alt. EBP
+    const Register R31; // Return Address register
 
-    std::vector<Register *> calleeSavedRegisters;
-    std::vector<Register *> callerSavedRegisters;
-    std::vector<Register *> EVALRegisters;
-    std::vector<Register *> ParamRegisters;
+    std::vector<const Register *> calleeSavedRegisters;
+    std::vector<const Register *> callerSavedRegisters;
+    std::vector<const Register *> EVALRegisters;
+    std::vector<const Register *> ParamRegisters;
 };
 
 }

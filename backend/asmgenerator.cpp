@@ -1,5 +1,6 @@
 #include "asmgenerator.h"
 #include <iostream>
+#include <utility>
 
 
 namespace backend {
@@ -21,31 +22,23 @@ void ASMgenerator::translateIR(ir::Builder &builder){
 
 void ASMgenerator::visit(ir::Function *func)
 {
-    //std::cout << "<< Entering function " << func->getName() << " >>" << std::endl;
+    std::cout << "<< Entering function " << func->getName() << " >>" << std::endl;
 
 
     const std::vector<ir::Value*> parameters = func->getParameters();
-    unsigned paramCount = parameters.size();
 
     //create new context
-    FunctionContext fc(func);
+    FunctionContext fc(func, &mips);
     //store it by value
-    context.insert(std::make_pair(func, fc));
+    context.emplace(func, std::move(fc));
     // set pointer to newly added reference
-    activeFunction = &(context[func]);
 
-
-
+    activeFunction = &context.at(func);
 
     for (unsigned int i = 0; i<parameters.size(); i++)
     {
-        // TODO: static cast
-        ir::NamedValue* param = dynamic_cast<ir::NamedValue*>(parameters[i]);
-        if (param == nullptr){
-            // error handling ....
-        }
-        activeFunction->addVar(*param, i+1, paramCount);
-
+        ir::NamedValue* param = static_cast<ir::NamedValue*>(parameters[i]);
+        activeFunction->addVar(*param, i);
     }
 
     // iterate over each basicblock
@@ -54,77 +47,80 @@ void ASMgenerator::visit(ir::Function *func)
         bb->accept(*this);
     }
 
-    std::cout << context[func].getInstructions();
+    std::cout << activeFunction->getInstructions().str() << std::endl ;
 }
 
 void ASMgenerator::visit(ir::BasicBlock *block)
 {
     activeFunction->addBlock(block);
-
-    for (ir::Instruction* inst : block->getInstructions())
+    activeFunction->setActiveBlock(block);
+    for (ir::Instruction* inst : block->getInstructions()){
             inst->accept(*this);
+            activeFunction->Active()->updateLRU();
+    }
 
 }
+
 
 void ASMgenerator::visit(ir::NamedValue *value)
-{
+{/*
     activeFunction->Active()->getRegister(value);
-}
+*/}
 
 void ASMgenerator::visit(ir::TemporaryValue *value)
-{
+{/*
     activeFunction->Active()->getRegister(value);
-}
+*/}
 
 void ASMgenerator::visit(ir::ConstantValue<int> *value)
-{
+{/*
 
-}
+*/}
 
 void ASMgenerator::visit(ir::ConstantValue<char> *value)
-{
+{/*
 
-}
+*/}
 
 void ASMgenerator::visit(ir::ConstantValue<std::string> *value)
-{
+{/*
 
-}
+*/}
 
 void ASMgenerator::visit(ir::AssignInstruction *instr)
 {
     ir::Value *dest = instr->getResult();
+    return;
     ir::Value *operand = instr->getOperand();
 
-    arch::Register *operandReg = activeFunction->Active()->getRegister(operand, true); // must be locked
-    arch::Register *destReg = activeFunction->Active()->getRegister(dest,false, false);
-    activeFunction->Active()->unlockVar(operand);
+    const mips::Register *operandReg = activeFunction->Active()->getRegister(operand);
+    const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
 
-    activeFunction->Active()->addInstruction("move", destReg->getIDName(), 0, operandReg->getIDName() );
+    activeFunction->Active()->addInstruction("move", *destReg, *operandReg);
 
 
 }
 
 void ASMgenerator::visit(ir::DeclarationInstruction *instr)
-{
+{/*
     ir::Value *operand = instr->getOperand();
     activeFunction->addVar(*(static_cast<ir::NamedValue*>(operand)));
     // activeFunction->Active()->getRegister(operand);
-}
+*/}
 
 void ASMgenerator::visit(ir::JumpInstruction *instr)
-{
+{/*
     activeFunction->Active()->saveUnsavedVariables();
     ir::BasicBlock *jumpBlock = instr->getFollowingBasicBlock();
     activeFunction->Active()->addInstruction("j", BlockContext::getName(jumpBlock,activeFunction->getFunction()));
 
 
 
-}
+*/}
 
 void ASMgenerator::visit(ir::CondJumpInstruction *instr)
-{
+{/*
     activeFunction->Active()->saveUnsavedVariables();
 
     ir::Value *cond =  instr->getCondition();
@@ -138,87 +134,76 @@ void ASMgenerator::visit(ir::CondJumpInstruction *instr)
 
     activeFunction->Active()->addInstruction("bne", condReg->getIDName(), 0, "$0",0,trueJumpBlockName);
     activeFunction->Active()->addInstruction("b ", falseJumpBlockName);
-}
+*/}
 
 void ASMgenerator::visit(ir::ReturnInstruction *instr)
 {
     ir::Value *retVal = instr->getOperand();
-    arch::Register *retReg = activeFunction->Active()->getRegister(retVal);
+    const mips::Register *retReg = activeFunction->Active()->getRegister(retVal);
 
-
-    activeFunction->Active()->addInstruction("move", activeFunction->getMips()->getRetRegister()->getIDName(),
-                                             0, retReg->getIDName() );
-
+    activeFunction->Active()->saveUnsavedVariables();
+    activeFunction->Active()->addInstruction("move", *(mips.getRetRegister()), *retReg );
     activeFunction->Active()->addCanonicalInstruction("j " + activeFunction->getFunction()->getName() + "_$return\n");
 }
 
 void ASMgenerator::visit(ir::CallInstruction *instr)
 {
-
-    //save all registers with namedValue + temoraries which are locked
+/*
+    temoraries
     std::vector<std::pair<ir::Value*,int>> activeMapping = activeFunction->Active()->saveCallerRegisters();
     int mappingSize = activeMapping.size();
+*/
 
+    //save all registers with namedValue
+    activeFunction->Active()->saveUnsavedVariables();
+    activeFunction->Active()->saveTemporaries(instr->getArguments());
 
-    bool hasStackTransfer = instr->getArguments().size() > arch.getParamRegisters().size();
+    bool hasStackTransfer = instr->getArguments().size() > mips.getParamRegisters().size();
     if (hasStackTransfer)
     {
         // some parameters are stack transfered -> prepare place
-        int requiredSize = (instr->getArguments().size() - arch.getParamRegisters().size()) *4;
-        activeFunction->Active()->addInstruction("addi", "$sp", 0, "$sp", 0, std::to_string(-requiredSize));
+        int requiredSize = (instr->getArguments().size() - mips.getParamRegisters().size()) *4;
+        activeFunction->Active()->addInstruction("addi", mips.getStackPointer(), mips.getStackPointer(), -requiredSize);
     }
 
     int stackOffset = 0;
     unsigned int i = 1;
     for(auto &param : instr->getArguments()){
-        arch::Register *paramReg = activeFunction->Active()->getRegister(param);
+        const mips::Register *paramReg = activeFunction->Active()->getRegister(param);
 
-        if (i<=arch.getMaxRegisterParameters()) {
-            arch::Register *destReg = arch.getParamRegisters()[i-1];
+        if (i<=mips.getParamRegisters().size()) {
+            const mips::Register *destReg = mips.getParamRegisters()[i-1];
 
-            activeFunction->Active()->addInstruction("move", destReg->getIDName(), 0, paramReg->getIDName());
+            activeFunction->Active()->addInstruction("move", *destReg, *paramReg);
         }  else {
             // cdecl convention
-            activeFunction->Active()->addInstruction("sw", paramReg->getIDName(), 0, std::to_string(stackOffset) + "($sp)");
+            activeFunction->Active()->addInstruction("sw", *paramReg, stackOffset, mips.getStackPointer());
             stackOffset += 4;
         }
         i++;
-
-        // if parameter was temporary, remove it from activeMapping
-        //search for value in activeMapping
-        for (auto &item: activeMapping) {
-            if ( param == item.first )
-            {
-                item.first = nullptr;
-            }
-        }
 
     }
 
     activeFunction->Active()->clearCallerRegisters();
 
     // function call
-    activeFunction->Active()->addInstruction("jal", instr->getFunction()->getName());
+    activeFunction->Active()->addInstruction("jal", instr->getFunction());
 
     // return stack to valid state
     if (hasStackTransfer)
     {
-        int requiredSize = (instr->getArguments().size() - arch.getParamRegisters().size()) *4;
-        activeFunction->Active()->addInstruction("addi", "$sp", 0, "$sp", 0, std::to_string(requiredSize));
+        int requiredSize = (instr->getArguments().size() - mips.getParamRegisters().size()) *4;
+        activeFunction->Active()->addInstruction("addi", mips.getStackPointer(), mips.getStackPointer(), requiredSize);
     }
-
-    // recover old mapping
-    activeFunction->Active()->loadMapingAfterCall(activeMapping, mappingSize);
 
     if (instr->getResult())
     {
         // save result if has one
-        arch::Register *destReg = activeFunction->Active()->getRegister(instr->getResult(),false, false);
+        const mips::Register *destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
         activeFunction->Active()->markChanged(destReg);
 
-        activeFunction->Active()->addInstruction("move", destReg->getIDName(), 0, arch.getRetRegister()->getIDName());
+        activeFunction->Active()->addInstruction("move", *destReg, *(mips.getRetRegister()));
     }
-
 
 }
 
@@ -234,34 +219,19 @@ void ASMgenerator::visit(ir::AddInstruction *instr)
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
 
-    arch::Register *leftReg = nullptr;
-    arch::Register *rightReg = nullptr;
+    const mips::Register *leftReg = activeFunction->Active()->getRegister(left);
+    const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
 
 
-    /*if ( left->getType() == ir::Value::Type::TEMPORARY )
-    {*/
-        leftReg = activeFunction->Active()->getRegister(left, true);
-        rightReg = activeFunction->Active()->getRegister(right);
-        activeFunction->Active()->unlockVar(left); // unlocking left
-    /*}
-    else
-    {
-        rightReg = activeFunction->Active()->getRegister(right, true);
-        leftReg = activeFunction->Active()->getRegister(left);
-        activeFunction->Active()->unlockVar(right); // unlocking left
-    }*/
-
-
-    arch::Register *destReg = activeFunction->Active()->getRegister(dest);
+    const mips::Register *destReg = activeFunction->Active()->getRegister(dest);
     activeFunction->Active()->markChanged(destReg);
 
-    activeFunction->Active()->addInstruction("ADD", destReg->getIDName(),
-                                             0, leftReg->getIDName(), 0, rightReg->getIDName() );
+    activeFunction->Active()->addInstruction("ADD", *destReg, *leftReg, *rightReg );
 
 }
 
 void ASMgenerator::visit(ir::SubtractInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -278,10 +248,10 @@ void ASMgenerator::visit(ir::SubtractInstruction *instr)
 
     activeFunction->Active()->addInstruction("SUB",destReg->getIDName(),
                                              0, leftReg->getIDName(), 0, rightReg->getIDName() );
-}
+*/}
 
 void ASMgenerator::visit(ir::MultiplyInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -299,10 +269,10 @@ void ASMgenerator::visit(ir::MultiplyInstruction *instr)
 
     activeFunction->Active()->addInstruction("MUL", destReg->getIDName(),
                                              0, leftReg->getIDName(), 0, rightReg->getIDName() );
-}
+*/}
 
 void ASMgenerator::visit(ir::DivideInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -320,10 +290,10 @@ void ASMgenerator::visit(ir::DivideInstruction *instr)
 
     activeFunction->Active()->addInstruction("DIV", destReg->getIDName(),
                                              0, leftReg->getIDName(), 0, rightReg->getIDName() );
-}
+*/}
 
 void ASMgenerator::visit(ir::ModuloInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -341,10 +311,10 @@ void ASMgenerator::visit(ir::ModuloInstruction *instr)
 
     activeFunction->Active()->addInstruction("div", leftReg->getIDName(), 0, rightReg->getIDName() );
     activeFunction->Active()->addInstruction("mfhi", destReg->getIDName() );
-}
+*/}
 
 void ASMgenerator::visit(ir::LessInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -361,10 +331,10 @@ void ASMgenerator::visit(ir::LessInstruction *instr)
 
     activeFunction->Active()->addInstruction("SLT",destReg->getIDName(),
                                              0, leftReg->getIDName(), 0, rightReg->getIDName() );
-}
+*/}
 
 void ASMgenerator::visit(ir::LessEqualInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -392,10 +362,10 @@ void ASMgenerator::visit(ir::LessEqualInstruction *instr)
     activeFunction->Active()->addInstruction("OR", destReg->getIDName(),
                                              0, destReg->getIDName(), 0, tempReg->getIDName());
 
-}
+*/}
 
 void ASMgenerator::visit(ir::GreaterInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -412,10 +382,10 @@ void ASMgenerator::visit(ir::GreaterInstruction *instr)
 
     activeFunction->Active()->addInstruction("SLT",destReg->getIDName(),
                                              0, rightReg->getIDName(), 0, leftReg->getIDName() );
-}
+*/}
 
 void ASMgenerator::visit(ir::GreaterEqualInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -442,10 +412,10 @@ void ASMgenerator::visit(ir::GreaterEqualInstruction *instr)
 
     activeFunction->Active()->addInstruction("OR", destReg->getIDName(),
                                              0, destReg->getIDName(), 0, tempReg->getIDName());
-}
+*/}
 
 void ASMgenerator::visit(ir::EqualInstruction *instr)
-{
+{/*
 
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
@@ -471,10 +441,10 @@ void ASMgenerator::visit(ir::EqualInstruction *instr)
     activeFunction->Active()->addInstruction("SLTIU", destReg->getIDName(),
                                              0, destReg->getIDName(), 0, "1");
 
-}
+*/}
 
 void ASMgenerator::visit(ir::NotEqualInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -497,10 +467,10 @@ void ASMgenerator::visit(ir::NotEqualInstruction *instr)
     activeFunction->Active()->addInstruction("SLTU", destReg->getIDName(),
                                              0, arch.getZero()->getIDName(), 0, destReg->getIDName());
 
-}
+*/}
 
 void ASMgenerator::visit(ir::AndInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -522,10 +492,10 @@ void ASMgenerator::visit(ir::AndInstruction *instr)
                                              0, arch.getZero()->getIDName(), 0, rightReg->getIDName() );
     activeFunction->Active()->addInstruction("AND",destReg->getIDName(),
                                              0, destReg->getIDName(), 0, tempReg->getIDName() );
-}
+*/}
 
 void ASMgenerator::visit(ir::OrInstruction *instr)
-{
+{/*
     ir::Value *left = instr->getLeftOperand();
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
@@ -547,7 +517,7 @@ void ASMgenerator::visit(ir::OrInstruction *instr)
                                              0, arch.getZero()->getIDName(), 0, rightReg->getIDName() );
     activeFunction->Active()->addInstruction("OR",destReg->getIDName(),
                                              0, destReg->getIDName(), 0, tempReg->getIDName() );
-}
+*/}
 
 void ASMgenerator::visit(ir::BitwiseAndInstruction *instr)
 {
@@ -560,7 +530,7 @@ void ASMgenerator::visit(ir::BitwiseOrInstruction *instr)
 }
 
 void ASMgenerator::visit(ir::NotInstruction *instr)
-{
+{/*
     ir::Value *op = instr->getOperand();
     ir::Value *result = instr->getResult();
 
@@ -572,7 +542,7 @@ void ASMgenerator::visit(ir::NotInstruction *instr)
                                              0, opReg->getIDName(), 0, "1");
 
 
-}
+*/}
 
 void ASMgenerator::visit(ir::TypecastInstruction *instr)
 {
