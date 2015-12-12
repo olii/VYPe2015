@@ -22,22 +22,21 @@ class FunctionContext;
 //using RegFlag = struct REGFLAG{ mips::Register * reg; bool saved; bool locked;};
 //using VarFlag = struct VARFLAG{ ir::Value * val; bool saved;};
 
+struct registerItem{
+    const mips::Register *reg;
+    ir::Value *val = nullptr;
+    bool saved;
+    unsigned int lruValue;
+};
+
+struct spillItem{
+    ir::Value *val = nullptr;
+    unsigned int offset;
+};
 
 
 class BlockContext
 {
-    struct registerItem{
-        const mips::Register *reg;
-        ir::Value *val;
-        bool saved;
-        unsigned int lruValue;
-    };
-
-    struct spillItem{
-        ir::Value *val;
-        unsigned int offset;
-    };
-
 public:
     BlockContext ( BlockContext && ) = default;
     BlockContext(FunctionContext *Parent, const ir::BasicBlock *Block);
@@ -58,20 +57,21 @@ public:
     void addInstruction(const std::string &inst, const ir::Function *func);
     void addInstruction(const std::string &inst, const mips::Register &dst , const int imm, const mips::Register &src);
     void addInstruction(const std::string &inst, const mips::Register &dst , const mips::Register &op1, const int imm);
+    void addInstruction(const std::string &inst, const mips::Register &op1 , const mips::Register &op2, const ir::BasicBlock *block);
     void addInstruction(const std::string &inst, const mips::Register &dst , const mips::Register &op1, const mips::Register &op2);
     void addInstruction(const std::string &inst, const mips::Register &dst , const mips::Register &op1, const int imm, const mips::Register &op2);
 
     std::vector<std::pair<ir::Value *, int> > saveCallerRegisters();
     void saveUnsavedVariables();
-    void saveTemporaries(std::vector<ir::Value*>& ignore);
+    void saveTemporaries();
     void clearCallerRegisters();
 
     const mips::Register *getRegister(ir::Value *val, bool load = true);
+    const mips::Register *getFreeRegister();
     void markChanged(const mips::Register *reg);
 
     void updateLRU();
 /*
-    void removeVictim();
 
     std::vector<std::pair<ir::Value *, int> > saveCallerRegisters();
     void clearCallerRegisters();
@@ -86,11 +86,11 @@ private:
     const ir::BasicBlock *block;
 
     std::vector<registerItem> registerTable;
-    std::vector<spillItem> spillTable;
 
     std::stringstream text;
 
     registerItem *getFreeTableItem();
+    void removeVictim();
 
 };
 

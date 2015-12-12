@@ -33,13 +33,20 @@ public:
     void addVar(ir::NamedValue &var);
     void addVar(ir::NamedValue &var, unsigned paramPos);
     const ir::Function *getFunction() const;
-    int getVarOffset(ir::NamedValue &var) const;
+    int getVarOffset(ir::NamedValue &var);
     const std::stringstream getInstructions() const;
     const mips::MIPS *getMips() const;
     void testCalleeSaved(const mips::Register * reg);
 
+    unsigned int getSpillTableFreePos();
+    //std::vector<spillItem> &getSpillTable();
+    unsigned int spillTemp(ir::Value *val);
+    int unspillTemp(ir::Value *val);
+    void cleanspillTable();
+
 private:
     std::map<ir::NamedValue*, int> varToStackTable; // map a NamedValue to its place on stack
+    std::vector<spillItem> spillTable;
     std::vector<BlockContext> blockContextTable;
     BlockContext *activeBlock;
 

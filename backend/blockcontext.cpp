@@ -37,7 +37,9 @@ const std::string BlockContext::getInstructions() const
     std::string instr;
 
     instr += getName() + ":    #BLOCK START LABEL\n";
+    //instr += Indent + "addi $sp, $sp, " + std::to_string(-(int)spillTable.size() * 4) + "\n";
     instr += text.str();
+    //instr += Indent + "addi $sp, $sp, " + std::to_string(spillTable.size() * 4) + "\n";
 
     return instr;
 }
@@ -106,6 +108,14 @@ void BlockContext::addInstruction(const std::string &inst, const mips::Register 
     text << inst << " " << dst.getAsmName() << ", "  << op1.getAsmName() << ", " << imm << "\n";
 }
 
+void BlockContext::addInstruction(const std::string &inst, const mips::Register &op1, const mips::Register &op2, const ir::BasicBlock *block)
+{
+    const BlockContext* context = parent->getBlockContext(block);
+
+    text << backend::Indent;
+    text << inst << " " << op1.getAsmName() << ", "  << op2.getAsmName() << ", " << context->getName() << "\n";
+}
+
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &dst, const mips::Register &op1, const mips::Register &op2)
 {
     text << backend::Indent;
@@ -127,7 +137,7 @@ void BlockContext::saveUnsavedVariables()
 {
     for( auto &it: registerTable){
         if(it.val == nullptr) continue;
-        if(it.val->getType() == ir::Value::Type::NAMED)
+        if(it.val->getType() == ir::Value::Type::NAMED && it.saved == false)
         {
             ir::NamedValue *value = static_cast<ir::NamedValue*>(it.val);
             int offset = parent->getVarOffset(*value);
@@ -137,9 +147,21 @@ void BlockContext::saveUnsavedVariables()
     }
 }
 
-void BlockContext::saveTemporaries(std::vector<ir::Value *> &ignore)
+void BlockContext::saveTemporaries()
 {
+    for( auto &it: registerTable){
+        if(it.val == nullptr) continue;
+        if(it.val->getType() == ir::Value::Type::TEMPORARY)
+        {
+            unsigned int pos =parent->spillTemp(it.val);
 
+            ir::TemporaryValue* tmp = static_cast<ir::TemporaryValue*>(it.val);
+            addCanonicalInstruction("# temporaryValue " + tmp->getSymbolicName() + " got spill offset ... " + std::to_string(-(int)pos) + "($fp)");
+            addInstruction("sw", *(it.reg), -pos, getMips()->getFramePointer());
+
+            it.val = nullptr;             // remove from mapping
+        }
+    }
 }
 
 void BlockContext::clearCallerRegisters()
@@ -204,15 +226,9 @@ const mips::Register *BlockContext::getRegister(ir::Value *val, bool load)
             }
         }
     }
-    // TODO: check spilled VAR
 
     // there is no value in register -- alocating one
     registerItem *item = getFreeTableItem();
-
-    if ( item == nullptr ){
-        //remove victim
-        // item = remove victim
-    }
 
     item->lruValue = 0; // set as last used
     item->saved = false;
@@ -232,26 +248,33 @@ const mips::Register *BlockContext::getRegister(ir::Value *val, bool load)
         addCanonicalInstruction("#variable " + namVal->getName() + " got register "+ item->reg->getAsmName() );
 
         item->saved = true;
-        if (parent->getVarOffset(*namVal) == -1){
-            //not yet allocated on stack
-            parent->addVar(*namVal); // reserve place on stack
-        } else
-        {
-            // already on stack
-            int offset = parent->getVarOffset(*namVal);
-            if (load){
-                // load to register if required
-                addInstruction("lw", *(item->reg), -offset, getMips()->getFramePointer());
-            }
-
+        int offset = parent->getVarOffset(*namVal);
+        if (load){
+            // load to register if required
+            addInstruction("lw", *(item->reg), -offset, getMips()->getFramePointer());
         }
+
     } else if (val->getType() == ir::Value::Type::TEMPORARY){
         ir::TemporaryValue *tempVal = static_cast<ir::TemporaryValue*>(val);
         addCanonicalInstruction("#temporary " + tempVal->getSymbolicName() + " got register "+ item->reg->getAsmName() );
+        if (load){
+            // check if has been spilled, if yes, load it to register
+            int offset = parent->unspillTemp(val);
+            if (offset != -1){
+                // spilled item, load it back to register
+                    addInstruction("lw", *(item->reg),-offset, getMips()->getFramePointer());
+            }
+        }
     }
 
     return item->reg;
 
+}
+
+const mips::Register *BlockContext::getFreeRegister()
+{
+    registerItem *item = getFreeTableItem();
+    return item->reg;
 }
 
 void BlockContext::markChanged(const mips::Register *reg)
@@ -270,14 +293,62 @@ void BlockContext::updateLRU()
         it.lruValue += 1;
 }
 
-BlockContext::registerItem *BlockContext::getFreeTableItem()
+registerItem *BlockContext::getFreeTableItem()
 {
     for( auto &it: registerTable){
         if (it.val == nullptr){
             return &it;
         }
     }
-    return nullptr;
+    removeVictim();
+
+    return getFreeTableItem();
+}
+
+void BlockContext::removeVictim()
+{
+    unsigned int maxLRU = 0;
+    int posMaxLRU = 0;
+
+    for( auto &it: registerTable){
+        if (it.val == nullptr) return;
+
+        if (it.lruValue > maxLRU){
+            maxLRU = it.lruValue;
+            posMaxLRU = &it - &registerTable[0];
+        }
+    }
+
+    addCanonicalInstruction("#Spilling register " + registerTable[posMaxLRU].reg->getAsmName() + " with LRU = " + std::to_string(maxLRU));
+    ir::Value* val = registerTable[posMaxLRU].val;
+
+
+
+    if (val->getType() == ir::Value::Type::CONSTANT)
+    {
+        addCanonicalInstruction("#Spilled variable is constant -> removed ");
+
+    } else if (val->getType() == ir::Value::Type::NAMED){
+        ir::NamedValue *named = static_cast<ir::NamedValue *>(val);
+        addCanonicalInstruction("#Spilled variable is " + named->getName());
+        if (!registerTable[posMaxLRU].saved){
+            int offset = parent->getVarOffset(*named);
+            addInstruction("sw", *(registerTable[posMaxLRU].reg),-offset, getMips()->getFramePointer());
+        }
+
+    } else if (val->getType() == ir::Value::Type::TEMPORARY){
+        ir::TemporaryValue* tmp = static_cast<ir::TemporaryValue*>(val);
+        addCanonicalInstruction("#Spilled temporary is " + tmp->getSymbolicName());
+
+        unsigned int offset = parent->spillTemp(val);
+
+        addCanonicalInstruction("# temporaryValue " + tmp->getSymbolicName() + " got spill offset ... " + std::to_string(-(int)offset) + "($fp)");
+        addInstruction("sw", *(registerTable[posMaxLRU].reg), -offset, getMips()->getFramePointer());
+    }
+
+
+    registerTable[posMaxLRU].val = nullptr;
+
 }
 
 
