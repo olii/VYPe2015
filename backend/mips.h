@@ -35,6 +35,7 @@ public:
      ~MIPS();
     const Register& getStackPointer() const;
     const Register& getFramePointer() const;
+    const Register &getGlobalPointer() const;
     const Register& getRAPointer() const;
     const std::vector<const Register *>& getParamRegisters() const;
 

@@ -1,15 +1,18 @@
 #include "functioncontext.h"
 #include "ir/function.h"
+#include "backend/asmgenerator.h"
 
 
 namespace backend{
 
 extern const std::string Indent = "        ";
 
-FunctionContext::FunctionContext(ir::Function *func, mips::MIPS *mips)
+
+FunctionContext::FunctionContext(ir::Function *func, ASMgenerator *parent, const mips::MIPS *mips)
 {
     this->func = func;
     this->mips = mips;
+    this->parent = parent;
 }
 
 BlockContext *FunctionContext::Active() const
@@ -201,6 +204,11 @@ void FunctionContext::cleanspillTable()
 {
     for(auto &it : spillTable)
         it.val = nullptr;
+}
+
+ConstStringData &FunctionContext::getStringTable()
+{
+    return parent->getStringTable();
 }
 
 

@@ -2,7 +2,7 @@ ROOT=..
 ARCHIVE=backend
 MODULE=backend
 
-SRC_FILES= asmgenerator.cpp mips.cpp functioncontext.cpp blockcontext.cpp
+SRC_FILES= asmgenerator.cpp mips.cpp functioncontext.cpp blockcontext.cpp conststringdata.cpp
 
 include $(ROOT)/mak/config.mak
 

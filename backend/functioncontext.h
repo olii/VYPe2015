@@ -11,11 +11,15 @@
 #include "ir/basic_block.h"
 #include "backend/blockcontext.h"
 #include "backend/mips.h"
+#include "backend/conststringdata.h"
+
 
 
 namespace backend{
 
 extern const std::string Indent;
+
+class ASMgenerator;
 
 class FunctionContext
 {
@@ -23,7 +27,7 @@ public:
     FunctionContext ( FunctionContext && ) = default;
     //FunctionContext ( FunctionContext & ) = default;
     //FunctionContext(){}
-    FunctionContext(ir::Function *func, mips::MIPS *mips);
+    FunctionContext(ir::Function *func, ASMgenerator *parent, const mips::MIPS *mips);
 
     BlockContext* Active() const;
     void addBlock(const ir::BasicBlock *block);
@@ -44,6 +48,8 @@ public:
     int unspillTemp(ir::Value *val);
     void cleanspillTable();
 
+    ConstStringData &getStringTable();
+
 private:
     std::map<ir::NamedValue*, int> varToStackTable; // map a NamedValue to its place on stack
     std::vector<spillItem> spillTable;
@@ -58,6 +64,7 @@ private:
 
 
     const mips::MIPS *mips;
+    ASMgenerator *parent;
 
 };
 

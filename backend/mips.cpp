@@ -77,6 +77,11 @@ const Register &MIPS::getRAPointer() const
     return R31;
 }
 
+const mips::Register &mips::MIPS::getGlobalPointer() const
+{
+    return R28;
+}
+
 const std::vector<const Register *> &MIPS::getParamRegisters() const
 {
     return ParamRegisters;

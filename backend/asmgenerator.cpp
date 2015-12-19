@@ -7,7 +7,7 @@ namespace backend {
 ASMgenerator::ASMgenerator()
 {
 
-    std::cout << "<< TODO: temporaries spilling as function context, instructions, asm loader>>" << std::endl;
+    std::cout << "<< TODO:, instructions check, string operations, void functions >>" << std::endl;
 }
 
 ASMgenerator::~ASMgenerator()
@@ -16,8 +16,24 @@ ASMgenerator::~ASMgenerator()
 }
 
 void ASMgenerator::translateIR(ir::Builder &builder){
+
+    std::cout << ".text"                "\n"
+                 ".org 0"               "\n"
+                 "li $sp, 0x100000"     "\n"
+                 "la $gp, DATABEGIN"     "\n"
+                 "move $fp, $sp"        "\n"
+                 "jal main$0$"          "\n"
+                 "break"               "\n"
+                 "\n";
+
     for (auto& it : builder.getFunctions())
         it.second->accept(*this);
+
+    std::cout << ".data"                "\n";
+    const std::stringstream &data = constStringData.TranslateTable();
+    std::cout << data.str();
+
+
 }
 
 void ASMgenerator::visit(ir::Function *func)
@@ -28,7 +44,7 @@ void ASMgenerator::visit(ir::Function *func)
     const std::vector<ir::Value*> parameters = func->getParameters();
 
     //create new context
-    FunctionContext fc(func, &mips);
+    FunctionContext fc(func, this, &mips);
     //store it by value
     context.emplace(func, std::move(fc));
     // set pointer to newly added reference
@@ -70,29 +86,29 @@ void ASMgenerator::visit(ir::BasicBlock *block)
 
 
 void ASMgenerator::visit(ir::NamedValue *value)
-{/*
-    activeFunction->Active()->getRegister(value);
-*/}
+{
+    //activeFunction->Active()->getRegister(value);
+}
 
 void ASMgenerator::visit(ir::TemporaryValue *value)
-{/*
-    activeFunction->Active()->getRegister(value);
-*/}
+{
+    //activeFunction->Active()->getRegister(value);
+}
 
 void ASMgenerator::visit(ir::ConstantValue<int> *value)
-{/*
+{
 
-*/}
+}
 
 void ASMgenerator::visit(ir::ConstantValue<char> *value)
-{/*
+{
 
-*/}
+}
 
 void ASMgenerator::visit(ir::ConstantValue<std::string> *value)
-{/*
+{
 
-*/}
+}
 
 void ASMgenerator::visit(ir::AssignInstruction *instr)
 {
@@ -104,7 +120,6 @@ void ASMgenerator::visit(ir::AssignInstruction *instr)
     activeFunction->Active()->markChanged(destReg);
 
     activeFunction->Active()->addInstruction("move", *destReg, *operandReg);
-
 
 }
 
@@ -151,18 +166,21 @@ void ASMgenerator::visit(ir::ReturnInstruction *instr)
 
 void ASMgenerator::visit(ir::CallInstruction *instr)
 {
-
     activeFunction->Active()->addCanonicalInstruction("#function call");
-    //save all registers with namedValue
-    activeFunction->Active()->saveUnsavedVariables();
+
+        activeFunction->Active()->saveUnsavedVariables();//save all registers with namedValue
 
     bool hasStackTransfer = instr->getArguments().size() > mips.getParamRegisters().size();
-    if (hasStackTransfer)
+    int requiredSize = 4; // reserve place for GP
+    if (hasStackTransfer) // some parameters are stack transfered -> prepare place
     {
-        // some parameters are stack transfered -> prepare place
-        int requiredSize = (instr->getArguments().size() - mips.getParamRegisters().size()) *4;
-        activeFunction->Active()->addInstruction("addi", mips.getStackPointer(), mips.getStackPointer(), -requiredSize);
+        requiredSize += (instr->getArguments().size() - mips.getParamRegisters().size()) *4;
     }
+    activeFunction->Active()->addInstruction("addi", mips.getStackPointer(), mips.getStackPointer(), -(requiredSize));
+
+    int gpOffset = requiredSize - 4;
+
+    activeFunction->Active()->addInstruction("sw", mips.getGlobalPointer(), gpOffset, mips.getStackPointer()); // save GP
 
     int stackOffset = 0;
     unsigned int i = 1;
@@ -179,7 +197,6 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
             stackOffset += 4;
         }
         i++;
-
     }
 
     activeFunction->Active()->saveTemporaries();
@@ -189,11 +206,11 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
     activeFunction->Active()->addInstruction("jal", instr->getFunction());
 
     // return stack to valid state
-    if (hasStackTransfer)
-    {
-        int requiredSize = (instr->getArguments().size() - mips.getParamRegisters().size()) *4;
-        activeFunction->Active()->addInstruction("addi", mips.getStackPointer(), mips.getStackPointer(), requiredSize);
-    }
+    activeFunction->Active()->addInstruction("lw", mips.getGlobalPointer(), gpOffset, mips.getStackPointer()); // save GP
+    activeFunction->Active()->addInstruction("addi", mips.getStackPointer(), mips.getStackPointer(), requiredSize);
+
+
+
 
     if (instr->getResult())
     {
@@ -201,7 +218,14 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
         const mips::Register *destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
         activeFunction->Active()->markChanged(destReg);
 
-        activeFunction->Active()->addInstruction("move", *destReg, *(mips.getRetRegister()));
+
+        if (instr->getResult()->getDataType() == ir::Value::DataType::STRING){
+            // copy string in R2 to local address space and move
+            activeFunction->Active()->addCanonicalInstruction("jal $MOVE_TO_LOCAL$");
+            activeFunction->Active()->addInstruction("move", *destReg, mips.getGlobalPointer());
+        }
+            activeFunction->Active()->addInstruction("move", *destReg, *(mips.getRetRegister()));
+
     }
 
 }
@@ -211,23 +235,23 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
     const mips::Register *destReg = nullptr;
 
     const std::string &name = instr->getFunctionName();
-    if (name.compare("print") == 0){
+    if (name == "print"){
         builtin_print(instr->getArguments());
-    } else if (name.compare("read_char") == 0){
+    } else if (name == "read_char"){
         destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
         activeFunction->Active()->markChanged(destReg);
         activeFunction->Active()->addInstruction("READ_CHAR", *destReg);
-    } else if (name.compare("read_int") == 0){
+    } else if (name == "read_int"){
         destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
         activeFunction->Active()->markChanged(destReg);
         activeFunction->Active()->addInstruction("READ_INT", *destReg);
-    } else if (name.compare("read_string") == 0){
+    } else if (name == "read_string"){
 
-    } else if (name.compare("get_at") == 0){
+    } else if (name == "get_at"){
 
-    } else if (name.compare("set_at") == 0){
+    } else if (name == "set_at"){
 
-    } else if (name.compare("strcat") == 0){
+    } else if (name == "strcat"){
 
     }
 }
@@ -528,8 +552,7 @@ void ASMgenerator::visit(ir::TypecastInstruction *instr)
             case ir::Value::DataType::CHAR:
             {
                 //int to char -> only least significant
-                activeFunction->Active()->addInstruction("MOVE", *destReg, *opReg);
-                activeFunction->Active()->addInstruction("ANDI", *destReg, 0xFF);
+                activeFunction->Active()->addInstruction("ANDI", *destReg, *opReg, 0xFF);
                 break;
             }
             case ir::Value::DataType::STRING:
@@ -586,6 +609,11 @@ void ASMgenerator::visit(ir::NegInstruction *instr)
     activeFunction->Active()->markChanged(destReg);
 
     activeFunction->Active()->addInstruction("SUB", *destReg, *mips.getZero(),*opReg);
+}
+
+ConstStringData &ASMgenerator::getStringTable()
+{
+    return constStringData;
 }
 
 void ASMgenerator::builtin_print(std::vector<ir::Value *> &params)

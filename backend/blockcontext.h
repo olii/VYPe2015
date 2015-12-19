@@ -9,6 +9,7 @@
 #include "ir/instruction.h"
 #include "ir/basic_block.h"
 #include "backend/mips.h"
+#include "backend/conststringdata.h"
 
 
 namespace backend{
@@ -53,6 +54,7 @@ public:
     void addInstruction(const std::string &inst, const mips::Register &reg);
     void addInstruction(const std::string &inst, const mips::Register &dst, const mips::Register &src);
     void addInstruction(const std::string &inst, const mips::Register &dst, const int imm);
+    void addInstruction(const std::string &inst, const mips::Register &reg, const std::string &label);
     void addInstruction(const std::string &inst, const ir::BasicBlock *block);
     void addInstruction(const std::string &inst, const ir::Function *func);
     void addInstruction(const std::string &inst, const mips::Register &dst , const int imm, const mips::Register &src);
@@ -90,6 +92,8 @@ private:
 
     registerItem *getFreeTableItem();
     void removeVictim();
+
+    ConstStringData &getStringTable();
 
 };
 

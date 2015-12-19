@@ -6,8 +6,10 @@
 #include "mips.h"
 #include <list>
 #include "functioncontext.h"
+#include "backend/conststringdata.h"
 
 namespace backend {
+
 
 class ASMgenerator : public ir::IrVisitor
 {
@@ -51,11 +53,17 @@ public:
     virtual void visit(ir::BitwiseNotInstruction* instr) override;
     virtual void visit(ir::NegInstruction* instr) override;
 
+
+    /**/
+    ConstStringData &getStringTable();
+
 private:
     mips::MIPS mips;
     std::map<ir::Function*,FunctionContext> context;
     FunctionContext* activeFunction;
 
+
+    ConstStringData constStringData;
 
     void builtin_print(std::vector<ir::Value*> &params);
 };
