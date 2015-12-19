@@ -351,6 +351,19 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
 														YYERROR;
 													}
 
+													VariableSymbol* varSymbol = static_cast<VariableSymbol*>(symbol);
+													if (varDecl->getInitialization() && varDecl->getInitialization()->getDataType() != varSymbol->getDataType())
+													{
+														yyerror("Unable to initialize variable '%s' of type '%s' with '%s'.",
+																	varSymbol->getName().c_str(),
+																	Symbol::dataTypeToString(varSymbol->getDataType()).c_str(),
+																	Symbol::dataTypeToString(varDecl->getInitialization()->getDataType()).c_str());
+														delete $1;
+														delete $2;
+														finalize(3);
+														YYERROR;
+													}
+
 													varDecl->setVariableSymbol(static_cast<VariableSymbol*>(symbol));
 												}
 
