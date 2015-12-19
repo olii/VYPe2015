@@ -25,6 +25,20 @@ void ASMgenerator::translateIR(ir::Builder &builder){
                  "jal main$0$"          "\n"
                  "break"               "\n"
                  "\n";
+    std::cout <<"$MOVE_R2_TO_GP$:"                      "\n"
+                "	move $3, $2"                        "\n"
+                "	move $2, $gp"                       "\n"
+                "$MOVE_R2_TO_GP_loop$:"                 "\n"
+                "	lbu $4, 0($3)"                      "\n"
+                "	sb $4, 0($gp)"                      "\n"
+                "	addi $3, $3, 1"                     "\n"
+                "	addi $gp, $gp, 1"                   "\n"
+                "	bne $4,$0,$MOVE_R2_TO_GP_loop$"     "\n"
+                "	jr $ra"                             "\n";
+
+
+
+
 
     for (auto& it : builder.getFunctions())
         it.second->accept(*this);
@@ -219,10 +233,9 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
         activeFunction->Active()->markChanged(destReg);
 
 
-        if (instr->getResult()->getDataType() == ir::Value::DataType::STRING){
+        if (instr->getFunction()->getReturnDataType() == ir::Value::DataType::STRING){
             // copy string in R2 to local address space and move
-            activeFunction->Active()->addCanonicalInstruction("jal $MOVE_TO_LOCAL$");
-            activeFunction->Active()->addInstruction("move", *destReg, mips.getGlobalPointer());
+            activeFunction->Active()->addCanonicalInstruction("jal $MOVE_R2_TO_GP$");
         }
             activeFunction->Active()->addInstruction("move", *destReg, *(mips.getRetRegister()));
 
@@ -246,13 +259,59 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
         activeFunction->Active()->markChanged(destReg);
         activeFunction->Active()->addInstruction("READ_INT", *destReg);
     } else if (name == "read_string"){
-
+        destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
+        activeFunction->Active()->markChanged(destReg);
+        activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer());
+        activeFunction->Active()->addInstruction("READ_INT", *destReg, *(mips.getParamRegisters()[0]));
+        activeFunction->Active()->addInstruction("ADD", mips.getGlobalPointer(), mips.getGlobalPointer(), *(mips.getParamRegisters()[0]));
     } else if (name == "get_at"){
+        ir::Value *op1 = instr->getArguments()[0];
+        ir::Value *op2 = instr->getArguments()[1];
+        ir::Value *dest = instr->getResult();
+
+        const mips::Register *op1Reg = activeFunction->Active()->getRegister(op1);
+        const mips::Register *op2Reg = activeFunction->Active()->getRegister(op2);
+        const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
+        activeFunction->Active()->markChanged(destReg);
+
+        activeFunction->Active()->addInstruction("add", *destReg, *op1Reg, *op2Reg);
+        activeFunction->Active()->addInstruction("lb", *destReg, 0, *destReg);
 
     } else if (name == "set_at"){
+        ir::Value *op1 = instr->getArguments()[0];
+        ir::Value *op2 = instr->getArguments()[1];
+        ir::Value *op3 = instr->getArguments()[2];
+        ir::Value *dest = instr->getResult();
+
+        const mips::Register *op1Reg = activeFunction->Active()->getRegister(op1);
+        const mips::Register *op2Reg = activeFunction->Active()->getRegister(op2);
+        const mips::Register *op3Reg = activeFunction->Active()->getRegister(op3);
+        const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
+        activeFunction->Active()->markChanged(destReg);
+
+        activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer()); // set ptr to new string
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getRetRegister()), *op1Reg);    // prepare source reg
+        activeFunction->Active()->addCanonicalInstruction("jal $MOVE_R2_TO_GP$");            // copy
+        activeFunction->Active()->addInstruction("ADD", *(mips.getRetRegister()), *destReg, *op2Reg);
+
+        activeFunction->Active()->addInstruction("SB", *op3Reg, 0, *(mips.getRetRegister()));
 
     } else if (name == "strcat"){
+        ir::Value *op1 = instr->getArguments()[0];
+        ir::Value *op2 = instr->getArguments()[1];
+        ir::Value *dest = instr->getResult();
 
+        const mips::Register *op1Reg = activeFunction->Active()->getRegister(op1);
+        const mips::Register *op2Reg = activeFunction->Active()->getRegister(op2);
+        const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
+        activeFunction->Active()->markChanged(destReg);
+
+        activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer()); // set ptr to new string
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getRetRegister()), *op1Reg);    // prepare source reg
+        activeFunction->Active()->addCanonicalInstruction("jal $MOVE_R2_TO_GP$");            // copy
+        activeFunction->Active()->addInstruction("ADDI", mips.getGlobalPointer(), mips.getGlobalPointer(), -1); // concat
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getRetRegister()), *op2Reg);    // prepare source reg
+        activeFunction->Active()->addCanonicalInstruction("jal $MOVE_R2_TO_GP$");            // copy
     }
 }
 
