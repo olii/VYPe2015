@@ -100,6 +100,7 @@ int main()
     generator.translateIR(builder);
 
 	std::cout << builder.codeText() << std::endl;
+    std::cout << generator.getTargetCode().str() << std::endl;
 	yylex_destroy(); // Fix memory leaks from flex, bison doesn't call this
 	return 0;
 }

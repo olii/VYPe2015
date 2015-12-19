@@ -6,8 +6,7 @@
 namespace backend {
 ASMgenerator::ASMgenerator()
 {
-
-    std::cout << "<< TODO:, instructions check, string operations, void functions >>" << std::endl;
+    //std::cout << "<< TODO:, instructions check, void functions >>" << std::endl;
 }
 
 ASMgenerator::~ASMgenerator()
@@ -15,9 +14,19 @@ ASMgenerator::~ASMgenerator()
 
 }
 
-void ASMgenerator::translateIR(ir::Builder &builder){
+int ASMgenerator::translateIR(ir::Builder &builder){
 
-    std::cout << ".text"                "\n"
+    //TODO: catch exceptions and return value
+    for (auto& it : builder.getFunctions())
+        it.second->accept(*this);
+    return 0;
+}
+
+std::stringstream ASMgenerator::getTargetCode()
+{
+    std::stringstream out;
+
+    out <<       ".text"                "\n"
                  ".org 0"               "\n"
                  "li $sp, 0x100000"     "\n"
                  "la $gp, DATABEGIN"     "\n"
@@ -25,7 +34,7 @@ void ASMgenerator::translateIR(ir::Builder &builder){
                  "jal main$0$"          "\n"
                  "break"               "\n"
                  "\n";
-    std::cout <<"$MOVE_R2_TO_GP$:"                      "\n"
+    out <<      "$MOVE_R2_TO_GP$:"                      "\n"
                 "	move $3, $2"                        "\n"
                 "	move $2, $gp"                       "\n"
                 "$MOVE_R2_TO_GP_loop$:"                 "\n"
@@ -36,23 +45,24 @@ void ASMgenerator::translateIR(ir::Builder &builder){
                 "	bne $4,$0,$MOVE_R2_TO_GP_loop$"     "\n"
                 "	jr $ra"                             "\n";
 
+    out << "\n\n\n\n\n\n\n";
+    for (auto &it : context){
+         out << it.second.getInstructions().str() << std::endl ;
+         out << "\n\n\n\n\n\n\n";
+    }
 
+    out << "\n\n\n\n\n\n\n";
+    out << "\n\n\n\n\n\n\n";
 
-
-
-    for (auto& it : builder.getFunctions())
-        it.second->accept(*this);
-
-    std::cout << ".data"                "\n";
-    const std::stringstream &data = constStringData.TranslateTable();
-    std::cout << data.str();
-
-
+    out << ".data \n";
+    out << constStringData.TranslateTable().str();
+    out << "\n\n\n\n\n\n\n";
+    return out;
 }
 
 void ASMgenerator::visit(ir::Function *func)
 {
-    std::cout << "#<< Entery point of function " << func->getName() << " >>" << std::endl;
+    //std::cout << "#<< Entery point of function " << func->getName() << " >>" << std::endl;
 
 
     const std::vector<ir::Value*> parameters = func->getParameters();
@@ -83,7 +93,7 @@ void ASMgenerator::visit(ir::Function *func)
         bb->accept(*this);
     }
 
-    std::cout << activeFunction->getInstructions().str() << std::endl ;
+    //std::cout << activeFunction->getInstructions().str() << std::endl ;
 }
 
 void ASMgenerator::visit(ir::BasicBlock *block)
@@ -597,7 +607,11 @@ void ASMgenerator::visit(ir::TypecastInstruction *instr)
             }
             case ir::Value::DataType::STRING:
             {
-                //char to str -- make new string str("char");
+                //char to str -- make new string str("c");
+                activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer());
+                activeFunction->Active()->addInstruction("sb", *opReg, 0,*destReg);
+                activeFunction->Active()->addInstruction("sb", *mips.getZero(), 1, *destReg);
+                activeFunction->Active()->addInstruction("addi", mips.getGlobalPointer(), mips.getGlobalPointer(), 2);
                 break;
             }
         default: break;
