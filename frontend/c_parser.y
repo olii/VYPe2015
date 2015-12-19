@@ -364,7 +364,7 @@ decl_stmt   :   TYPE decl_id_list SEMICOLON {
 														YYERROR;
 													}
 
-													varDecl->setVariableSymbol(static_cast<VariableSymbol*>(symbol));
+													varDecl->setVariableSymbol(varSymbol);
 												}
 
 												$$ = new DeclarationStatement(*$2);
@@ -859,7 +859,7 @@ expr    :   expr PLUS expr	{
 									delete $2;
 								}
 								else if ((($4->getDataType() == Symbol::DataType::CHAR) && (Symbol::stringToDataType(*$2) == Symbol::DataType::INT)) ||
-									(($4->getDataType() == Symbol::DataType::STRING) && (Symbol::stringToDataType(*$2) == Symbol::DataType::CHAR)) ||
+									(($4->getDataType() == Symbol::DataType::CHAR) && (Symbol::stringToDataType(*$2) == Symbol::DataType::STRING)) ||
 									(($4->getDataType() == Symbol::DataType::INT) && (Symbol::stringToDataType(*$2) == Symbol::DataType::CHAR)))
 								{
 									$$ = new UnaryExpression(Expression::Type::TYPECAST, Symbol::stringToDataType(*$2), $4);
