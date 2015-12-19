@@ -11,7 +11,7 @@ class IrVisitor;
 class Function
 {
 public:
-	Function(const std::string& name, const std::vector<Value*>& _parameters);
+	Function(const std::string& name, Value::DataType returnDataType, const std::vector<Value*>& _parameters);
 	~Function();
 
 	void accept(IrVisitor& visitor);
@@ -27,9 +27,9 @@ public:
 
 private:
 	std::string _name;
-	std::vector<BasicBlock*> _basicBlocks;
-	std::vector<Value*> _parameters;
 	Value::DataType _returnDataType;
+	std::vector<Value*> _parameters;
+	std::vector<BasicBlock*> _basicBlocks;
 };
 
 } // namespace ir

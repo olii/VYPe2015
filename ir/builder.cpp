@@ -18,12 +18,12 @@ Builder::~Builder()
 		delete value;
 }
 
-Function* Builder::createFunction(const std::string& name, const std::vector<Value*>& arguments)
+Function* Builder::createFunction(const std::string& name, Value::DataType returnDataType, const std::vector<Value*>& arguments)
 {
 	if (getFunction(name) != nullptr)
 		return nullptr;
 
-	Function* func = new Function(name, arguments);
+	Function* func = new Function(name, returnDataType, arguments);
 	func->addBasicBlock(createBasicBlock()); // entry basic block
 	func->addBasicBlock(createBasicBlock()); // terminal basic block
 	_functions[name] = func;

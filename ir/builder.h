@@ -14,7 +14,7 @@ public:
 	Builder();
 	virtual ~Builder();
 
-	Function* createFunction(const std::string& name, const std::vector<Value*>& parameters);
+	Function* createFunction(const std::string& name, Value::DataType returnDataType, const std::vector<Value*>& parameters);
 	Function* getFunction(const std::string& name) const;
 	Function* getActiveFunction() const;
 	void setActiveFunction(ir::Function* function);

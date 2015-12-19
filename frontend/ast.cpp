@@ -339,7 +339,7 @@ void Function::generateIr(ir::Builder& builder)
 		irParameters.push_back(value);
 	}
 
-	ir::Function* irFunction = builder.createFunction(_symbol->getName(), irParameters);
+	ir::Function* irFunction = builder.createFunction(_symbol->getName(), Symbol::dataTypeToIrDataType(_symbol->getReturnType()), irParameters);
 	if (irFunction == nullptr)
 		return;
 

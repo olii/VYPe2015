@@ -3,8 +3,8 @@
 
 namespace ir {
 
-Function::Function(const std::string& name, const std::vector<Value*>& parameters)
-	: _name(name), _basicBlocks(), _parameters(parameters), _returnDataType(ir::Value::DataType::VOID)
+Function::Function(const std::string& name, Value::DataType returnDataType, const std::vector<Value*>& parameters)
+	: _name(name), _returnDataType(returnDataType), _parameters(parameters), _basicBlocks()
 {
 }
 
