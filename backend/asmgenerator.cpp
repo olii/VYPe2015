@@ -6,7 +6,7 @@
 namespace backend {
 ASMgenerator::ASMgenerator()
 {
-    //std::cout << "<< TODO:, instructions check, void functions >>" << std::endl;
+    //std::cout << "<< TODO:instructions check, void functions >>" << std::endl;
 }
 
 ASMgenerator::~ASMgenerator()
@@ -180,11 +180,12 @@ void ASMgenerator::visit(ir::CondJumpInstruction *instr)
 
 void ASMgenerator::visit(ir::ReturnInstruction *instr)
 {
-    ir::Value *retVal = instr->getOperand();
-    const mips::Register *retReg = activeFunction->Active()->getRegister(retVal);
-
     activeFunction->Active()->saveUnsavedVariables();
-    activeFunction->Active()->addInstruction("move", *(mips.getRetRegister()), *retReg );
+    ir::Value *retVal = instr->getOperand();
+    if (retVal != nullptr){
+        const mips::Register *retReg = activeFunction->Active()->getRegister(retVal);
+        activeFunction->Active()->addInstruction("move", *(mips.getRetRegister()), *retReg );
+    }
     activeFunction->Active()->addCanonicalInstruction("j " + activeFunction->getFunction()->getName() + "_$return\n");
 }
 
