@@ -616,7 +616,7 @@ void ASMgenerator::visit(ir::NotEqualInstruction *instr)
         activeFunction->Active()->addInstruction("SLTU", *destReg, *mips.getZero(), *mips.getRetRegister());
     } else {
         activeFunction->Active()->addInstruction("XOR",*destReg, *leftReg, *rightReg);
-        activeFunction->Active()->addInstruction("SLTU", *destReg, *destReg, *mips.getZero());
+        activeFunction->Active()->addInstruction("SLTU", *destReg, *mips.getZero(), *destReg);
     }
 }
 
