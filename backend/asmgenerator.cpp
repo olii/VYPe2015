@@ -313,6 +313,7 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
         activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer());
         activeFunction->Active()->addInstruction("READ_STRING", *destReg, *(mips.getParamRegisters()[0]));
         activeFunction->Active()->addInstruction("ADD", mips.getGlobalPointer(), mips.getGlobalPointer(), *(mips.getParamRegisters()[0]));
+        activeFunction->Active()->addInstruction("ADDIU", mips.getGlobalPointer(), mips.getGlobalPointer(), 1);
     } else if (name == "get_at"){
         ir::Value *op1 = instr->getArguments()[0];
         ir::Value *op2 = instr->getArguments()[1];
