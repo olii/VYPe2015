@@ -26,24 +26,41 @@ std::stringstream ASMgenerator::getTargetCode()
 {
     std::stringstream out;
 
-    out <<       ".text"                "\n"
-                 ".org 0"               "\n"
-                 "li $sp, 0x100000"     "\n"
-                 "la $gp, DATABEGIN"     "\n"
-                 "move $fp, $sp"        "\n"
-                 "jal main$0$"          "\n"
-                 "break"               "\n"
-                 "\n";
-    out <<      "$MOVE_R2_TO_GP$:"                      "\n"
-                "	move $3, $2"                        "\n"
-                "	move $2, $gp"                       "\n"
-                "$MOVE_R2_TO_GP_loop$:"                 "\n"
-                "	lbu $4, 0($3)"                      "\n"
-                "	sb $4, 0($gp)"                      "\n"
-                "	addi $3, $3, 1"                     "\n"
-                "	addi $gp, $gp, 1"                   "\n"
-                "	bne $4,$0,$MOVE_R2_TO_GP_loop$"     "\n"
-                "	jr $ra"                             "\n";
+    out << ".text"                "\n"
+           ".org 0"               "\n"
+           "li $sp, 0x100000"     "\n"
+           "la $gp, DATABEGIN"     "\n"
+           "move $fp, $sp"        "\n"
+           "jal main$0$"          "\n"
+           "break"               "\n"
+           "\n";
+    out << "$MOVE_R2_TO_GP$:"                      "\n"
+           "	move $3, $2"                        "\n"
+           "	move $2, $gp"                       "\n"
+           "$MOVE_R2_TO_GP_loop$:"                 "\n"
+           "	lbu $4, 0($3)"                      "\n"
+           "	sb $4, 0($gp)"                      "\n"
+           "	addi $3, $3, 1"                     "\n"
+           "	addi $gp, $gp, 1"                   "\n"
+           "	bne $4,$0,$MOVE_R2_TO_GP_loop$"     "\n"
+           "	jr $ra"                             "\n"
+           "\n";
+
+    out << "$STR_CMP$:"                      "\n"
+           "	lb $6, 0($4)"                 "\n"
+           "	lb $7, 0($5)"                 "\n"
+           "	addi $4, $4, 1"               "\n"
+           "	addi $5, $5, 1"               "\n"
+           "	beq $6,$7,$STR_CMP_eq$"       "\n"
+           "	sub $2, $6, $7"               "\n"
+           "	jr $ra"                       "\n"
+           "$STR_CMP_eq$:"                   "\n"
+           "	BEQ $6, $0, $STR_CMP_end$"    "\n"
+           "	j $STR_CMP$"                  "\n"
+           "$STR_CMP_end$:"                  "\n"
+           "	li $2, 0"                     "\n"
+           "	jr $ra"                       "\n"
+           "\n";
 
     out << "\n\n\n\n\n\n\n";
     for (auto &it : context){
@@ -414,7 +431,15 @@ void ASMgenerator::visit(ir::LessInstruction *instr)
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
 
-    activeFunction->Active()->addInstruction("SLT", *destReg,*leftReg, *rightReg);
+    if (left->getDataType() == ir::Value::DataType::STRING){
+        //$STR_CMP$
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*leftReg);
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*rightReg);
+        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("SLT", *destReg, *mips.getRetRegister(),*mips.getZero());
+    } else {
+        activeFunction->Active()->addInstruction("SLT", *destReg,*leftReg, *rightReg);
+    }
 }
 
 void ASMgenerator::visit(ir::LessEqualInstruction *instr)
@@ -430,11 +455,20 @@ void ASMgenerator::visit(ir::LessEqualInstruction *instr)
 
     const mips::Register *tempReg = activeFunction->Active()->getFreeRegister();
 
-
-    activeFunction->Active()->addInstruction("SLT",   *destReg, *leftReg, *rightReg );
-    activeFunction->Active()->addInstruction("XOR",   *tempReg, *leftReg, *rightReg );
-    activeFunction->Active()->addInstruction("SLTIU", *tempReg, *tempReg, 1);
-    activeFunction->Active()->addInstruction("OR",    *destReg, *destReg, *tempReg);
+    if (left->getDataType() == ir::Value::DataType::STRING){
+        //$STR_CMP$
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*leftReg);
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*rightReg);
+        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("SLT", *destReg, *mips.getRetRegister(), *mips.getZero());
+        activeFunction->Active()->addInstruction("SLTIU", *tempReg, *mips.getRetRegister(), 1);
+        activeFunction->Active()->addInstruction("OR",    *destReg, *destReg, *tempReg);
+    } else {
+        activeFunction->Active()->addInstruction("SLT",   *destReg, *leftReg, *rightReg );
+        activeFunction->Active()->addInstruction("XOR",   *tempReg, *leftReg, *rightReg );
+        activeFunction->Active()->addInstruction("SLTIU", *tempReg, *tempReg, 1);
+        activeFunction->Active()->addInstruction("OR",    *destReg, *destReg, *tempReg);
+    }
 
 }
 
@@ -449,7 +483,15 @@ void ASMgenerator::visit(ir::GreaterInstruction *instr)
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
 
-    activeFunction->Active()->addInstruction("SLT", *destReg,*rightReg, *leftReg);
+    if (left->getDataType() == ir::Value::DataType::STRING){
+        //$STR_CMP$
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*rightReg);
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*leftReg);
+        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("SLT", *destReg, *mips.getRetRegister(),*mips.getZero());
+    } else{
+        activeFunction->Active()->addInstruction("SLT", *destReg,*rightReg, *leftReg);
+    }
 }
 
 void ASMgenerator::visit(ir::GreaterEqualInstruction *instr)
@@ -465,11 +507,20 @@ void ASMgenerator::visit(ir::GreaterEqualInstruction *instr)
 
     const mips::Register *tempReg = activeFunction->Active()->getFreeRegister();
 
-
-    activeFunction->Active()->addInstruction("SLT",   *destReg, *rightReg, *leftReg );
-    activeFunction->Active()->addInstruction("XOR",   *tempReg, *rightReg, *leftReg );
-    activeFunction->Active()->addInstruction("SLTIU", *tempReg, *tempReg, 1);
-    activeFunction->Active()->addInstruction("OR",    *destReg, *destReg, *tempReg);
+    if (left->getDataType() == ir::Value::DataType::STRING){
+        //$STR_CMP$
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*leftReg);
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*rightReg);
+        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("SLT", *destReg, *mips.getRetRegister(), *mips.getZero());
+        activeFunction->Active()->addInstruction("SLTIU", *tempReg, *mips.getRetRegister(), 1);
+        activeFunction->Active()->addInstruction("OR",    *destReg, *destReg, *tempReg);
+    } else {
+        activeFunction->Active()->addInstruction("SLT",   *destReg, *rightReg, *leftReg );
+        activeFunction->Active()->addInstruction("XOR",   *tempReg, *rightReg, *leftReg );
+        activeFunction->Active()->addInstruction("SLTIU", *tempReg, *tempReg, 1);
+        activeFunction->Active()->addInstruction("OR",    *destReg, *destReg, *tempReg);
+    }
 
 }
 
@@ -485,8 +536,15 @@ void ASMgenerator::visit(ir::EqualInstruction *instr)
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
 
-    activeFunction->Active()->addInstruction("XOR",*destReg, *leftReg, *rightReg);
-    activeFunction->Active()->addInstruction("SLTIU", *destReg, *destReg, 1);
+    if (left->getDataType() == ir::Value::DataType::STRING){
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*leftReg);
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*rightReg);
+        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+         activeFunction->Active()->addInstruction("SLTIU", *destReg, *mips.getRetRegister(), 1);
+    } else {
+        activeFunction->Active()->addInstruction("XOR",*destReg, *leftReg, *rightReg);
+        activeFunction->Active()->addInstruction("SLTIU", *destReg, *destReg, 1);
+    }
 
 }
 
@@ -501,8 +559,15 @@ void ASMgenerator::visit(ir::NotEqualInstruction *instr)
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
 
-    activeFunction->Active()->addInstruction("XOR",*destReg, *leftReg, *rightReg);
-    activeFunction->Active()->addInstruction("SLTU", *destReg, *destReg, *mips.getZero());
+    if (left->getDataType() == ir::Value::DataType::STRING){
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*leftReg);
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*rightReg);
+        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("SLTU", *destReg, *mips.getZero(), *mips.getRetRegister());
+    } else {
+        activeFunction->Active()->addInstruction("XOR",*destReg, *leftReg, *rightReg);
+        activeFunction->Active()->addInstruction("SLTU", *destReg, *destReg, *mips.getZero());
+    }
 }
 
 void ASMgenerator::visit(ir::AndInstruction *instr)
