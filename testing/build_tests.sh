@@ -31,7 +31,9 @@ template <typename T, typename... Args> void print(const T& data, const Args&...
 }
 
 char read_char(void) {
-	return std::cin.get();
+	char c = std::cin.get();
+	while (std::cin.get() != '\n');
+	return c;
 }
 
 int read_int(void) {
