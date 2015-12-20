@@ -25,7 +25,7 @@ print_test() {
 
 run_on() {
 	"$VYPE" "$1".c tmp/"$1".asm 2>/dev/null
-	echo $? > "$1".ec && [[ `cat "$1".ec` -eq 0 ]] && \
+	echo $? > "$1".ec && touch "$1".out && [[ `cat "$1".ec` -eq 0 ]] && \
 	"$ASM" -i tmp/"$1".asm -o tmp/"$1".obj && \
 	"$LNK" tmp/"$1".obj -o tmp/"$1".xexe && \
 	if [ -r "$1".in ]; then
@@ -33,17 +33,17 @@ run_on() {
 	else
 		"$SIM" -i tmp/"$1".xexe -x tmp/"$1".xml -n mips > tmp/"$1".out
 	fi
-	cat tmp/"$1".out | sed -r "/--- Simulation ended in [0-9]+ cycles ---$/q" \
-		| sed -r "/^--- Simulation ended in [0-9]+ cycles ---/d" \
-		| sed -r "s/--- Simulation ended in [0-9]+ cycles ---//g" > "$1".out
+	if [ -r tmp/"$1".out ]; then
+		cat tmp/"$1".out | sed -r "/--- Simulation ended in [0-9]+ cycles ---$/q" \
+			| sed -r "/^--- Simulation ended in [0-9]+ cycles ---/d" \
+			| sed -r "s/--- Simulation ended in [0-9]+ cycles ---//g" > "$1".out
+	fi
 	diff -u "$1".ec.ref "$1".ec > tmp/"$1".ec.diff
 	failed_ec=$?
 	failed_out=0
-	if [ -r "$1".out.ref ]; then
-		diff -u "$1".out.ref "$1".out > tmp/"$1".out.diff
-		failed_out=$?
-	fi
-	failed=$(($failed_ec & $failed_out))
+	diff -u "$1".out.ref "$1".out > tmp/"$1".out.diff
+	failed_out=$?
+	failed=$(($failed_ec | $failed_out))
 	print_test "$1".c $failed
 	if [ $failed_out -ne 0 ]; then
 		cat tmp/"$1".out.diff

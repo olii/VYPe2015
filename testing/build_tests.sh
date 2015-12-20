@@ -55,6 +55,8 @@ prepare_test() {
 	echo "$2" > "$1".ec.ref
 	if [ $2 -eq 0 ]; then
 		build_gcc_file "$1"
+	else
+		touch "$1".out.ref
 	fi
 }
 
