@@ -48,11 +48,11 @@ whitespace  [ \r\n\t]
 						}
 
 \"                      { inputString = ""; BEGIN(STR); }
-<STR>\\\'               { inputString += '\''; }
-<STR>\\\"               { inputString += '\"'; }
-<STR>\\\\               { inputString += '\\'; }
-<STR>\\t                { inputString += '\t'; }
-<STR>\\n                { inputString += '\n'; }
+<STR>\\\'               { inputString += "\\'"; }
+<STR>\\\"               { inputString += "\\\""; }
+<STR>\\\\               { inputString += "\\\\"; }
+<STR>\\t                { inputString += "\\t"; }
+<STR>\\n                { inputString += "\\n"; }
 <STR>([^\\"])+          { inputString += std::string(yytext, yyleng); }
 <STR>\"                 {
 							BEGIN(0);
