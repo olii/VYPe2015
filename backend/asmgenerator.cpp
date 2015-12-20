@@ -22,7 +22,7 @@ int ASMgenerator::translateIR(ir::Builder &builder){
     return 0;
 }
 
-std::stringstream ASMgenerator::getTargetCode()
+std::string ASMgenerator::getTargetCode()
 {
     std::stringstream out;
 
@@ -57,7 +57,7 @@ std::stringstream ASMgenerator::getTargetCode()
     out << ".data \n";
     out << constStringData.TranslateTable().str();
     out << "\n\n\n\n\n\n\n";
-    return out;
+    return out.str();
 }
 
 void ASMgenerator::visit(ir::Function *func)

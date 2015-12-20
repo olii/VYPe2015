@@ -17,7 +17,7 @@ public:
     ASMgenerator();
     virtual ~ASMgenerator();
     int translateIR(ir::Builder &builder);
-    std::stringstream getTargetCode();
+    std::string getTargetCode();
 
     /* IR visitor pure virtual methods */
     virtual void visit(ir::Function* func) override;

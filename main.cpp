@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cstdarg>
 
 #include "frontend/ast.h"
@@ -21,6 +22,8 @@ void finalize(int _exitCode)
 {
 	exitCode = _exitCode;
 	yylex_destroy(); // Fix memory leaks from flex, bison doesn't call this
+	if (yyin != nullptr)
+		fclose(yyin);
 }
 
 void yyerror(const char *s, ...)
@@ -32,10 +35,23 @@ void yyerror(const char *s, ...)
 	fprintf(stderr, "\n");
 }
 
-int main()
+int main(int argc, char** argv)
 {
+	yyin = nullptr;
+	if (argc != 3)
+	{
+		exitCode = 5;
+		finalize(exitCode);
+	}
+
 	//yydebug = 1;
-	yyin = fopen("test.c", "r");
+	yyin = fopen(argv[1], "r");
+	if (yyin == nullptr)
+	{
+		exitCode = 5;
+		finalize(exitCode);
+	}
+
 	int result = yyparse();
 	if (result != 0)
 	{
@@ -96,11 +112,15 @@ int main()
 
 	ir::Builder builder;
 	program.generateIr(builder);
-    backend::ASMgenerator generator;
-    generator.translateIR(builder);
 
-	std::cout << builder.codeText() << std::endl;
-    std::cout << generator.getTargetCode().str() << std::endl;
+	std::ofstream outputFile(argv[2], std::ios::trunc | std::ios::out);
+	backend::ASMgenerator generator;
+	generator.translateIR(builder);
+
+	//std::cout << builder.codeText() << std::endl;
+	outputFile << generator.getTargetCode() << std::endl;
+	outputFile.close();
+
 	yylex_destroy(); // Fix memory leaks from flex, bison doesn't call this
 	return 0;
 }
