@@ -24,7 +24,7 @@ print_test() {
 }
 
 run_on() {
-	"$VYPE" "$1".c tmp/"$1".asm 2>/dev/null
+	"$VYPE" "$1".c tmp/"$1".asm 2>/dev/null >&2
 	echo $? > "$1".ec && touch "$1".out && [[ `cat "$1".ec` -eq 0 ]] && \
 	"$ASM" -i tmp/"$1".asm -o tmp/"$1".obj && \
 	"$LNK" tmp/"$1".obj -o tmp/"$1".xexe && \
