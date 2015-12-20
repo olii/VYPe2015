@@ -46,6 +46,7 @@ whitespace  [ \r\n\t]
 							yylval.charValue = inputChar;
 							return CHAR_LIT;
 						}
+<CHR_END>.              { finalize(1); yyterminate(); }
 
 \"                      { inputString = ""; BEGIN(STR); }
 <STR>\\\'               { inputString += "\\'"; }
