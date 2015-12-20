@@ -4,7 +4,25 @@ build_gcc_file() {
 	echo "#include <iostream>
 #include <string>
 
-using string = std::string;
+class vype_string : public std::string {
+public:
+	vype_string() : std::string() {}
+	vype_string(const std::string& str) : std::string(str) {}
+	vype_string(const std::string& str, size_t pos, size_t len = std::string::npos) : std::string(str, pos, npos) {}
+	vype_string(const char* s) : std::string(s) {}
+	vype_string(const char* s, size_t n) : std::string(s, n) {}
+	vype_string(size_t n, char c) : std::string(n, c) {}
+	template <class InputIterator> vype_string(InputIterator first, InputIterator last) : std::string(first, last) {}
+	vype_string(std::initializer_list<char> il) : std::string(il) {}
+	vype_string(std::string&& str) noexcept : std::string(std::move(str)) {}
+
+	// Required for VYPe15 so typecast from char works
+	vype_string(char c) : std::string(1, c) {}
+
+	virtual ~vype_string() {}
+};
+
+using string = vype_string;
 
 void print() {}
 template <typename T, typename... Args> void print(const T& data, const Args&... args) {
