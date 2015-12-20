@@ -45,9 +45,13 @@ string strcat(const string& first, const string& second) { return first + second
 
 	g++ -std=c++11 -o tmp/"$1".bin tmp/"$1".c
 	if [ -r "$1".in ]; then
-		./tmp/"$1".bin 2>/dev/null >"$1".out.ref < "$1".in
+		if [ ! -r "$1".out.ref ]; then
+			./tmp/"$1".bin 2>/dev/null >"$1".out.ref < "$1".in
+		fi
 	else
-		./tmp/"$1".bin 2>/dev/null >"$1".out.ref
+		if [ ! -r "$1".out.ref ]; then
+			./tmp/"$1".bin 2>/dev/null >"$1".out.ref
+		fi
 	fi
 }
 
