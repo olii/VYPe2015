@@ -110,7 +110,10 @@ Value* Builder::createConstantValue(const std::string& value)
 Value* Builder::createCall(const std::string& functionName, const std::vector<Value*> arguments)
 {
 	Function* function = getFunction(functionName);
-	Value* retValue = createTemporaryValue(function->getReturnDataType());
+	Value* retValue = nullptr;
+	if (function->getReturnDataType() != Value::DataType::VOID)
+		retValue = createTemporaryValue(function->getReturnDataType());
+
 	for (Value* arg : arguments)
 	{
 		if (arg->getType() == Value::Type::NAMED)
@@ -122,7 +125,10 @@ Value* Builder::createCall(const std::string& functionName, const std::vector<Va
 
 Value* Builder::createBuiltinCall(const std::string& functionName, ir::Value::DataType returnDataType, const std::vector<Value*> arguments)
 {
-	Value* retValue = createTemporaryValue(returnDataType);
+	Value* retValue = nullptr;
+	if (returnDataType != Value::DataType::VOID)
+		retValue = createTemporaryValue(returnDataType);
+
 	for (Value* arg : arguments)
 	{
 		if (arg->getType() == Value::Type::NAMED)

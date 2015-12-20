@@ -167,8 +167,12 @@ void PrintIrVisitor::visit(ReturnInstruction* instr)
 void PrintIrVisitor::visit(CallInstruction* instr)
 {
 	_os << Indentation;
-	instr->getResult()->accept(*this);
-	_os << " = call " << instr->getFunction()->getName();
+	if (instr->getResult() != nullptr)
+	{
+		instr->getResult()->accept(*this);
+		_os << " = ";
+	}
+	_os << "call " << instr->getFunction()->getName();
 	for (Value* arg : instr->getArguments())
 	{
 		_os << ", ";
@@ -180,8 +184,12 @@ void PrintIrVisitor::visit(CallInstruction* instr)
 void PrintIrVisitor::visit(BuiltinCallInstruction* instr)
 {
 	_os << Indentation;
-	instr->getResult()->accept(*this);
-	_os << " = builtin-call " << instr->getFunctionName();
+	if (instr->getResult() != nullptr)
+	{
+		instr->getResult()->accept(*this);
+		_os << " = ";
+	}
+	_os << "builtin-call " << instr->getFunctionName();
 	for (Value* arg : instr->getArguments())
 	{
 		_os << ", ";
