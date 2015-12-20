@@ -21,6 +21,4 @@ int main(void)
 	test("a > b", a > b);
 	test("a >= a", a >= a);
 	test("a >= b", a >= b);
-	test("!a", !a);
-	test("!!a", !!a);
 }
