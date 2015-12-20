@@ -1,6 +1,6 @@
 
 int main(void) { //Hlavni telo programu
-	print(1|2)
+	print(1|2);
 	string str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris sed nunc est. Aenean sit amet mi pharetra, posuere lectus vel, pulvinar metus. Etiam mattis arcu augue. Sed in tempus sapien, et egestas risus. Pellentesque porttitor orci ac vulputate sodales. Sed maximus felis ut velit bibendum, non ultrices urna mattis. Vivamus nibh dolor, consequat sed porta a, placerat at ipsum. Sed cursus suscipit urna in mollis. Pellentesque iaculis laoreet enim, a blandit odio blandit a. Curabitur vehicula, lacus id gravida molestie, magna orci venenatis mi, at lobortis libero erat sit amet orci. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nunc malesuada sodales lacus, in consequat augue tincidunt vitae. Etiam malesuada tortor pulvinar purus mattis sagittis eu sed diam. Donec risus est, vehicula sed pharetra nec, blandit ut elit.
 
 Proin vestibulum velit ut neque fringilla, vitae pellentesque arcu tristique. Etiam aliquam sem a sem malesuada sagittis. Maecenas tempus diam quis dui gravida efficitur. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nulla cursus elit magna, nec faucibus risus scelerisque ac. Vestibulum sed porta sem. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Aliquam ut faucibus dui, in ultricies ante. Duis porttitor risus eu aliquam ornare. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras sed feugiat velit.

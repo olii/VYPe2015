@@ -588,7 +588,7 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																delete $1;
 																delete $3;
 															}
-			|   BUILTIN LEFT_PAREN exprs RIGHT_PAREN        {
+			|   BUILTIN LEFT_PAREN exprs RIGHT_PAREN SEMICOLON {
 																if (*$1 == "print")
 																{
 																	if ($3->size() < 1)
