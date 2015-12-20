@@ -311,7 +311,7 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
         destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
         activeFunction->Active()->markChanged(destReg);
         activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer());
-        activeFunction->Active()->addInstruction("READ_INT", *destReg, *(mips.getParamRegisters()[0]));
+        activeFunction->Active()->addInstruction("READ_STRING", *destReg, *(mips.getParamRegisters()[0]));
         activeFunction->Active()->addInstruction("ADD", mips.getGlobalPointer(), mips.getGlobalPointer(), *(mips.getParamRegisters()[0]));
     } else if (name == "get_at"){
         ir::Value *op1 = instr->getArguments()[0];
