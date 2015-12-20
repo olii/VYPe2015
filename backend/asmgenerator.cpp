@@ -173,8 +173,11 @@ void ASMgenerator::visit(ir::AssignInstruction *instr)
     const mips::Register *operandReg = activeFunction->Active()->getRegister(operand);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(operand);
 
     activeFunction->Active()->addInstruction("MOVE", *destReg, *operandReg);
+
+
 
 }
 
@@ -203,6 +206,8 @@ void ASMgenerator::visit(ir::CondJumpInstruction *instr)
     ir::BasicBlock *trueJump = instr->getTrueBasicBlock();
     ir::BasicBlock *falseJump = instr->getFalseBasicBlock();
 
+    activeFunction->Active()->markUsed(cond);
+
     const mips::Register *condReg = activeFunction->Active()->getRegister(cond);
 
     activeFunction->Active()->addInstruction("BNE", *condReg, *mips.getZero(), trueJump);
@@ -216,6 +221,7 @@ void ASMgenerator::visit(ir::ReturnInstruction *instr)
     if (retVal != nullptr){
         const mips::Register *retReg = activeFunction->Active()->getRegister(retVal);
         activeFunction->Active()->addInstruction("MOVE", *(mips.getRetRegister()), *retReg );
+        activeFunction->Active()->markUsed(retVal);
     }
     activeFunction->Active()->addInstruction("J", activeFunction->getFunction()->getName() + "_$return\n");
 }
@@ -252,6 +258,7 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
             activeFunction->Active()->addInstruction("SW", *paramReg, stackOffset, mips.getStackPointer());
             stackOffset += 4;
         }
+        activeFunction->Active()->markUsed(param);
         i++;
     }
 
@@ -315,6 +322,8 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
         const mips::Register *op2Reg = activeFunction->Active()->getRegister(op2);
         const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
         activeFunction->Active()->markChanged(destReg);
+        activeFunction->Active()->markUsed(op1);
+        activeFunction->Active()->markUsed(op2);
 
         activeFunction->Active()->addInstruction("ADD", *destReg, *op1Reg, *op2Reg);
         activeFunction->Active()->addInstruction("LB", *destReg, 0, *destReg);
@@ -330,6 +339,9 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
         const mips::Register *op3Reg = activeFunction->Active()->getRegister(op3);
         const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
         activeFunction->Active()->markChanged(destReg);
+        activeFunction->Active()->markUsed(op1);
+        activeFunction->Active()->markUsed(op2);
+        activeFunction->Active()->markUsed(op3);
 
         activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer()); // set ptr to new string
         activeFunction->Active()->addInstruction("MOVE", *(mips.getRetRegister()), *op1Reg);    // prepare source reg
@@ -347,6 +359,8 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
         const mips::Register *op2Reg = activeFunction->Active()->getRegister(op2);
         const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
         activeFunction->Active()->markChanged(destReg);
+        activeFunction->Active()->markUsed(op1);
+        activeFunction->Active()->markUsed(op2);
 
         activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer()); // set ptr to new string
         activeFunction->Active()->addInstruction("MOVE", *(mips.getRetRegister()), *op1Reg);    // prepare source reg
@@ -370,6 +384,8 @@ void ASMgenerator::visit(ir::AddInstruction *instr)
 
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     activeFunction->Active()->addInstruction("ADD", *destReg, *leftReg, *rightReg );
 
@@ -387,6 +403,8 @@ void ASMgenerator::visit(ir::SubtractInstruction *instr)
 
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     activeFunction->Active()->addInstruction("SUB", *destReg, *leftReg, *rightReg );
 }
@@ -401,6 +419,8 @@ void ASMgenerator::visit(ir::MultiplyInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     activeFunction->Active()->addInstruction("MUL", *destReg, *leftReg, *rightReg  );
 }
@@ -415,6 +435,8 @@ void ASMgenerator::visit(ir::DivideInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     activeFunction->Active()->addInstruction("DIV", *destReg, *leftReg, *rightReg  );
 }
@@ -429,6 +451,8 @@ void ASMgenerator::visit(ir::ModuloInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     activeFunction->Active()->addInstruction("DIV", *leftReg, *rightReg  );
     activeFunction->Active()->addInstruction("MFHI", *destReg );
@@ -444,6 +468,8 @@ void ASMgenerator::visit(ir::LessInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     if (left->getDataType() == ir::Value::DataType::STRING){
         //$STR_CMP$
@@ -466,6 +492,8 @@ void ASMgenerator::visit(ir::LessEqualInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     const mips::Register *tempReg = activeFunction->Active()->getFreeRegister();
 
@@ -496,6 +524,8 @@ void ASMgenerator::visit(ir::GreaterInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     if (left->getDataType() == ir::Value::DataType::STRING){
         //$STR_CMP$
@@ -518,6 +548,8 @@ void ASMgenerator::visit(ir::GreaterEqualInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     const mips::Register *tempReg = activeFunction->Active()->getFreeRegister();
 
@@ -549,6 +581,8 @@ void ASMgenerator::visit(ir::EqualInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     if (left->getDataType() == ir::Value::DataType::STRING){
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*leftReg);
@@ -572,6 +606,8 @@ void ASMgenerator::visit(ir::NotEqualInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     if (left->getDataType() == ir::Value::DataType::STRING){
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*leftReg);
@@ -591,10 +627,13 @@ void ASMgenerator::visit(ir::AndInstruction *instr)
     ir::Value *right = instr->getRightOperand();
     ir::Value *dest = instr->getResult();
 
+
     const mips::Register *leftReg = activeFunction->Active()->getRegister(left);
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     const mips::Register *tempReg = activeFunction->Active()->getFreeRegister();
 
@@ -614,6 +653,8 @@ void ASMgenerator::visit(ir::OrInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
     const mips::Register *tempReg = activeFunction->Active()->getFreeRegister();
 
@@ -632,6 +673,8 @@ void ASMgenerator::visit(ir::BitwiseAndInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
 
     activeFunction->Active()->addInstruction("AND", *destReg, *leftReg, *rightReg);
@@ -647,6 +690,8 @@ void ASMgenerator::visit(ir::BitwiseOrInstruction *instr)
     const mips::Register *rightReg = activeFunction->Active()->getRegister(right);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(left);
+    activeFunction->Active()->markUsed(right);
 
 
     activeFunction->Active()->addInstruction("OR", *destReg, *leftReg, *rightReg);
@@ -660,6 +705,7 @@ void ASMgenerator::visit(ir::NotInstruction *instr)
     const mips::Register *opReg = activeFunction->Active()->getRegister(op);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(op);
 
     activeFunction->Active()->addInstruction("SLTIU", *destReg, *opReg, 1);
 
@@ -672,6 +718,7 @@ void ASMgenerator::visit(ir::TypecastInstruction *instr)
     const mips::Register *opReg = activeFunction->Active()->getRegister(op);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(op);
 
 
     activeFunction->Active()->addCanonicalInstruction("#Typecast");
@@ -748,6 +795,7 @@ void ASMgenerator::visit(ir::BitwiseNotInstruction *instr)
     const mips::Register *opReg = activeFunction->Active()->getRegister(op);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(op);
 
     activeFunction->Active()->addInstruction("NOT", *destReg, *opReg);
 }
@@ -760,6 +808,7 @@ void ASMgenerator::visit(ir::NegInstruction *instr)
     const mips::Register *opReg = activeFunction->Active()->getRegister(op);
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
+    activeFunction->Active()->markUsed(op);
 
     activeFunction->Active()->addInstruction("SUB", *destReg, *mips.getZero(),*opReg);
 }
@@ -773,6 +822,7 @@ void ASMgenerator::builtin_print(std::vector<ir::Value *> &params)
 {
     for(auto &item : params){
         const mips::Register *opReg = activeFunction->Active()->getRegister(item);
+        activeFunction->Active()->markUsed(item);
 
         switch (item->getDataType()) {
         case ir::Value::DataType::INT:

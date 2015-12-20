@@ -217,11 +217,11 @@ const mips::Register *BlockContext::getRegister(ir::Value *val, bool load)
     for( auto &it: registerTable){
         if (it.val == nullptr) continue;
 
-        if (it.val == val){ // match
+        if (it.val == val){ // match, using temp value means. it will no longer be needed
             it.lruValue = 0;
 
-            if (val->getType() == ir::Value::Type::TEMPORARY) // remove temporary val form mapping
-                it.val = nullptr;
+            //if (val->getType() == ir::Value::Type::TEMPORARY) // cannot delete here
+                //it.val = nullptr;
 
             return it.reg;
         }
@@ -325,6 +325,23 @@ void BlockContext::markChanged(const mips::Register *reg)
             return;
         }
     }
+}
+
+void BlockContext::markUsed(ir::Value *val)
+{
+    // removes temp if used at least once
+    if (val->getType() != ir::Value::Type::TEMPORARY){
+        return;
+    }
+    ir::TemporaryValue *tempVal = static_cast<ir::TemporaryValue*>(val);
+    for( auto &it: registerTable){
+        if (it.val == val){
+            it.val = nullptr;
+            addCanonicalInstruction("#temporary " + tempVal->getSymbolicName() + " deleted" );
+            return;
+        }
+    }
+    return;
 }
 
 void BlockContext::updateLRU()

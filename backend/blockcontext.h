@@ -71,6 +71,7 @@ public:
     const mips::Register *getRegister(ir::Value *val, bool load = true);
     const mips::Register *getFreeRegister();
     void markChanged(const mips::Register *reg);
+    void markUsed(ir::Value *val);
 
     void updateLRU();
 /*
