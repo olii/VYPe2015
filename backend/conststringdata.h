@@ -11,9 +11,11 @@ public:
 
     const std::string &getLabel(ir::Value *val);
     std::stringstream TranslateTable();
+    int getDataSize();
 
 private:
     std::map<ir::Value*, std::string> table;
+    int datasize;
 };
 
 #endif // CONSTSTRINGDATA_H

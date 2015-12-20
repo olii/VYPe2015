@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <string>
 
 #include "blockcontext.h"
 #include "backend/functioncontext.h"
@@ -66,30 +67,42 @@ void BlockContext::addLabel(const std::string &label)
 
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &reg)
 {
+    updateInstrSize(inst);
     text << backend::Indent;
     text << inst << " " << reg.getAsmName() << "\n";;
 }
 
+void BlockContext::addInstruction(const std::string &inst, const std::string &op)
+{
+    updateInstrSize(inst);
+    text << backend::Indent;
+    text << inst << " " << op << "\n";;
+}
+
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &dst, const mips::Register &src)
 {
+    updateInstrSize(inst);
     text << backend::Indent;
     text << inst << " " << dst.getAsmName() << ", " << src.getAsmName() << "\n";
 }
 
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &dst, const int imm)
 {
+    updateInstrSize(inst);
     text << backend::Indent;
     text << inst << " " << dst.getAsmName() << ", " << imm << "\n";
 }
 
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &reg, const std::string &label)
 {
+    updateInstrSize(inst);
     text << backend::Indent;
     text << inst << " " << reg.getAsmName() << ", " << label << "\n";
 }
 
 void BlockContext::addInstruction(const std::string &inst, const ir::BasicBlock *block)
 {
+    updateInstrSize(inst);
     const BlockContext* context = parent->getBlockContext(block);
 
     text << backend::Indent;
@@ -98,24 +111,28 @@ void BlockContext::addInstruction(const std::string &inst, const ir::BasicBlock 
 
 void BlockContext::addInstruction(const std::string &inst, const ir::Function *func)
 {
+    updateInstrSize(inst);
     text << backend::Indent;
     text << inst << " " << func->getName() << "\n";
 }
 
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &dst,const int imm, const mips::Register &src)
 {
+    updateInstrSize(inst);
     text << backend::Indent;
     text << inst << " " << dst.getAsmName() << ", " << imm << "(" << src.getAsmName() << ")" << "\n";
 }
 
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &dst, const mips::Register &op1, const int imm)
 {
+    updateInstrSize(inst);
     text << backend::Indent;
     text << inst << " " << dst.getAsmName() << ", "  << op1.getAsmName() << ", " << imm << "\n";
 }
 
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &op1, const mips::Register &op2, const ir::BasicBlock *block)
 {
+    updateInstrSize(inst);
     const BlockContext* context = parent->getBlockContext(block);
 
     text << backend::Indent;
@@ -124,12 +141,14 @@ void BlockContext::addInstruction(const std::string &inst, const mips::Register 
 
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &dst, const mips::Register &op1, const mips::Register &op2)
 {
+    updateInstrSize(inst);
     text << backend::Indent;
     text << inst << " " << dst.getAsmName() << ", "  << op1.getAsmName() << ", "  << op2.getAsmName() << "\n";
 }
 
 void BlockContext::addInstruction(const std::string &inst, const mips::Register &dst, const mips::Register &op1, const int imm, const mips::Register &op2)
 {
+    updateInstrSize(inst);
     text << backend::Indent;
     text << inst << " " << dst.getAsmName() << ", "  << op1.getAsmName() << ", " << imm << "(" << op2.getAsmName() << ")" << "\n";
 }
@@ -375,6 +394,41 @@ void BlockContext::removeVictim()
 ConstStringData &backend::BlockContext::getStringTable()
 {
     return parent->getStringTable();
+}
+
+void BlockContext::updateInstrSize(const std::string &str)
+{
+
+    std::string lower;
+    transform(str.begin(), str.end(), lower.begin(),::tolower);
+
+    if (lower == "la"){
+        parent->addInstrSize(8);
+    } else if (lower == "li"){
+        parent->addInstrSize(8);
+    } else if (lower == "bgt"){
+        parent->addInstrSize(8);
+    } else if (lower == "blt"){
+        parent->addInstrSize(8);
+    } else if (lower == "bge"){
+        parent->addInstrSize(8);
+    } else if (lower == "ble"){
+        parent->addInstrSize(8);
+    } else if (lower == "blez"){
+        parent->addInstrSize(8);
+    } else if (lower == "bgtu"){
+        parent->addInstrSize(8);
+    } else if (lower == "bgtz"){
+        parent->addInstrSize(8);
+    } else if (lower == "mul"){
+        parent->addInstrSize(8);
+    } else if (lower == "div"){
+        parent->addInstrSize(8);
+    } else if (lower == "rem"){
+        parent->addInstrSize(8);
+    } else{
+         parent->addInstrSize(4);
+    }
 }
 
 

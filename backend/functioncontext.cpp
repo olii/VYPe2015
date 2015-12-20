@@ -83,6 +83,7 @@ void FunctionContext::addVar(ir::NamedValue &var, unsigned paramPos)
         const mips::Register *src = mips->getParamRegisters()[paramPos]; // first param has position 0
         EntryCode << Indent << "  #Variable " << var.getName() << " is transfered through register" << "\n";
         EntryCode << Indent << "sw " +  src->getAsmName() << ", " << -localOffset << "($fp)"  << "\n";
+        instrSize += 4;
     } else {
         int fpOffBytes = 4 + 4 * ((paramPos+1)-maxRegisterParams);
         varToStackTable[&var] = -fpOffBytes; // negative because stack is top-down
@@ -116,17 +117,21 @@ int FunctionContext::getVarOffset(ir::NamedValue &var)
     //}
 }
 
-const std::stringstream FunctionContext::getInstructions() const
+const std::stringstream FunctionContext::getInstructions()
 {
     std::stringstream instr, epilog;
 
+    int localInstrCounter = 0;
+
     instr << func->getName() + " :      #FUNCTION LABEL\n";              // label
     instr << mips->getFunctionPrologue();
+    localInstrCounter += 16;
 
     instr << Indent << "#local vars: "<< varToStackTable.size() << "\n";
     instr << Indent << "#spilled vars: "<< spillTable.size() << "\n";
     instr << Indent << "#Make place for local + spilled \n";
     instr << Indent << "addi $sp, $sp, " << -(stackCounter-4) << " \n" ;
+    localInstrCounter += 4;
     instr << EntryCode.rdbuf()->str();
 
     epilog << func->getName() + "_$return:\n";
@@ -135,12 +140,14 @@ const std::stringstream FunctionContext::getInstructions() const
     // callee saved registers SAVING place
     instr << Indent <<  "#callee saved registers\n";
     instr << Indent <<  "addi $sp, $sp, " << -(int)calleeSavedSet.size()*4 << " \n" ;
+    localInstrCounter += 4;
     int offset = 0;
     for ( auto & item : calleeSavedSet)
     {
         instr << Indent <<  "sw " + item->getAsmName()  << ", " <<  -(int)(offset+stackCounter) <<"($fp)" << " \n" ;
         epilog << Indent << "lw " + item->getAsmName()  << ", " <<  -(int)(offset+stackCounter) <<"($fp)" << " \n" ;
         offset += 4;
+        localInstrCounter += 8;
     }
 
 
@@ -149,6 +156,9 @@ const std::stringstream FunctionContext::getInstructions() const
     }
 
     instr << epilog.str() << mips->getFunctionEpilogue();
+    localInstrCounter += 20;
+
+    instrSize += localInstrCounter;
 
     return instr;
 }
@@ -209,6 +219,16 @@ void FunctionContext::cleanspillTable()
 ConstStringData &FunctionContext::getStringTable()
 {
     return parent->getStringTable();
+}
+
+void FunctionContext::addInstrSize(int size)
+{
+    instrSize += size;
+}
+
+unsigned FunctionContext::getInstrSize()
+{
+    return instrSize;
 }
 
 

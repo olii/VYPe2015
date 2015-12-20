@@ -3,6 +3,7 @@
 
 ConstStringData::ConstStringData()
 {
+    datasize = 0;
 }
 
 const std::string &ConstStringData::getLabel(ir::Value *val)
@@ -22,6 +23,8 @@ const std::string &ConstStringData::getLabel(ir::Value *val)
 
 
     std::string label = "String_" + std::to_string(table.size()) ;
+    ir::ConstantValue<std::string> *cVal = static_cast<ir::ConstantValue<std::string>*>(val);
+    datasize += cVal->getConstantValue().size()+1;
 
     table.emplace(val, label);
     return table.at(val);
@@ -37,5 +40,10 @@ std::stringstream ConstStringData::TranslateTable()
     }
     out << "DATABEGIN:\n";
     return out;
+}
+
+int ConstStringData::getDataSize()
+{
+    return datasize;
 }
 

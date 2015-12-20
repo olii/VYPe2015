@@ -25,6 +25,7 @@ int ASMgenerator::translateIR(ir::Builder &builder){
 std::string ASMgenerator::getTargetCode()
 {
     std::stringstream out;
+    int codeSize = 0;
 
     out << ".text"                "\n"
            ".org 0"               "\n"
@@ -34,6 +35,7 @@ std::string ASMgenerator::getTargetCode()
            "jal main$0$"          "\n"
            "break"               "\n"
            "\n";
+    codeSize += 7*4;
     out << "$MOVE_R2_TO_GP$:"                      "\n"
            "	move $3, $2"                        "\n"
            "	move $2, $gp"                       "\n"
@@ -45,7 +47,7 @@ std::string ASMgenerator::getTargetCode()
            "	bne $4,$0,$MOVE_R2_TO_GP_loop$"     "\n"
            "	jr $ra"                             "\n"
            "\n";
-
+    codeSize += 8*4;
     out << "$STR_CMP$:"                      "\n"
            "	lb $6, 0($4)"                 "\n"
            "	lb $7, 0($5)"                 "\n"
@@ -61,19 +63,32 @@ std::string ASMgenerator::getTargetCode()
            "	li $2, 0"                     "\n"
            "	jr $ra"                       "\n"
            "\n";
+    codeSize += 12*4;
+    out << "#Computed Code Size: " << codeSize << "\n";
 
     out << "\n\n\n\n\n\n\n";
     for (auto &it : context){
          out << it.second.getInstructions().str() << std::endl ;
+         codeSize += it.second.getInstrSize();
+         out << "#Computed Code Size: " << codeSize << "\n";
          out << "\n\n\n\n\n\n\n";
     }
 
-    out << "\n\n\n\n\n\n\n";
     out << "\n\n\n\n\n\n\n";
 
     out << ".data \n";
     out << constStringData.TranslateTable().str();
     out << "\n\n\n\n\n\n\n";
+
+    codeSize += constStringData.getDataSize();
+
+    out << "#Computed Code Size: " << codeSize << "\n";
+
+    if (((1024-64)*1024) < codeSize){
+        throw(codeSize);
+    }
+
+
     return out.str();
 }
 
@@ -160,7 +175,7 @@ void ASMgenerator::visit(ir::AssignInstruction *instr)
     const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
     activeFunction->Active()->markChanged(destReg);
 
-    activeFunction->Active()->addInstruction("move", *destReg, *operandReg);
+    activeFunction->Active()->addInstruction("MOVE", *destReg, *operandReg);
 
 }
 
@@ -175,7 +190,7 @@ void ASMgenerator::visit(ir::JumpInstruction *instr)
 {
     activeFunction->Active()->saveUnsavedVariables();
     ir::BasicBlock *jumpBlock = instr->getFollowingBasicBlock();
-    activeFunction->Active()->addInstruction("j", jumpBlock);
+    activeFunction->Active()->addInstruction("J", jumpBlock);
 
 
 
@@ -191,8 +206,8 @@ void ASMgenerator::visit(ir::CondJumpInstruction *instr)
 
     const mips::Register *condReg = activeFunction->Active()->getRegister(cond);
 
-    activeFunction->Active()->addInstruction("bne", *condReg, *mips.getZero(), trueJump);
-    activeFunction->Active()->addInstruction("b ", falseJump);
+    activeFunction->Active()->addInstruction("BNE", *condReg, *mips.getZero(), trueJump);
+    activeFunction->Active()->addInstruction("B ", falseJump);
 }
 
 void ASMgenerator::visit(ir::ReturnInstruction *instr)
@@ -201,9 +216,9 @@ void ASMgenerator::visit(ir::ReturnInstruction *instr)
     ir::Value *retVal = instr->getOperand();
     if (retVal != nullptr){
         const mips::Register *retReg = activeFunction->Active()->getRegister(retVal);
-        activeFunction->Active()->addInstruction("move", *(mips.getRetRegister()), *retReg );
+        activeFunction->Active()->addInstruction("MOVE", *(mips.getRetRegister()), *retReg );
     }
-    activeFunction->Active()->addCanonicalInstruction("j " + activeFunction->getFunction()->getName() + "_$return\n");
+    activeFunction->Active()->addInstruction("J", activeFunction->getFunction()->getName() + "_$return\n");
 }
 
 void ASMgenerator::visit(ir::CallInstruction *instr)
@@ -218,11 +233,11 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
     {
         requiredSize += (instr->getArguments().size() - mips.getParamRegisters().size()) *4;
     }
-    activeFunction->Active()->addInstruction("addi", mips.getStackPointer(), mips.getStackPointer(), -(requiredSize));
+    activeFunction->Active()->addInstruction("ADDI", mips.getStackPointer(), mips.getStackPointer(), -(requiredSize));
 
     int gpOffset = requiredSize - 4;
 
-    activeFunction->Active()->addInstruction("sw", mips.getGlobalPointer(), gpOffset, mips.getStackPointer()); // save GP
+    activeFunction->Active()->addInstruction("SW", mips.getGlobalPointer(), gpOffset, mips.getStackPointer()); // save GP
 
     int stackOffset = 0;
     unsigned int i = 1;
@@ -232,10 +247,10 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
         if (i<=mips.getParamRegisters().size()) {
             const mips::Register *destReg = mips.getParamRegisters()[i-1];
 
-            activeFunction->Active()->addInstruction("move", *destReg, *paramReg);
+            activeFunction->Active()->addInstruction("MOVE", *destReg, *paramReg);
         }  else {
             // cdecl convention
-            activeFunction->Active()->addInstruction("sw", *paramReg, stackOffset, mips.getStackPointer());
+            activeFunction->Active()->addInstruction("SW", *paramReg, stackOffset, mips.getStackPointer());
             stackOffset += 4;
         }
         i++;
@@ -245,11 +260,11 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
     activeFunction->Active()->clearCallerRegisters();
 
     // function call
-    activeFunction->Active()->addInstruction("jal", instr->getFunction());
+    activeFunction->Active()->addInstruction("JAL", instr->getFunction());
 
     // return stack to valid state
-    activeFunction->Active()->addInstruction("lw", mips.getGlobalPointer(), gpOffset, mips.getStackPointer()); // save GP
-    activeFunction->Active()->addInstruction("addi", mips.getStackPointer(), mips.getStackPointer(), requiredSize);
+    activeFunction->Active()->addInstruction("LW", mips.getGlobalPointer(), gpOffset, mips.getStackPointer()); // save GP
+    activeFunction->Active()->addInstruction("ADDI", mips.getStackPointer(), mips.getStackPointer(), requiredSize);
 
 
 
@@ -263,9 +278,9 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
 
         if (instr->getFunction()->getReturnDataType() == ir::Value::DataType::STRING){
             // copy string in R2 to local address space and move
-            activeFunction->Active()->addCanonicalInstruction("jal $MOVE_R2_TO_GP$");
+            activeFunction->Active()->addInstruction("JAL", "$MOVE_R2_TO_GP$");
         }
-            activeFunction->Active()->addInstruction("move", *destReg, *(mips.getRetRegister()));
+            activeFunction->Active()->addInstruction("MOVE", *destReg, *(mips.getRetRegister()));
 
     }
 
@@ -302,8 +317,8 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
         const mips::Register *destReg = activeFunction->Active()->getRegister(dest, false);
         activeFunction->Active()->markChanged(destReg);
 
-        activeFunction->Active()->addInstruction("add", *destReg, *op1Reg, *op2Reg);
-        activeFunction->Active()->addInstruction("lb", *destReg, 0, *destReg);
+        activeFunction->Active()->addInstruction("ADD", *destReg, *op1Reg, *op2Reg);
+        activeFunction->Active()->addInstruction("LB", *destReg, 0, *destReg);
 
     } else if (name == "set_at"){
         ir::Value *op1 = instr->getArguments()[0];
@@ -319,7 +334,7 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
 
         activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer()); // set ptr to new string
         activeFunction->Active()->addInstruction("MOVE", *(mips.getRetRegister()), *op1Reg);    // prepare source reg
-        activeFunction->Active()->addCanonicalInstruction("jal $MOVE_R2_TO_GP$");            // copy
+        activeFunction->Active()->addInstruction("JAL", "$MOVE_R2_TO_GP$");            // copy
         activeFunction->Active()->addInstruction("ADD", *(mips.getRetRegister()), *destReg, *op2Reg);
 
         activeFunction->Active()->addInstruction("SB", *op3Reg, 0, *(mips.getRetRegister()));
@@ -336,10 +351,10 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
 
         activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer()); // set ptr to new string
         activeFunction->Active()->addInstruction("MOVE", *(mips.getRetRegister()), *op1Reg);    // prepare source reg
-        activeFunction->Active()->addCanonicalInstruction("jal $MOVE_R2_TO_GP$");            // copy
+        activeFunction->Active()->addInstruction("JAL", "$MOVE_R2_TO_GP$");            // copy
         activeFunction->Active()->addInstruction("ADDI", mips.getGlobalPointer(), mips.getGlobalPointer(), -1); // concat
         activeFunction->Active()->addInstruction("MOVE", *(mips.getRetRegister()), *op2Reg);    // prepare source reg
-        activeFunction->Active()->addCanonicalInstruction("jal $MOVE_R2_TO_GP$");            // copy
+        activeFunction->Active()->addInstruction("JAL", "$MOVE_R2_TO_GP$");            // copy
     }
 }
 
@@ -417,7 +432,7 @@ void ASMgenerator::visit(ir::ModuloInstruction *instr)
     activeFunction->Active()->markChanged(destReg);
 
     activeFunction->Active()->addInstruction("DIV", *leftReg, *rightReg  );
-    activeFunction->Active()->addInstruction("mfhi", *destReg );
+    activeFunction->Active()->addInstruction("MFHI", *destReg );
 }
 
 void ASMgenerator::visit(ir::LessInstruction *instr)
@@ -435,7 +450,7 @@ void ASMgenerator::visit(ir::LessInstruction *instr)
         //$STR_CMP$
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*leftReg);
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*rightReg);
-        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("JAL", "$STR_CMP$");
         activeFunction->Active()->addInstruction("SLT", *destReg, *mips.getRetRegister(),*mips.getZero());
     } else {
         activeFunction->Active()->addInstruction("SLT", *destReg,*leftReg, *rightReg);
@@ -459,7 +474,7 @@ void ASMgenerator::visit(ir::LessEqualInstruction *instr)
         //$STR_CMP$
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*leftReg);
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*rightReg);
-        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("JAL", "$STR_CMP$");
         activeFunction->Active()->addInstruction("SLT", *destReg, *mips.getRetRegister(), *mips.getZero());
         activeFunction->Active()->addInstruction("SLTIU", *tempReg, *mips.getRetRegister(), 1);
         activeFunction->Active()->addInstruction("OR",    *destReg, *destReg, *tempReg);
@@ -487,7 +502,7 @@ void ASMgenerator::visit(ir::GreaterInstruction *instr)
         //$STR_CMP$
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*rightReg);
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*leftReg);
-        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("JAL", "$STR_CMP$");
         activeFunction->Active()->addInstruction("SLT", *destReg, *mips.getRetRegister(),*mips.getZero());
     } else{
         activeFunction->Active()->addInstruction("SLT", *destReg,*rightReg, *leftReg);
@@ -511,7 +526,7 @@ void ASMgenerator::visit(ir::GreaterEqualInstruction *instr)
         //$STR_CMP$
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*leftReg);
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*rightReg);
-        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("JAL", "$STR_CMP$");
         activeFunction->Active()->addInstruction("SLT", *destReg, *mips.getRetRegister(), *mips.getZero());
         activeFunction->Active()->addInstruction("SLTIU", *tempReg, *mips.getRetRegister(), 1);
         activeFunction->Active()->addInstruction("OR",    *destReg, *destReg, *tempReg);
@@ -539,7 +554,7 @@ void ASMgenerator::visit(ir::EqualInstruction *instr)
     if (left->getDataType() == ir::Value::DataType::STRING){
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*leftReg);
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*rightReg);
-        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("JAL", "$STR_CMP$");
          activeFunction->Active()->addInstruction("SLTIU", *destReg, *mips.getRetRegister(), 1);
     } else {
         activeFunction->Active()->addInstruction("XOR",*destReg, *leftReg, *rightReg);
@@ -562,7 +577,7 @@ void ASMgenerator::visit(ir::NotEqualInstruction *instr)
     if (left->getDataType() == ir::Value::DataType::STRING){
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[1]),*leftReg);
         activeFunction->Active()->addInstruction("MOVE", *(mips.getParamRegisters()[0]),*rightReg);
-        activeFunction->Active()->addCanonicalInstruction("JAL $STR_CMP$");
+        activeFunction->Active()->addInstruction("JAL", "$STR_CMP$");
         activeFunction->Active()->addInstruction("SLTU", *destReg, *mips.getZero(), *mips.getRetRegister());
     } else {
         activeFunction->Active()->addInstruction("XOR",*destReg, *leftReg, *rightReg);
@@ -675,9 +690,9 @@ void ASMgenerator::visit(ir::TypecastInstruction *instr)
             {
                 //char to str -- make new string str("c");
                 activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer());
-                activeFunction->Active()->addInstruction("sb", *opReg, 0,*destReg);
-                activeFunction->Active()->addInstruction("sb", *mips.getZero(), 1, *destReg);
-                activeFunction->Active()->addInstruction("addi", mips.getGlobalPointer(), mips.getGlobalPointer(), 2);
+                activeFunction->Active()->addInstruction("SB", *opReg, 0,*destReg);
+                activeFunction->Active()->addInstruction("SB", *mips.getZero(), 1, *destReg);
+                activeFunction->Active()->addInstruction("ADDI", mips.getGlobalPointer(), mips.getGlobalPointer(), 2);
                 break;
             }
         default: break;

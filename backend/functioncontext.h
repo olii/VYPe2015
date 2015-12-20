@@ -38,7 +38,7 @@ public:
     void addVar(ir::NamedValue &var, unsigned paramPos);
     const ir::Function *getFunction() const;
     int getVarOffset(ir::NamedValue &var);
-    const std::stringstream getInstructions() const;
+    const std::stringstream getInstructions();
     const mips::MIPS *getMips() const;
     void testCalleeSaved(const mips::Register * reg);
 
@@ -49,6 +49,8 @@ public:
     void cleanspillTable();
 
     ConstStringData &getStringTable();
+    void addInstrSize(int size);
+    unsigned getInstrSize();
 
 private:
     std::map<ir::NamedValue*, int> varToStackTable; // map a NamedValue to its place on stack
@@ -65,6 +67,8 @@ private:
 
     const mips::MIPS *mips;
     ASMgenerator *parent;
+
+    unsigned instrSize = 0;
 
 };
 

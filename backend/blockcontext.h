@@ -52,6 +52,7 @@ public:
     void addCanonicalInstruction(const std::string &inst);
     void addLabel(const std::string &label);
     void addInstruction(const std::string &inst, const mips::Register &reg);
+    void addInstruction(const std::string &inst, const std::string &op);
     void addInstruction(const std::string &inst, const mips::Register &dst, const mips::Register &src);
     void addInstruction(const std::string &inst, const mips::Register &dst, const int imm);
     void addInstruction(const std::string &inst, const mips::Register &reg, const std::string &label);
@@ -94,6 +95,8 @@ private:
     void removeVictim();
 
     ConstStringData &getStringTable();
+
+    void updateInstrSize(const std::string &str);
 
 };
 
