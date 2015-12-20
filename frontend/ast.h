@@ -293,8 +293,8 @@ private:
 class Declaration : public ASTNode
 {
 public:
-	Declaration(const std::string& variableName, Expression* initialization) : ASTNode(),
-		_variable(nullptr), _variableName(variableName), _initialization(initialization) {}
+	Declaration(VariableSymbol* variableSymbol, Expression* initialization) : ASTNode(),
+		_variable(variableSymbol), _initialization(initialization) {}
 	Declaration(const Declaration&) = delete;
 	virtual ~Declaration()
 	{
@@ -304,17 +304,13 @@ public:
 	virtual Generates generates() override { return Generates::NOTHING; }
 	virtual void generateIr(ir::Builder& builder) override;
 
-	void setVariableSymbol(VariableSymbol* symbol) { _variable = symbol; }
 	VariableSymbol* getVariableSymbol() const { return _variable; }
-
 	Expression* getInitialization() const { return _initialization; }
-	const std::string& getVariableName() const { return _variableName; }
 
 private:
 	Declaration& operator =(const Declaration&);
 
 	VariableSymbol* _variable;
-	std::string _variableName;
 	Expression* _initialization;
 };
 

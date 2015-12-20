@@ -2,7 +2,8 @@
 
 namespace frontend {
 
-Context::Context() : _globalSymTable(new SymbolTable), _symTableStack(), _allSymbolTables(), _currentFunction(nullptr)
+Context::Context() : _globalSymTable(new SymbolTable), _symTableStack(), _allSymbolTables(),
+	_currentFunction(nullptr), _currentDeclaredVarType(Symbol::DataType::VOID)
 {
 }
 
@@ -48,6 +49,16 @@ void Context::setCurrentFunction(FunctionSymbol* currentFunction)
 FunctionSymbol* Context::getCurrentFunction() const
 {
 	return _currentFunction;
+}
+
+Symbol::DataType Context::getCurrentDeclaredVarType() const
+{
+	return _currentDeclaredVarType;
+}
+
+void Context::setCurrentDeclaredVarType(Symbol::DataType dataType)
+{
+	_currentDeclaredVarType = dataType;
 }
 
 Symbol* Context::findSymbol(const std::string& name)

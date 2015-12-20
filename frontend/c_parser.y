@@ -324,61 +324,94 @@ assign_stmt :   ID ASSIGN expr SEMICOLON    {
 											}
 			;
 
-decl_stmt   :   TYPE decl_id_list SEMICOLON {
-												for (auto& varDecl : *$2)
-												{
-													Symbol* symbol = nullptr;
-													if ((symbol = context.findSymbol(varDecl->getVariableName())) != nullptr)
-													{
-														// We cannot shadow functions
-														if (symbol->getType() != Symbol::Type::VARIABLE)
+decl_stmt   :   TYPE                            { context.setCurrentDeclaredVarType(Symbol::stringToDataType(*$1)); }
+						 decl_id_list SEMICOLON {
+												$$ = new DeclarationStatement(*$3);
+												delete $1;
+												delete $3;
+											}
+			;
+
+decl_id_list    :   decl_id_list COMMA ID decl_init_expr   {
+														Symbol* symbol = nullptr;
+														if ((symbol = context.findSymbol(*$3)) != nullptr)
 														{
-															yyerror("Redefinition of symbol '%s'. Cannot shadow functions.", symbol->getName().c_str());
+															// We cannot shadow functions
+															if (symbol->getType() != Symbol::Type::VARIABLE)
+															{
+																yyerror("Redefinition of symbol '%s'. Cannot shadow functions.", symbol->getName().c_str());
+																delete $1;
+																delete $3;
+																finalize(3);
+																YYERROR;
+															}
+														}
+
+														// Adding can fail if there is symbol in the same block, we cannot shadow in the same block
+														if ((symbol = context.currentSymbolTable()->addVariable(*$3, context.getCurrentDeclaredVarType())) == nullptr)
+														{
+															yyerror("Redefinition of symbol '%s'.", $3->c_str());
+															delete $1;
+															delete $3;
+															finalize(3);
+															YYERROR;
+														}
+
+														VariableSymbol* varSymbol = static_cast<VariableSymbol*>(symbol);
+														if ($4 && $4->getDataType() != varSymbol->getDataType())
+														{
+															yyerror("Unable to initialize variable '%s' of type '%s' with '%s'.",
+																		varSymbol->getName().c_str(),
+																		Symbol::dataTypeToString(varSymbol->getDataType()).c_str(),
+																		Symbol::dataTypeToString($4->getDataType()).c_str());
+															delete $1;
+															delete $3;
+															finalize(3);
+															YYERROR;
+														}
+
+														$$->push_back(new Declaration(varSymbol, $4));
+														delete $3;
+													}
+				|   ID decl_init_expr               {
+														Symbol* symbol = nullptr;
+														if ((symbol = context.findSymbol(*$1)) != nullptr)
+														{
+															// We cannot shadow functions
+															if (symbol->getType() != Symbol::Type::VARIABLE)
+															{
+																yyerror("Redefinition of symbol '%s'. Cannot shadow functions.", symbol->getName().c_str());
+																delete $1;
+																delete $2;
+																finalize(3);
+																YYERROR;
+															}
+														}
+
+														// Adding can fail if there is symbol in the same block, we cannot shadow in the same block
+														if ((symbol = context.currentSymbolTable()->addVariable(*$1, context.getCurrentDeclaredVarType())) == nullptr)
+														{
+															yyerror("Redefinition of symbol '%s'.", $1->c_str());
 															delete $1;
 															delete $2;
 															finalize(3);
 															YYERROR;
 														}
-													}
 
-													// Adding can fail if there is symbol in the same block, we cannot shadow in the same block
-													if ((symbol = context.currentSymbolTable()->addVariable(varDecl->getVariableName(), Symbol::stringToDataType(*$1))) == nullptr)
-													{
-														yyerror("Redefinition of symbol '%s'.", varDecl->getVariableName().c_str());
-														delete $1;
-														delete $2;
-														finalize(3);
-														YYERROR;
-													}
+														VariableSymbol* varSymbol = static_cast<VariableSymbol*>(symbol);
+														if ($2 && $2->getDataType() != varSymbol->getDataType())
+														{
+															yyerror("Unable to initialize variable '%s' of type '%s' with '%s'.",
+																		varSymbol->getName().c_str(),
+																		Symbol::dataTypeToString(varSymbol->getDataType()).c_str(),
+																		Symbol::dataTypeToString($2->getDataType()).c_str());
+															delete $1;
+															delete $2;
+															finalize(3);
+															YYERROR;
+														}
 
-													VariableSymbol* varSymbol = static_cast<VariableSymbol*>(symbol);
-													if (varDecl->getInitialization() && varDecl->getInitialization()->getDataType() != varSymbol->getDataType())
-													{
-														yyerror("Unable to initialize variable '%s' of type '%s' with '%s'.",
-																	varSymbol->getName().c_str(),
-																	Symbol::dataTypeToString(varSymbol->getDataType()).c_str(),
-																	Symbol::dataTypeToString(varDecl->getInitialization()->getDataType()).c_str());
-														delete $1;
-														delete $2;
-														finalize(3);
-														YYERROR;
-													}
-
-													varDecl->setVariableSymbol(varSymbol);
-												}
-
-												$$ = new DeclarationStatement(*$2);
-												delete $1;
-												delete $2;
-											}
-			;
-
-decl_id_list    :   decl_id_list COMMA ID decl_init_expr   {
-														$$->push_back(new Declaration(*$3, $4));
-														delete $3;
-													}
-				|   ID decl_init_expr               {
-														$$ = new std::vector<Declaration*>( { new Declaration(*$1, $2) } );
+														$$ = new std::vector<Declaration*>( { new Declaration(varSymbol, $2) } );
 														delete $1;
 													}
 				;

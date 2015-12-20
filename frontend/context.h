@@ -25,6 +25,9 @@ public:
 	FunctionSymbol* getCurrentFunction() const;
 	void setCurrentFunction(FunctionSymbol* currentFunction);
 
+	Symbol::DataType getCurrentDeclaredVarType() const;
+	void setCurrentDeclaredVarType(Symbol::DataType dataType);
+
 	Symbol* findSymbol(const std::string& name);
 	const Symbol* findSymbol(const std::string& name) const;
 
@@ -35,6 +38,7 @@ private:
 	StackType _symTableStack;
 	StackType _allSymbolTables;
 	FunctionSymbol* _currentFunction;
+	Symbol::DataType _currentDeclaredVarType;
 };
 
 } // namespace frontend
