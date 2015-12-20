@@ -16,7 +16,6 @@ ASMgenerator::~ASMgenerator()
 
 int ASMgenerator::translateIR(ir::Builder &builder){
 
-    //TODO: catch exceptions and return value
     for (auto& it : builder.getFunctions())
         it.second->accept(*this);
     return 0;
@@ -141,27 +140,27 @@ void ASMgenerator::visit(ir::BasicBlock *block)
 }
 
 
-void ASMgenerator::visit(ir::NamedValue *value)
+void ASMgenerator::visit(ir::NamedValue* /*value*/)
 {
     //activeFunction->Active()->getRegister(value);
 }
 
-void ASMgenerator::visit(ir::TemporaryValue *value)
+void ASMgenerator::visit(ir::TemporaryValue* /*value*/)
 {
     //activeFunction->Active()->getRegister(value);
 }
 
-void ASMgenerator::visit(ir::ConstantValue<int> *value)
+void ASMgenerator::visit(ir::ConstantValue<int>* /*value*/)
 {
 
 }
 
-void ASMgenerator::visit(ir::ConstantValue<char> *value)
+void ASMgenerator::visit(ir::ConstantValue<char>* /*value*/)
 {
 
 }
 
-void ASMgenerator::visit(ir::ConstantValue<std::string> *value)
+void ASMgenerator::visit(ir::ConstantValue<std::string>* /*value*/)
 {
 
 }

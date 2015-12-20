@@ -118,7 +118,15 @@ int main(int argc, char** argv)
 	generator.translateIR(builder);
 
 	//std::cout << builder.codeText() << std::endl;
-	outputFile << generator.getTargetCode() << std::endl;
+    try {
+        outputFile << generator.getTargetCode() << std::endl;
+    }
+    catch (int e) {
+        std::cerr << "Generated assemly does not fit into 1MB. Assumed code size is: " << e << "B, stack has 64kB\n";
+        exitCode = 4;
+        finalize(exitCode);
+        return exitCode;
+    }
 	outputFile.close();
 
 	yylex_destroy(); // Fix memory leaks from flex, bison doesn't call this
