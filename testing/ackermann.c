@@ -8,6 +8,8 @@ int ackermann(int m, int n)
 int main(void){
 	
 	int tmp = ackermann(3, 4);
+	print("ackerman(3,4) = ", tmp);
+	print("\n");
 	return tmp;
 }
 

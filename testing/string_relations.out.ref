@@ -1,0 +1,42 @@
+aaa < aaa = false
+aaa <= aaa = true
+aaa > aaa = false
+aaa >= aaa = true
+aaa == aaa = true
+aaa != aaa = false
+aaa < aab = true
+aaa <= aab = true
+aaa > aab = true
+aaa >= aab = false
+aaa == aab = false
+aaa != aab = true
+aab < aaa = false
+aab <= aaa = false
+aab > aaa = false
+aab >= aaa = true
+aab == aaa = false
+aab != aaa = true
+zxczczxc < dsgvdgsr = false
+zxczczxc <= dsgvdgsr = false
+zxczczxc > dsgvdgsr = false
+zxczczxc >= dsgvdgsr = true
+zxczczxc == dsgvdgsr = false
+zxczczxc != dsgvdgsr = true
+ < dsgvdgsr = true
+ <= dsgvdgsr = true
+ > dsgvdgsr = true
+ >= dsgvdgsr = false
+ == dsgvdgsr = false
+ != dsgvdgsr = true
+sdfsdfsadf <  = false
+sdfsdfsadf <=  = false
+sdfsdfsadf >  = false
+sdfsdfsadf >=  = true
+sdfsdfsadf ==  = false
+sdfsdfsadf !=  = true
+ <  = false
+ <=  = true
+ >  = false
+ >=  = true
+ ==  = true
+ !=  = false
