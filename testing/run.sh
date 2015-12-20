@@ -24,20 +24,51 @@ print_test() {
 }
 
 run_on() {
-	"$VYPE" "$1".c "$1".asm
-	"$ASM" -i "$1".asm -o tmp/"$1".obj
-	"$LNK" tmp/"$1".obj -o tmp/"$1".xexe
-	"$SIM" -i tmp/"$1".xexe -x tmp/"$1".xml -n mips < "$1".in > "$1".out
-	cat "$1".out | sed -r "/--- Simulation ended in [0-9]+ cycles ---$/q" | sed -r "s/--- Simulation ended in [0-9]+ cycles ---//g" > tmp/"$1".out
-	diff -u "$1".ref tmp/"$1".out
-	print_test "$1".c $?
+	"$VYPE" "$1".c tmp/"$1".asm 2>/dev/null
+	echo $? > "$1".ec && [[ `cat "$1".ec` -eq 0 ]] && \
+	"$ASM" -i tmp/"$1".asm -o tmp/"$1".obj && \
+	"$LNK" tmp/"$1".obj -o tmp/"$1".xexe && \
+	if [ -r "$1".in ]; then
+		"$SIM" -i tmp/"$1".xexe -x tmp/"$1".xml -n mips < "$1".in > tmp/"$1".out
+	else
+		"$SIM" -i tmp/"$1".xexe -x tmp/"$1".xml -n mips > tmp/"$1".out
+	fi
+	cat tmp/"$1".out | sed -r "/--- Simulation ended in [0-9]+ cycles ---$/q" \
+		| sed -r "/^--- Simulation ended in [0-9]+ cycles ---/d" \
+		| sed -r "s/--- Simulation ended in [0-9]+ cycles ---//g" > "$1".out
+	diff -u "$1".ec.ref "$1".ec > tmp/"$1".ec.diff
+	failed_ec=$?
+	failed_out=0
+	if [ -r "$1".out.ref ]; then
+		diff -u "$1".out.ref "$1".out > tmp/"$1".out.diff
+		failed_out=$?
+	fi
+	failed=$(($failed_ec & $failed_out))
+	print_test "$1".c $failed
+	if [ $failed_out -ne 0 ]; then
+		cat tmp/"$1".out.diff
+	fi
+	if [ $failed_ec -ne 0 ]; then
+		cat tmp/"$1".ec.diff
+	fi
 }
+
+if [ $# -eq 1 ]; then
+	if [ "$1" = "clean" ]; then
+		rm -rf tmp/ `find . -maxdepth 1 -type f | grep -E "\.(ec|out)$" | tr '\n' ' '`
+		exit 0
+	fi
+fi
 
 if [ ! -x "$VYPE" -o ! -x "$ASM" -o ! -x "$LNK" -o ! -x "$SIM" ]; then
 	echo "Unable to locate VYPe compiler or MIPS assembler" >&2
 	exit 1
 fi
 
-mkdir tmp
-#run_on "basic-empty-main"
-rm -rf tmp
+all_test_files=`find . -maxdepth 1 -type f | grep -E "\.c$" | sed -r "s%\.\/%%g"`
+
+mkdir -p tmp
+for test_file in $all_test_files; do
+	run_on `echo "$test_file" | sed -r "s%\.c$%%g"`
+done
+#rm -rf tmp

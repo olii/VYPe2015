@@ -16,6 +16,13 @@ vype-test
 " User specific files
 .ycm_extra_conf.py*
 
+" Test files
+testing/tmp/
+testing/*.ec
+testing/*.out
+!testing/*.ec.ref
+!testing/*.out.ref
+
 " QtCreator
 VYPe.config
 VYPe.creator
