@@ -65,7 +65,7 @@ if [ ! -x "$VYPE" -o ! -x "$ASM" -o ! -x "$LNK" -o ! -x "$SIM" ]; then
 	exit 1
 fi
 
-all_test_files=`find . -maxdepth 1 -type f | grep -E "\.c$" | sed -r "s%\.\/%%g"`
+all_test_files=`find . -maxdepth 1 -type f | grep -E "\.c$" | sed -r "s%\.\/%%g" | sort`
 
 mkdir -p tmp
 for test_file in $all_test_files; do
