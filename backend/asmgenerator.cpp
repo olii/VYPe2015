@@ -729,7 +729,8 @@ void ASMgenerator::visit(ir::TypecastInstruction *instr)
         switch(dest->getDataType()){
             case ir::Value::DataType::INT:
             {
-                //char to int - noop
+                //char to int, simply move
+                activeFunction->Active()->addInstruction("MOVE", *destReg, *opReg);
                 break;
             }
             case ir::Value::DataType::STRING:
