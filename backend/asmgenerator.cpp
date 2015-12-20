@@ -799,7 +799,7 @@ void ASMgenerator::visit(ir::BitwiseNotInstruction *instr)
     activeFunction->Active()->markChanged(destReg);
     activeFunction->Active()->markUsed(op);
 
-    activeFunction->Active()->addInstruction("NOT", *destReg, *opReg);
+    activeFunction->Active()->addInstruction("NOR", *destReg, *opReg, *mips.getZero());
 }
 
 void ASMgenerator::visit(ir::NegInstruction *instr)
