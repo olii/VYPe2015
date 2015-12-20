@@ -90,6 +90,10 @@ while                   { return WHILE; }
 for                     { return FOR; }
 return                  { return RETURN; }
 void                    { return VOID; }
+unsigned                { return RESERVED; }
+short                   { return RESERVED; }
+break                   { return RESERVED; }
+continue                { return RESERVED; }
 int|char|string         {
 							yylval.strValue = new std::string(yytext, yyleng);
 							return TYPE;
