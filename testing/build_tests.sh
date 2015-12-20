@@ -6,13 +6,10 @@ build_gcc_file() {
 
 using string = std::string;
 
+void print() {}
 template <typename T, typename... Args> void print(const T& data, const Args&... args) {
 	std::cout << data;
 	print(args...);
-}
-
-template <typename T> void print(const T& data) {
-	std::cout << data;
 }
 
 char read_char(void) {
