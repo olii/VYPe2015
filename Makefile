@@ -18,6 +18,9 @@ frontend: ir
 backend: ir
 	@$(MAKE) -C backend
 
+doc:
+	@$(MAKE) -C doc
+
 DEPENDS=ir frontend backend
 include $(ROOT)/mak/app.mak
 
@@ -30,4 +33,4 @@ main-clean:
 test: all
 	@$(MAKE) -C testing
 
-.PHONY: ir frontend testing
+.PHONY: ir frontend testing doc
