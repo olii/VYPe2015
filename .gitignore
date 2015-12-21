@@ -23,6 +23,14 @@ testing/*.out
 !testing/*.ec.ref
 !testing/*.out.ref
 
+" Documentation
+doc/*
+!doc/dokumentace.tex
+!doc/FIT_logo.eps
+!doc/Makefile
+!doc/czechiso.bst
+!doc/literatura.bib
+
 " QtCreator
 VYPe.config
 VYPe.creator

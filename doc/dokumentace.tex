@@ -1,0 +1,48 @@
+\documentclass[12pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{graphicx}
+
+\usetikzlibrary{arrows,calc,positioning}
+\hypersetup{colorlinks=true}
+
+\begin{document}
+\nocite{*}
+\begin{titlepage}
+	\begin{center}
+		\noindent\LARGE{Project VYPe 2015/2016} \\
+		\scriptsize{Extensions: BITOP, FOR, INITVAR, MINUS, OVERLOAD} \\
+		\Large{Documentation}
+	\end{center}
+	\vfill
+	\begin{center}
+		\includegraphics[scale=0.7]{FIT_logo.eps}
+	\end{center}
+	\vfill
+	Marek Milkovič -- \texttt{xmilko01} (50\%) \\
+	Oliver Nemček -- \texttt{xnemce03} (50\%)
+\end{titlepage}
+\thispagestyle{empty}
+\tableofcontents
+\clearpage
+
+\setcounter{page}{1}
+\section{Introduction}
+\section{Design and Implementation}
+\subsection{Front-end}
+\subsection{IR}
+\subsection{Back-end}
+\section{Testing}
+\section{Work Division}
+
+\clearpage
+\bibliographystyle{czechiso}
+\begin{flushleft}
+	\bibliography{literatura}
+\end{flushleft}
+
+\end{document}
