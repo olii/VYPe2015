@@ -266,7 +266,7 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
 
 
     activeFunction->Active()->saveVarsAndClear();
-    activeFunction->Active()->clearCallerRegisters();
+    //activeFunction->Active()->clearCallerRegisters();
 
     // function call
     activeFunction->Active()->addInstruction("JAL", instr->getFunction());
