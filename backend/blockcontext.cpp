@@ -185,6 +185,33 @@ void BlockContext::saveTemporaries()
     }
 }
 
+void BlockContext::saveVarsAndClear()
+{
+    for( auto &it: registerTable){
+        if(it.val == nullptr) continue;
+        auto &vector = getMips()->getCallerSavedRegisters();
+        if ( std::find(vector.begin(), vector.end(), it.reg) != vector.end() ) // if it is callerSaved than save and remove
+        {
+            if(it.val->getType() == ir::Value::Type::TEMPORARY)
+            {
+                unsigned int pos =parent->spillTemp(it.val);
+
+                ir::TemporaryValue* tmp = static_cast<ir::TemporaryValue*>(it.val);
+                addCanonicalInstruction("# temporaryValue " + tmp->getSymbolicName() + " got spill offset ... " + std::to_string(-(int)pos) + "($fp)");
+                addInstruction("sw", *(it.reg), -pos, getMips()->getFramePointer());
+
+                it.val = nullptr;             // remove from mapping
+            } else if(it.val->getType() == ir::Value::Type::NAMED && it.saved == false)
+            {
+                ir::NamedValue *value = static_cast<ir::NamedValue*>(it.val);
+                int offset = parent->getVarOffset(*value);
+                addInstruction("sw", *(it.reg),-offset, getMips()->getFramePointer());
+                it.saved = true;
+            }
+        } // else it will be preserved
+    }
+}
+
 void BlockContext::clearCallerRegisters()
 {
     for( auto &it: registerTable){

@@ -66,6 +66,7 @@ public:
 
     void saveUnsavedVariables();
     void saveTemporaries();
+    void saveVarsAndClear();
     void clearCallerRegisters();
 
     const mips::Register *getRegister(ir::Value *val, bool load = true);

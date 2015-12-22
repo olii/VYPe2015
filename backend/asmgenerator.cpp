@@ -206,9 +206,8 @@ void ASMgenerator::visit(ir::CondJumpInstruction *instr)
     ir::BasicBlock *trueJump = instr->getTrueBasicBlock();
     ir::BasicBlock *falseJump = instr->getFalseBasicBlock();
 
-    activeFunction->Active()->markUsed(cond);
-
     const mips::Register *condReg = activeFunction->Active()->getRegister(cond);
+    activeFunction->Active()->markUsed(cond);
 
     activeFunction->Active()->addInstruction("BNE", *condReg, *mips.getZero(), trueJump);
     activeFunction->Active()->addInstruction("B ", falseJump);
@@ -230,7 +229,7 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
 {
     activeFunction->Active()->addCanonicalInstruction("#function call");
 
-        activeFunction->Active()->saveUnsavedVariables();//save all registers with namedValue
+    //activeFunction->Active()->saveUnsavedVariables();//save all registers with namedValue
 
     bool hasStackTransfer = instr->getArguments().size() > mips.getParamRegisters().size();
     int requiredSize = 4; // reserve place for GP
@@ -262,7 +261,11 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
         i++;
     }
 
-    activeFunction->Active()->saveTemporaries();
+    /*activeFunction->Active()->saveTemporaries();
+    activeFunction->Active()->clearCallerRegisters();*/
+
+
+    activeFunction->Active()->saveVarsAndClear();
     activeFunction->Active()->clearCallerRegisters();
 
     // function call
