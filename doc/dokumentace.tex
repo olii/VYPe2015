@@ -134,7 +134,10 @@ original name and it also forbids definition of variable with the same name as f
 This module of compiler, implemented in \texttt{libir.a}, is completely independent of any other module and can be reused for other compilers. It is slightly
 inspired by LLVM framework. It provides a set of instructions in form of hierarchical class structure. Every instruction inherits from class \texttt{Instruction}.
 It also implements \emph{control flow graph} (abbr. CFG) management using \texttt{BasicBlock} and \texttt{Function} classes. The interface provides methods
-that are able to build whole CFG for list of functions.
+that are able to build whole CFG for list of functions. Instructions operate over objects called \texttt{Values}. \texttt{Value} can be either \texttt{NamedValue},
+\texttt{TemporaryValue} or \texttt{ConstantValue}. \texttt{NamedValues} are bound to user-defined variable, those which are actually given name by the user himself.
+\texttt{TemporaryValues} are product of the operations and their intermediate results. They are created automatically if any intermediate result needs to be stored
+for further evaluation. \texttt{ConstantValue} is templated class that stores constant values in the program.
 
 Similar to LLVM, \texttt{libir} also provides way to write passes. These passes are implemented using \emph{visitor}-like interface. To write a pass, one would
 inherit \texttt{IrVisitor} and implement all its \texttt{visit} methods. \texttt{libir} already comes with one pass called \texttt{PrintIrVisitor}, which
