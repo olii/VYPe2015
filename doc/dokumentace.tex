@@ -144,37 +144,112 @@ inherit \texttt{IrVisitor} and implement all its \texttt{visit} methods. \texttt
 is able to print whole CFG in text form.
 
 \subsection{Back-end}
-\subsubsection{Overview}
-The responsibility of this module is to translate IR code to assembly code. Our target platform is MIPS processor with 1 MB of RAM space. As we have no MIPS device to run the code on, we use simulation program written by Lissom research group. The simulator is capable of running limited MIPS instruction set. In this module we deal with translationof IR instructions to MIPS instructions, simulation of stack, function prolog and epilog and register allocation.
+The responsibility of this module is to translate IR code to assembly code. Our target platform is MIPS processor with 1 MB of RAM space. As we have no MIPS device to run the code on, we use simulation program written by Lissom research group. The simulator is capable of running limited MIPS instruction set. In this module we deal with translation of IR instructions to MIPS instructions, simulation of stack, function prologue and epilogue and register allocation.
 
 The module is divided into 4 parts. 
 \begin{itemize}
-	\item Mips - describes hardware architecture, defines sets of registers used for parameter transfer, regisetrs for evaluation, caller saved and callee saved registers.
-	\item FunctionContext - handles function prolog/epilog, mapping of variables at the stack, saving caller saved registers.
-	\item BlockContext -- handles register allocation, loading of registers, spilling of variables to stack.
-	\item AsmGenerator -- implements IrVisitor, traverses IR instructions and translates it to Mips instructions.
+	\item \texttt{Mips} - describes hardware architecture, defines sets of registers used for parameter transfer, regisetrs for evaluation, caller saved and callee saved registers.
+	\item \texttt{FunctionContext} - handles function prolog/epilog, mapping of variables at the stack, saving caller saved registers.
+	\item \texttt{BlockContext} -- handles register allocation, loading of registers, spilling of variables to stack.
+	\item \texttt{AsmGenerator} -- implements \texttt{IrVisitor}, traverses IR instructions and translates it to Mips instructions.
 \end{itemize}
 
 \subsubsection{ABI Convention}
-In our compiler, we follow the application binary interface known as \textit{O32}. \texttt{TODO:TABLE}
+In our compiler, we follow the application binary interface known as \textit{O32} \cite{O32}. 
 Some restrictions have been put on \textit{\$GP} register, as we use it as the address of first free data in RAM.
-
+Convention for parameter passing and stack cleaning is \texttt{C-decl}.
 \subsubsection{Stack}
-The MIPS processor has no stack instructions. We have to simulate it using ADD/SUB instructions. As usual, stack grows downward. By the assignment, we are limited to 1 MB of address space. At the beginning of code, we set a O32 dedicated stack pointer \textit{SP} to the address of "0x10000" hexadecimal. At time of 
+The MIPS processor has no stack instructions. We have to simulate it using \texttt{ADD}/\texttt{SUB} instructions. As usual, stack grows downward. By the assignment, we are limited to 1 MB of address space. At the beginning of code, we set a O32 dedicated stack pointer \textit{SP} to the address of "\textit{0x10000}" hexadecimal. There is no detection of stack overflow.
+
+Stack manipulation is mostly handled in context of function \texttt{FunctionContext}.
 
 \subsubsection{Frame}
-Stack frame represents function context. The function has parameters, local variables and temporary values , return value and return address. The placement of all items is shown on figure TODO. 
+Stack frame represents function context. The function has parameters, local variables and temporary values , return value and return address. The placement of all items is shown on figure TODO. First 4 parameters are transfered through Register \texttt{R4} -- \texttt{R7}, they are copied on stack for future use. Parameters 5 -- $N$ are transfered through stack, so we do not have to copy them to function frame. All local variables(\texttt{NamedValue}) have dedicated place on the stack. Space for temporary values (\texttt{TemporaryValue}) is shared among all temporaries, which exists simultaneously. It is used only if spilling of temporary value occurs or a temporary will be used after function call. In that case the compiler must preserve all temporaries, which haven't been used yet.
 
 \subsubsection{String handling}
-Static strings are stored in Data section of assembly file. First free address is labeled. At the beginning of code, we set GP register to this address(label). At runtime, if memory place for dynamic string is needed, a GP register points to it. If there is a function call, we store the GP register content to stack and load it back after return from function call. If function returns a string value, we simply create a new dynamic string (using a memory place pointed by GP) and copy returned string to this location. This method reduces memory consumption generated by program. Each time a return from function occurs, data memory is returned to state before function call.
+Static strings are stored in \textit{data} section of assembly file. First free address is labeled. At the beginning of code, we set \textit{GP} register to this address(label). At runtime, if memory place for dynamic string is needed, a \textit{GP} register points to it. If there is a function call, we store the GP register content to stack and load it back after return from function call. If function returns a string value, we simply create a new dynamic string (using a memory place pointed by \textit{GP}) and copy returned string to this location. This method reduces memory consumption generated by program. Each time a return from function occurs, data memory is returned to state before function call.
+
+Constant literals(\texttt{ConstantValue}) are stored at the beginning of \textit{data} section. There is no redundant literal. Each time a generator requires the address of a constant string, symbol table is searched for a match. If there is no match, new item is added to table. 
+
+There are two embedded functions added to all generated files to support string manipulation. First function copies string returned from a function to local variable. Second function implements C-like strcmp used by relational operators.
 
 \subsubsection{Register allocation}
-Register allocation does not use liveness. Every variable mapped in register does have a value, denoting last use. Therefore out implementation uses Least Recently Used(LRU) technique. If there is no more free register and there is a request for free register, a variable must be spilled. Victim is chosen by highest LRU value.
+Register allocation does not use liveness. Every variable mapped in register does have a value, denoting last use. Our implementation uses Least Recently Used(LRU) technique. If there is no more free register and there is a request for free register, a variable must be spilled. Victim is chosen by highest LRU value. As it was written, spilled variable is saved to stack. If variable is constant, it is removed without spilling.
 
-A temporary value is not needed after used exactly once. If a usage on temporary is detected, this temporary value is removed from mapping and discarted.
+A register allocation is done per basic block. At the beginning of each basic block compiler assumes that all registers are free. Requested variable is given a register and generated a load of variable into register. The load is default, but can be omitted. This is handled by a \texttt{BlockContext} part of backend. 
+
+A temporary value is not needed after used exactly once. If a usage of this value is detected, this value is removed from mapping and discarded permanently.
+
+
 
 \subsubsection{Instruction simulation}
-In few cases, it is required to simulate IR instructions with a sequence of MIPS instructions. 
+In few cases, it is required to simulate IR instructions with a sequence of MIPS instructions. The table bellow shows MIPS instructions simulating IR instructions. There are also string versions of these instructions(they use embedded C-like strcmp), which are not shown.
+\begin{center}
+	\begin{tabular}{ | c | c | }
+		\hline
+		IR instruction & MIPS instructions \\
+		\hline
+		
+		$c = (a < b)$  & 
+		\begin{tabular}{@{}c@{}}
+			SLT c, a, b \\
+		\end{tabular}
+		\\ \hline
+		$c = (a \leq b)$  & 
+			\begin{tabular}{@{}c@{}}
+				SLT c, a, b \\ 
+				XOR tmp, a, b \\
+				SLTIU tmp, tmp, 1 \\
+				OR c, c, tmp
+			\end{tabular}
+		\\ \hline
+		
+		$c = (a > b) $ & 
+		\begin{tabular}{@{}c@{}}
+			SLT c, b, a \\
+		\end{tabular}
+		\\ \hline
+		
+		$c = (a \geq b) $ & 
+		\begin{tabular}{@{}c@{}}
+			SLT c, b, a \\ 
+			XOR tmp, b, a \\
+			SLTIU tmp, tmp, 1 \\
+			OR c, c, tmp
+		\end{tabular}
+		\\ \hline
+		
+		$c = (a == b) $ & 
+		\begin{tabular}{@{}c@{}}
+			XOR c, a, b \\
+			SLTIU c, c, 1 \\
+		\end{tabular}
+		\\ \hline
+
+		$c = (a != b) $ & 
+		\begin{tabular}{@{}c@{}}
+			XOR c, a, b \\
+			SLTIU c, \$0, c \\
+		\end{tabular}
+		\\ \hline
+		
+		$c = (a \&\& b) $ & 
+		\begin{tabular}{@{}c@{}}
+			SLTIU temp, \$0, a \\
+			SLTIU c, \$0, b \\
+			AND c, c, temp
+		\end{tabular}
+		\\ \hline
+		
+		$c = (a || b) $ & 
+		\begin{tabular}{@{}c@{}}
+			SLTIU temp, \$0, a \\
+			SLTIU c, \$0, b \\
+			OR c, c, temp
+		\end{tabular}
+		\\ \hline
+	\end{tabular}
+\end{center}
 
 \section{Testing}
 Testing is performed on a set of input source codes written in VYPe15, which are compiled into MIPS32 assembly and then they are run
