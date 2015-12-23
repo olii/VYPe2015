@@ -298,28 +298,47 @@ void ASMgenerator::visit(ir::CallInstruction *instr)
 void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
 {
     const mips::Register *destReg = nullptr;
+    bool hasResult = (instr->getResult()) ? true:false;
 
     const std::string &name = instr->getFunctionName();
     if (name == "print"){
         builtin_print(instr->getArguments());
     } else if (name == "read_char"){
-        destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
-        activeFunction->Active()->markChanged(destReg);
+        if (hasResult){
+            destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
+            activeFunction->Active()->markChanged(destReg);
+        } else {
+            destReg = mips.getZero();
+        }
         activeFunction->Active()->addInstruction("READ_CHAR", *destReg);
     } else if (name == "read_int"){
-        destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
-        activeFunction->Active()->markChanged(destReg);
+        if (hasResult){
+            destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
+            activeFunction->Active()->markChanged(destReg);
+        } else {
+            destReg = mips.getZero();
+        }
         activeFunction->Active()->addInstruction("READ_INT", *destReg);
     } else if (name == "read_string"){
-        destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
-        activeFunction->Active()->markChanged(destReg);
-        activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer());
-        activeFunction->Active()->addInstruction("READ_STRING", *destReg, *(mips.getParamRegisters()[0]));
-        activeFunction->Active()->addInstruction("ADD", mips.getGlobalPointer(), mips.getGlobalPointer(), *(mips.getParamRegisters()[0]));
-        activeFunction->Active()->addInstruction("ADDIU", mips.getGlobalPointer(), mips.getGlobalPointer(), 1);
+        if (hasResult){
+            destReg = activeFunction->Active()->getRegister(instr->getResult(),false);
+            activeFunction->Active()->markChanged(destReg);
+            activeFunction->Active()->addInstruction("MOVE", *destReg, mips.getGlobalPointer());
+            activeFunction->Active()->addInstruction("READ_STRING", *destReg, *(mips.getParamRegisters()[0]));
+            activeFunction->Active()->addInstruction("ADD", mips.getGlobalPointer(), mips.getGlobalPointer(), *(mips.getParamRegisters()[0]));
+            activeFunction->Active()->addInstruction("ADDIU", mips.getGlobalPointer(), mips.getGlobalPointer(), 1);
+        } else {
+            activeFunction->Active()->addInstruction("READ_STRING", mips.getGlobalPointer(), *mips.getZero());
+        }
     } else if (name == "get_at"){
         ir::Value *op1 = instr->getArguments()[0];
         ir::Value *op2 = instr->getArguments()[1];
+
+        if(!hasResult){
+            activeFunction->Active()->markUsed(op1);
+            activeFunction->Active()->markUsed(op2);
+            return;
+        }
         ir::Value *dest = instr->getResult();
 
         const mips::Register *op1Reg = activeFunction->Active()->getRegister(op1);
@@ -333,9 +352,17 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
         activeFunction->Active()->addInstruction("LB", *destReg, 0, *destReg);
 
     } else if (name == "set_at"){
+
         ir::Value *op1 = instr->getArguments()[0];
         ir::Value *op2 = instr->getArguments()[1];
         ir::Value *op3 = instr->getArguments()[2];
+
+        if(!hasResult){
+            activeFunction->Active()->markUsed(op1);
+            activeFunction->Active()->markUsed(op2);
+            activeFunction->Active()->markUsed(op3);
+            return;
+        }
         ir::Value *dest = instr->getResult();
 
         const mips::Register *op1Reg = activeFunction->Active()->getRegister(op1);
@@ -357,6 +384,11 @@ void ASMgenerator::visit(ir::BuiltinCallInstruction *instr)
     } else if (name == "strcat"){
         ir::Value *op1 = instr->getArguments()[0];
         ir::Value *op2 = instr->getArguments()[1];
+        if(!hasResult){
+            activeFunction->Active()->markUsed(op1);
+            activeFunction->Active()->markUsed(op2);
+            return;
+        }
         ir::Value *dest = instr->getResult();
 
         const mips::Register *op1Reg = activeFunction->Active()->getRegister(op1);
@@ -392,7 +424,6 @@ void ASMgenerator::visit(ir::AddInstruction *instr)
     activeFunction->Active()->markUsed(right);
 
     activeFunction->Active()->addInstruction("ADD", *destReg, *leftReg, *rightReg );
-
 }
 
 void ASMgenerator::visit(ir::SubtractInstruction *instr)
