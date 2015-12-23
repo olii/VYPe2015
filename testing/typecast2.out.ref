@@ -1,0 +1,3 @@
+
+(char) (((int) number()) + 5) = h
+(int) number() + 5 = 104
