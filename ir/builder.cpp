@@ -107,11 +107,11 @@ Value* Builder::createConstantValue(const std::string& value)
 	return strValue;
 }
 
-Value* Builder::createCall(const std::string& functionName, const std::vector<Value*> arguments)
+Value* Builder::createCall(const std::string& functionName, const std::vector<Value*> arguments, bool createValueForResult)
 {
 	Function* function = getFunction(functionName);
 	Value* retValue = nullptr;
-	if (function->getReturnDataType() != Value::DataType::VOID)
+	if (createValueForResult)
 		retValue = createTemporaryValue(function->getReturnDataType());
 
 	for (Value* arg : arguments)
@@ -123,10 +123,10 @@ Value* Builder::createCall(const std::string& functionName, const std::vector<Va
 	return retValue;
 }
 
-Value* Builder::createBuiltinCall(const std::string& functionName, ir::Value::DataType returnDataType, const std::vector<Value*> arguments)
+Value* Builder::createBuiltinCall(const std::string& functionName, ir::Value::DataType returnDataType, const std::vector<Value*> arguments, bool createValueForResult)
 {
 	Value* retValue = nullptr;
-	if (returnDataType != Value::DataType::VOID)
+	if (createValueForResult)
 		retValue = createTemporaryValue(returnDataType);
 
 	for (Value* arg : arguments)

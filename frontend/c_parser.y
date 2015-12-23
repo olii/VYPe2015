@@ -634,6 +634,107 @@ call_stmt   :   ID LEFT_PAREN exprs RIGHT_PAREN SEMICOLON   {
 																	}
 
 																}
+																else if (*$1 == "read_char")
+																{
+																	if ($3->size() != 0)
+																	{
+																		yyerror("Builtin function 'read_char' requires 0 arguments.");
+																		delete $1;
+																		delete $3;
+																		finalize(3);
+																		YYERROR;
+																	}
+																}
+																else if (*$1 == "read_int")
+																{
+																	if ($3->size() != 0)
+																	{
+																		yyerror("Builtin function 'read_int' requires 0 arguments.");
+																		delete $1;
+																		delete $3;
+																		finalize(3);
+																		YYERROR;
+																	}
+																}
+																else if (*$1 == "read_string")
+																{
+																	if ($3->size() != 0)
+																	{
+																		yyerror("Builtin function 'read_string' requires 0 arguments.");
+																		delete $1;
+																		delete $3;
+																		finalize(3);
+																		YYERROR;
+																	}
+																}
+																else if (*$1 == "get_at")
+																{
+																	if ($3->size() != 2)
+																	{
+																		yyerror("Builtin function 'get_at' requires 2 arguments.");
+																		delete $1;
+																		delete $3;
+																		finalize(3);
+																		YYERROR;
+																	}
+
+																	if (($3->at(0)->getDataType() != Symbol::DataType::STRING) || ($3->at(1)->getDataType() != Symbol::DataType::INT))
+																	{
+																		yyerror("Function 'get_at' requires its arguments type to be (string, int). Got (%s, %s).",
+																			Symbol::dataTypeToString($3->at(0)->getDataType()).c_str(),
+																			Symbol::dataTypeToString($3->at(1)->getDataType()).c_str());
+																		delete $1;
+																		delete $3;
+																		finalize(3);
+																		YYERROR;
+																	}
+																}
+																else if (*$1 == "set_at")
+																{
+																	if ($3->size() != 3)
+																	{
+																		yyerror("Builtin function 'set_at' requires 3 arguments.");
+																		delete $1;
+																		delete $3;
+																		finalize(3);
+																		YYERROR;
+																	}
+
+																	if (($3->at(0)->getDataType() != Symbol::DataType::STRING) || ($3->at(1)->getDataType() != Symbol::DataType::INT)
+																		|| ($3->at(2)->getDataType() != Symbol::DataType::CHAR))
+																	{
+																		yyerror("Function 'set_at' requires its arguments type to be (string, int, char). Got (%s, %s, %s).",
+																			Symbol::dataTypeToString($3->at(0)->getDataType()).c_str(),
+																			Symbol::dataTypeToString($3->at(1)->getDataType()).c_str(),
+																			Symbol::dataTypeToString($3->at(2)->getDataType()).c_str());
+																		delete $1;
+																		delete $3;
+																		finalize(3);
+																		YYERROR;
+																	}
+																}
+																else if (*$1 == "strcat")
+																{
+																	if ($3->size() != 2)
+																	{
+																		yyerror("Builtin function 'strcat' requires 2 arguments.");
+																		delete $1;
+																		delete $3;
+																		finalize(3);
+																		YYERROR;
+																	}
+
+																	if (($3->at(0)->getDataType() != Symbol::DataType::STRING) || ($3->at(1)->getDataType() != Symbol::DataType::STRING))
+																	{
+																		yyerror("Function 'strcat' requires its arguments type to be (string, string). Got (%s, %s).",
+																			Symbol::dataTypeToString($3->at(0)->getDataType()).c_str(),
+																			Symbol::dataTypeToString($3->at(1)->getDataType()).c_str());
+																		delete $1;
+																		delete $3;
+																		finalize(3);
+																		YYERROR;
+																	}
+																}
 																else
 																{
 																	yyerror("Builtin function '%s' cannot be in form of statement.", $1->c_str());

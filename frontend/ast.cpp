@@ -29,7 +29,7 @@ ir::Value* Call::generateIrValue(ir::Builder& builder)
 	for (Expression* param : _parameters)
 		paramValues.push_back(param->generateIrValue(builder));
 
-	return builder.createCall(_data->getName(), paramValues);
+	return builder.createCall(_data->getName(), paramValues, true);
 }
 
 ir::Value* BuiltinCall::generateIrValue(ir::Builder& builder)
@@ -38,7 +38,7 @@ ir::Value* BuiltinCall::generateIrValue(ir::Builder& builder)
 	for (Expression* param : _parameters)
 		paramValues.push_back(param->generateIrValue(builder));
 
-	return builder.createBuiltinCall(_data, Symbol::dataTypeToIrDataType(getDataType()), paramValues);
+	return builder.createBuiltinCall(_data, Symbol::dataTypeToIrDataType(getDataType()), paramValues, getDataType() != Symbol::DataType::VOID);
 }
 
 ir::Value* CallStatement::generateIrValue(ir::Builder& builder)
@@ -47,7 +47,7 @@ ir::Value* CallStatement::generateIrValue(ir::Builder& builder)
 	for (Expression* param : _parameters)
 		paramValues.push_back(param->generateIrValue(builder));
 
-	return builder.createCall(_function->getName(), paramValues);
+	return builder.createCall(_function->getName(), paramValues, false);
 }
 
 ir::Value* BuiltinCallStatement::generateIrValue(ir::Builder& builder)
@@ -56,7 +56,7 @@ ir::Value* BuiltinCallStatement::generateIrValue(ir::Builder& builder)
 	for (Expression* param : _parameters)
 		paramValues.push_back(param->generateIrValue(builder));
 
-	return builder.createBuiltinCall(_functionName, Symbol::dataTypeToIrDataType(Symbol::DataType::VOID), paramValues);
+	return builder.createBuiltinCall(_functionName, Symbol::dataTypeToIrDataType(Symbol::DataType::VOID), paramValues, false);
 }
 
 ir::Value* UnaryExpression::generateIrValue(ir::Builder& builder)
