@@ -21,9 +21,9 @@ frontend::Context context;
 void finalize(int _exitCode)
 {
 	exitCode = _exitCode;
-	yylex_destroy(); // Fix memory leaks from flex, bison doesn't call this
 	if (yyin != nullptr)
 		fclose(yyin);
+	yylex_destroy(); // Fix memory leaks from flex, bison doesn't call this
 }
 
 void yyerror(const char *s, ...)
@@ -37,11 +37,21 @@ void yyerror(const char *s, ...)
 
 int main(int argc, char** argv)
 {
+	std::string outputFileName = "out.asm";
 	yyin = nullptr;
-	if (argc != 3)
+	if (argc == 2)
+	{
+		;
+	}
+	else if (argc == 3)
+	{
+		outputFileName = argv[2];
+	}
+	else
 	{
 		exitCode = 5;
 		finalize(exitCode);
+		return exitCode;
 	}
 
 	//yydebug = 1;
@@ -50,6 +60,7 @@ int main(int argc, char** argv)
 	{
 		exitCode = 5;
 		finalize(exitCode);
+		return exitCode;
 	}
 
 	int result = yyparse();
@@ -113,22 +124,26 @@ int main(int argc, char** argv)
 	ir::Builder builder;
 	program.generateIr(builder);
 
-	std::ofstream outputFile(argv[2], std::ios::trunc | std::ios::out);
+	std::ofstream outputFile(outputFileName, std::ios::trunc | std::ios::out);
 	backend::ASMgenerator generator;
 	generator.translateIR(builder);
 
 	//std::cout << builder.codeText() << std::endl;
-    try {
-        outputFile << generator.getTargetCode() << std::endl;
-    }
-    catch (int e) {
-        std::cerr << "Generated assemly does not fit into 1MB. Assumed code size is: " << e << "B, stack has 64kB\n";
-        exitCode = 4;
-        finalize(exitCode);
-        return exitCode;
-    }
+	try
+	{
+		outputFile << generator.getTargetCode() << std::endl;
+	}
+	catch (int e)
+	{
+		std::cerr << "Generated assemly does not fit into 1MB. Assumed code size is: " << e << "B, stack has 64kB\n";
+		outputFile.close();
+		exitCode = 4;
+		finalize(exitCode);
+		return exitCode;
+	}
 	outputFile.close();
 
+	fclose(yyin);
 	yylex_destroy(); // Fix memory leaks from flex, bison doesn't call this
 	return 0;
 }
