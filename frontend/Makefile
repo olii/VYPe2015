@@ -13,6 +13,7 @@ PARSER_FILE=$(PARSER).y
 PARSER_SRC=$(PARSER).cpp
 PARSER_HDR=$(PARSER).h
 PARSER_OBJ=$(PARSER).o
+PARSER_OUT=$(PARSER).output
 
 SRC_FILES= ast.cpp \
            context.cpp \
@@ -22,6 +23,7 @@ SRC_FILES= ast.cpp \
 
 CUSTOM_CLEAN_FILES= $(PARSER_SRC) \
 					$(PARSER_HDR) \
+					$(PARSER_OUT) \
 					$(LEXER_SRC)
 
 include $(ROOT)/mak/config.mak
