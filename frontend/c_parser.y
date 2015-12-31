@@ -70,7 +70,7 @@ extern void finalize(int exitCode);
 %%
 
 program :   body
-		|   %empty
+		|
 		;
 
 body    :   body func_decl
@@ -271,7 +271,7 @@ impl_param_list :   impl_param_list COMMA TYPE ID   { $$->push_back(new Variable
 				;
 
 stmts   :   stmt_list   { $$ = $1; }
-		|   %empty      { $$ = new StatementBlock(); }
+		|               { $$ = new StatementBlock(); }
 		;
 
 stmt    :   assign_stmt { $$ = $1; }
@@ -417,7 +417,7 @@ decl_id_list    :   decl_id_list COMMA ID decl_init_expr   {
 				;
 
 decl_init_expr  :   ASSIGN expr                     { $$ = $2; }
-				|   %empty                          { $$ = nullptr; }
+				|                                   { $$ = nullptr; }
 				;
 
 if_stmt :   IF LEFT_PAREN expr RIGHT_PAREN          {
@@ -502,11 +502,11 @@ for_init    :   ID ASSIGN expr                      {
 														$$ = new AssignStatement(varSymbol, $3);
 														delete $1;
 													}
-			|   %empty                              { $$ = nullptr; }
+			|                                       { $$ = nullptr; }
 			;
 
 for_cond    :   expr                                { $$ = $1; }
-			|   %empty                              { $$ = nullptr; }
+			|                                       { $$ = nullptr; }
 			;
 
 for_iter    :   ID ASSIGN expr                      {
@@ -535,7 +535,7 @@ for_iter    :   ID ASSIGN expr                      {
 														delete $1;
 													}
 			|   expr                                { $$ = new ForIterationStatement($1); }
-			|   %empty                              { $$ = nullptr; }
+			|                                       { $$ = nullptr; }
 			;
 
 return_stmt :   RETURN expr SEMICOLON	{
@@ -753,7 +753,7 @@ empty_stmt  :   SEMICOLON { $$ = nullptr; }
 			;
 
 exprs       :   expr_list { $$ = $1; }
-			|   %empty { $$ = new std::vector<Expression*>(); }
+			|             { $$ = new std::vector<Expression*>(); }
 			;
 
 expr_list   :   expr_list COMMA expr    { $$->push_back($3); }

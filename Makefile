@@ -33,4 +33,7 @@ main-clean:
 test: all
 	@$(MAKE) -C testing
 
-.PHONY: ir frontend testing doc
+pack: doc clean
+	tar -czvf xmilko01.tgz main.cpp Makefile frontend/* backend/* ir/* mak/* testing/* dokumentace.pdf rozsireni rozdeleni
+
+.PHONY: ir frontend testing doc pack
