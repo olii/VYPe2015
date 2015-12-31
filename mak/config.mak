@@ -1,5 +1,5 @@
-CXX=g++
-CXXFLAGS=-g -std=c++11 -Wall -Wextra -Wno-unused-function -c -I$(ROOT) $(CUSTOM_CXXFLAGS)
+CXX=g++-5.1
+CXXFLAGS=-static -std=c++11 -Wall -Wextra -Wno-unused-function -c -I$(ROOT) $(CUSTOM_CXXFLAGS)
 LXXFLAGS= $(CUSTOM_LXXFLAGS)
 MAKEFLAGS=-j4
 

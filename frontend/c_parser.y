@@ -18,7 +18,6 @@ extern Context context;
 extern void finalize(int exitCode);
 %}
 
-%define parse.error verbose // Better error reporting
 %debug
 
 %union
