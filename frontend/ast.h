@@ -1,3 +1,8 @@
+/**
+ * Project VYPe 2015/2016
+ * Marek Milkovič (xmilko01) & Oliver Nemček (xnemce03)
+ **/
+
 #ifndef FRONTEND_AST_H
 #define FRONTEND_AST_H
 

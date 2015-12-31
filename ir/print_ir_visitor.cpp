@@ -1,3 +1,8 @@
+/**
+ * Project VYPe 2015/2016
+ * Marek Milkovič (xmilko01) & Oliver Nemček (xnemce03)
+ **/
+
 #include "ir/function.h"
 #include "ir/print_ir_visitor.h"
 

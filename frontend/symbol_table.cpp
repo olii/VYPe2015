@@ -1,3 +1,8 @@
+/**
+ * Project VYPe 2015/2016
+ * Marek Milkovič (xmilko01) & Oliver Nemček (xnemce03)
+ **/
+
 #include <algorithm>
 #include "frontend/name_mangler.h"
 #include "frontend/symbol_table.h"

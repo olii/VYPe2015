@@ -1,3 +1,8 @@
+/**
+ * Project VYPe 2015/2016
+ * Marek Milkovič (xmilko01) & Oliver Nemček (xnemce03)
+ **/
+
 #ifndef CONSTSTRINGDATA_H
 #define CONSTSTRINGDATA_H
 #include <map>

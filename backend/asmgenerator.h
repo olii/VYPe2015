@@ -1,3 +1,8 @@
+/**
+ * Project VYPe 2015/2016
+ * Marek Milkovič (xmilko01) & Oliver Nemček (xnemce03)
+ **/
+
 #ifndef ASMGENERATOR_H
 #define ASMGENERATOR_H
 #include "ir/ir_visitor.h"
