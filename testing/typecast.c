@@ -8,6 +8,6 @@ int main(void)
 	string char_to_string = (string)c;
 
 	print("(char)305402420: ", int_to_char, "\n");
-	print("(int)'A': ", char_to_int, "\n");
-	print("(string)'A' ", char_to_string, "\n");
+	print("(int)\'A\': ", char_to_int, "\n");
+	print("(string)\'A\' ", char_to_string, "\n");
 }

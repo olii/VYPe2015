@@ -54,7 +54,8 @@ whitespace  [ \r\n\t]
 <STR>\\\\               { inputString += "\\\\"; }
 <STR>\\t                { inputString += "\\t"; }
 <STR>\\n                { inputString += "\\n"; }
-<STR>([^\\"])+          { inputString += std::string(yytext, yyleng); }
+<STR>([^\\"'])+         { inputString += std::string(yytext, yyleng); }
+<STR>'                  { finalize(1); yyterminate(); }
 <STR>\"                 {
 							BEGIN(0);
 							yylval.strValue = new std::string(inputString);
